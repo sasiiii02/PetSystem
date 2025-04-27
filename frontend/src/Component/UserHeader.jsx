@@ -157,7 +157,7 @@ export default function UserHeader() {
   };
 
   const handleNavClick = async (path) => {
-    const publicRoutes = ["/", "/aboutus", "/contactus", "/events", "/appointment"];
+    const publicRoutes = ["/", "/aboutus", "/contactus", "/events", "/appointment", "/adoption"];
     if (!token && !publicRoutes.includes(path)) {
       setIntendedPath(path);
       setLoginOpen(true);
