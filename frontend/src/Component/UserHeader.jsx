@@ -76,10 +76,10 @@ export default function UserHeader() {
           email: data.email,
           phoneNumber: data.phoneNumber,
           city: data.city,
-        })); // Store user data in localStorage
-        setToken(data.token); // Update token state
+        }));
+        setToken(data.token);
         setLoginOpen(false);
-        setEmail(""); // Clear form fields
+        setEmail("");
         setPassword("");
         navigate(intendedPath || "/");
       } else {
@@ -138,12 +138,12 @@ export default function UserHeader() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("user"); // Clear user data
-    setToken(null); // Update token state
+    localStorage.removeItem("user");
+    setToken(null);
     setIntendedPath("");
-    setLoginOpen(false); // Close any open dialogs
+    setLoginOpen(false);
     setRegisterOpen(false);
-    setEmail(""); // Clear form fields
+    setEmail("");
     setPassword("");
     setRegName("");
     setRegEmail("");

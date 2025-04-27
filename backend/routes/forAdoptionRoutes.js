@@ -27,11 +27,11 @@ router.post("/", upload.single("petImage"), addPet); // Accept image upload
 // Get all adoption listings
 router.get('/', getAllAdoptionListings);
 
+// Get adoption listings by owner's userId
+router.get('/owner/:userId', getAdoptionListingsByOwner);
+
 // Get specific adoption listing by ID
 router.get('/:id', getAdoptionListingById);
-
-// Get adoption listings by owner's email
-router.get('/owner/:email', getAdoptionListingsByOwner);
 
 // Update adoption listing
 router.put('/:id', upload.single('petImage'), updateAdoptionListing);

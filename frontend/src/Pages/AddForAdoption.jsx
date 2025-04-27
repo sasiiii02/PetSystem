@@ -15,6 +15,7 @@ const PetOwnerForm = () => {
     ownerLastName: '',
     email: '',
     phone: '',
+    userId: '',
     
     // Pet Information
     petName: '',
@@ -49,28 +50,27 @@ const PetOwnerForm = () => {
           return;
         }
 
-        const response = await axios.get('http://localhost:5000/api/users/profile', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        const userData = JSON.parse(localStorage.getItem('user') || '{}');
+        if (!userData._id) {
+          navigate('/login');
+          return;
+        }
 
-        setUserData(response.data);
-        
-        // Auto-fill owner information
-        const nameParts = response.data.name.split(' ');
-        setFormData(prev => ({
-          ...prev,
-          ownerFirstName: nameParts[0] || '',
-          ownerLastName: nameParts.slice(1).join(' ') || '',
-          email: response.data.email || '',
-          phone: response.data.phoneNumber || ''
+        // Set the form data with user information
+        setFormData(prevData => ({
+          ...prevData,
+          ownerFirstName: userData.name.split(' ')[0] || '',
+          ownerLastName: userData.name.split(' ').slice(1).join(' ') || '',
+          email: userData.email || '',
+          phone: userData.phoneNumber || '',
+          userId: userData._id // Add userId to form data
         }));
-        
+
         setLoading(false);
       } catch (error) {
         console.error('Error fetching user data:', error);
         setLoading(false);
+        navigate('/login');
       }
     };
 
@@ -106,7 +106,6 @@ const PetOwnerForm = () => {
 
     // Owner Information Validation
     if (!formData.ownerFirstName.trim()) newErrors.ownerFirstName = 'First name is required';
-    if (!formData.ownerLastName.trim()) newErrors.ownerLastName = 'Last name is required';
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email.trim()) {
@@ -143,17 +142,28 @@ const PetOwnerForm = () => {
     if (validateForm()) {
       const data = new FormData();
       for (let key in formData) {
-        data.append(key, formData[key]);
+        if (key === 'petImage' && formData[key] instanceof File) {
+          data.append(key, formData[key]);
+        } else if (key !== 'petImage') {
+          data.append(key, formData[key]);
+        }
       }
 
       try {
+        const token = localStorage.getItem('token');
         const response = await axios.post("http://localhost:5000/api/foradoption", data, {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: { 
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`
+          },
         });
         setSubmissionStatus('success');
         alert(response.data.message);
       } catch (error) {
         console.error("Error adding pet for adoption:", error);
+        if (error.response?.status === 401) {
+          navigate('/login');
+        }
       }
     }
   };

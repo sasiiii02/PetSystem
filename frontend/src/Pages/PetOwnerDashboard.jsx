@@ -29,20 +29,32 @@ const PetOwnerDashboard = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState({ show: false, petId: null });
   const navigate = useNavigate();
 
-  // Get user email from localStorage
-  const userEmail = localStorage.getItem('userEmail');
+  // Get token and user data from localStorage
+  const token = localStorage.getItem('token');
+  const userData = JSON.parse(localStorage.getItem('user') || '{}');
+  const userId = userData._id;
+  console.log('User data from localStorage:', userData);
+  console.log('UserId from localStorage:', userId);
 
   // Fetch pet owner's adoption forms
   const fetchPets = async () => {
     try {
       setLoading(true);
-      // Get all pets and filter by user's email
-      const response = await axios.get('http://localhost:5000/api/foradoption');
-      const userPets = response.data.filter(pet => pet.email === userEmail);
-      setPets(userPets);
+      console.log('Fetching pets for userId:', userId);
+      // Get pets for the specific user using the owner endpoint
+      const response = await axios.get(`http://localhost:5000/api/foradoption/owner/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      console.log('Response from server:', response.data);
+      setPets(response.data);
       setError(null);
     } catch (err) {
       console.error("Error fetching pets:", err);
+      if (err.response?.status === 401) {
+        navigate('/login');
+      }
       setError("Failed to load your pet listings");
     } finally {
       setLoading(false);
@@ -50,13 +62,13 @@ const PetOwnerDashboard = () => {
   };
 
   useEffect(() => {
-    if (!userEmail) {
-      // If no user email is found, redirect to login
+    if (!token || !userId) {
+      // If no token or userId is found, redirect to login
       navigate('/login');
       return;
     }
     fetchPets();
-  }, [userEmail, navigate]);
+  }, [token, userId, navigate]);
 
   // Handle delete confirmation
   const handleDeleteClick = (petId) => {
@@ -66,11 +78,18 @@ const PetOwnerDashboard = () => {
   // Handle actual deletion
   const handleDeleteConfirm = async () => {
     try {
-      await axios.delete(`http://localhost:5000/api/foradoption/${showDeleteConfirm.petId}`);
+      await axios.delete(`http://localhost:5000/api/foradoption/${showDeleteConfirm.petId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setShowDeleteConfirm({ show: false, petId: null });
       fetchPets(); // Refresh the list
     } catch (err) {
       console.error("Error deleting pet:", err);
+      if (err.response?.status === 401) {
+        navigate('/login');
+      }
       setError("Failed to delete pet listing");
     }
   };
