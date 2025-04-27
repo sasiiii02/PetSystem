@@ -35,6 +35,8 @@ import UserEventsPage from "./Pages/UserEventsPage";
 import UserEventDetailsPage from "./Pages/UserEventDetails";
 import UserRegisteredEventsPage from "./Pages/UserRegisteredEventsPage";
 import Notifications from "./Pages/Notifications";
+import PetRegisterUserDashboard from "./Pages/PetRegisterUserDashboard";
+import EditAdoptionForm from "./Pages/EditAdoptionForm";
 
 const App = () => {
   return (
@@ -136,6 +138,22 @@ const App = () => {
           element={
             <PrivateRoute>
               <PetOwnerDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/pet-register-dashboard"
+          element={
+            <PrivateRoute>
+              <PetRegisterUserDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/edit-adoption-form/:id"
+          element={
+            <PrivateRoute>
+              <EditAdoptionForm />
             </PrivateRoute>
           }
         />
