@@ -112,8 +112,25 @@ const EditPetForm = () => {
     if (validateForm()) {
       try {
         const data = new FormData();
-        for (let key in formData) {
-          data.append(key, formData[key]);
+        // Only include pet-related fields, exclude owner information
+        const petFields = [
+          'petName',
+          'petAge',
+          'petGender',
+          'petBreed',
+          'petSpecies',
+          'petDescription',
+          'reason',
+          'specialNeeds',
+          'vaccinated',
+          'neutered',
+          'petImage'
+        ];
+        
+        for (let key of petFields) {
+          if (formData[key] !== null) {
+            data.append(key, formData[key]);
+          }
         }
 
         await axios.put(`http://localhost:5000/api/foradoption/${id}`, data, {
@@ -180,8 +197,8 @@ const EditPetForm = () => {
                     id="ownerFirstName"
                     name="ownerFirstName"
                     value={formData.ownerFirstName}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md"
+                    readOnly
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50"
                   />
                 </div>
 
@@ -194,8 +211,8 @@ const EditPetForm = () => {
                     id="ownerLastName"
                     name="ownerLastName"
                     value={formData.ownerLastName}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md"
+                    readOnly
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50"
                   />
                 </div>
               </div>
@@ -210,8 +227,8 @@ const EditPetForm = () => {
                     id="email"
                     name="email"
                     value={formData.email}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md"
+                    readOnly
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50"
                   />
                 </div>
 
@@ -224,8 +241,8 @@ const EditPetForm = () => {
                     id="phone"
                     name="phone"
                     value={formData.phone}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md"
+                    readOnly
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50"
                   />
                 </div>
               </div>

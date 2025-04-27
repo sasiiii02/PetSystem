@@ -23,7 +23,11 @@ export const upload = multer({ storage }); // Export the upload instance
 // Add a pet for adoption (with image)
 export const addPet = async (req, res) => {
     try {
+        console.log('Received request body:', req.body);
+        console.log('Received file:', req.file);
+
         const {
+            userId,
             ownerFirstName,
             ownerLastName,
             email,
@@ -40,7 +44,19 @@ export const addPet = async (req, res) => {
             neutered
         } = req.body;
 
+        console.log('Adding pet with data:', {
+            userId,
+            ownerName: `${ownerFirstName} ${ownerLastName}`,
+            email,
+            phone,
+            petName,
+            specialNeeds,
+            vaccinated,
+            neutered
+        });
+
         const newPet = new ForAdoption({
+            userId,
             ownerFirstName,
             ownerLastName,
             email,
@@ -58,9 +74,19 @@ export const addPet = async (req, res) => {
             petImage: req.file ? `/uploads/${req.file.filename}` : null,
         });
 
+        console.log('Created new pet object:', newPet);
+
         await newPet.save();
+        console.log('Saved pet:', {
+            _id: newPet._id,
+            userId: newPet.userId,
+            ownerName: `${newPet.ownerFirstName} ${newPet.ownerLastName}`,
+            email: newPet.email,
+            petName: newPet.petName
+        });
         res.status(201).json({ message: "Pet added for adoption successfully", newPet });
     } catch (error) {
+        console.error('Error adding pet:', error);
         res.status(500).json({ error: error.message });
     }
 };
@@ -68,7 +94,9 @@ export const addPet = async (req, res) => {
 // Get all adoption listings
 export const getAllAdoptionListings = async (req, res) => {
     try {
-        const listings = await ForAdoption.find();
+        const userId = req.query.userId;
+        const query = userId ? { userId } : {};
+        const listings = await ForAdoption.find(query);
         res.status(200).json(listings);
     } catch (error) {
         console.error('Error fetching adoption listings:', error);
@@ -93,7 +121,27 @@ export const getAdoptionListingById = async (req, res) => {
 // Get adoption listings by owner
 export const getAdoptionListingsByOwner = async (req, res) => {
     try {
-        const listings = await ForAdoption.find({ ownerId: req.params.ownerId });
+        const userId = req.params.userId;
+        console.log('Fetching pets for userId:', userId);
+        
+        // First, let's see all pets in the database
+        const allPets = await ForAdoption.find({});
+        console.log('All pets in database:', allPets.map(pet => ({ 
+            _id: pet._id, 
+            userId: pet.userId, 
+            ownerName: `${pet.ownerFirstName} ${pet.ownerLastName}`,
+            email: pet.email 
+        })));
+        
+        // Now let's find pets for this specific user
+        const listings = await ForAdoption.find({ userId: userId });
+        console.log('Found listings for user:', listings.map(pet => ({ 
+            _id: pet._id, 
+            userId: pet.userId, 
+            ownerName: `${pet.ownerFirstName} ${pet.ownerLastName}`,
+            email: pet.email 
+        })));
+        
         res.status(200).json(listings);
     } catch (error) {
         console.error('Error fetching owner adoption listings:', error);
@@ -111,8 +159,30 @@ export const updateAdoptionListing = async (req, res) => {
             return res.status(404).json({ message: 'Adoption listing not found' });
         }
         
+        // Only allow updating pet-related fields
+        const allowedFields = [
+            'petName',
+            'petAge',
+            'petGender',
+            'petBreed',
+            'petSpecies',
+            'petDescription',
+            'reason',
+            'specialNeeds',
+            'vaccinated',
+            'neutered',
+            'petImage'
+        ];
+        
+        // Filter out any fields that are not in allowedFields
+        const updatedData = {};
+        for (const field of allowedFields) {
+            if (field in req.body) {
+                updatedData[field] = req.body[field];
+            }
+        }
+        
         // Convert string boolean values to actual booleans
-        const updatedData = { ...req.body };
         ['specialNeeds', 'vaccinated', 'neutered'].forEach(field => {
             if (field in updatedData) {
                 updatedData[field] = updatedData[field] === 'true';
