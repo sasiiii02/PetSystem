@@ -1,11 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { AlertCircle, Dog, Cat, Heart, CheckCircle } from 'lucide-react';
+import { AlertCircle, Dog, Cat, Heart, CheckCircle, Loader } from 'lucide-react';
+import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const PetAdoptionForm = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { petName, petImage, petType } = location.state || {};
+
+  // Check authentication on component mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    if (!token || !userData) {
+      navigate('/login');
+      return;
+    }
+
+    // Split the full name into first and last name
+    const [firstName = '', lastName = ''] = (userData.name || '').split(' ');
+
+    // Auto-fill user data from localStorage
+    setFormData(prev => ({
+      ...prev,
+      firstName: firstName,
+      lastName: lastName,
+      email: userData.email || '',
+      phone: userData.phoneNumber || '', // Map phoneNumber to phone field
+      petType: petType || '',
+      preferredPet: petName || '',
+      homeType: '',
+      hasYard: false,
+      otherPets: false,
+      employmentStatus: '',
+      additionalInfo: ''
+    }));
+  }, [navigate]);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -22,7 +55,9 @@ const PetAdoptionForm = () => {
   });
 
   const [errors, setErrors] = useState({});
-  const [submissionStatus, setSubmissionStatus] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [globalError, setGlobalError] = useState('');
 
   const petTypes = ['Dog', 'Cat', 'Either'];
   const homeTypes = ['House', 'Apartment', 'Condo', 'Other'];
@@ -30,10 +65,24 @@ const PetAdoptionForm = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    const newValue = type === 'checkbox' ? checked : value;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: newValue
     }));
+    
+    // Clear field-specific error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+    // Clear global error when user makes any change
+    if (globalError) {
+      setGlobalError('');
+    }
   };
 
   const validateForm = () => {
@@ -61,24 +110,79 @@ const PetAdoptionForm = () => {
     if (!formData.employmentStatus) newErrors.employmentStatus = 'Please select employment status';
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return Object.keys(newErrors).length === 0 ? {} : newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      console.log('Form submitted:', formData);
-      // Set submission status to success
-      setSubmissionStatus('success');
-      
-      // Optional: Navigate after a delay or reset form
-      setTimeout(() => {
-        // Either navigate to another page
-        navigate('/Submit_adoption_Form');
-        // Or reset the form and submission status
-        // setFormData({ ... }); // Reset to initial state
-        // setSubmissionStatus(null);
-      }, 3000);
+    setGlobalError('');
+    
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      setGlobalError('Please fix the errors below before submitting.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      // Map the form data to match the backend schema
+      const adoptionData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phoneNumber: formData.phone,
+        petType: formData.petType,
+        petName: formData.preferredPet,
+        homeType: formData.homeType,
+        employmentStatus: formData.employmentStatus,
+        hasYard: formData.hasYard,
+        hasOtherPets: formData.otherPets,
+        additionalInfo: formData.additionalInfo
+      };
+
+      // Make API call to save adoption form
+      const response = await axios.post(
+        'http://localhost:5000/api/adoptionform/apply',
+        adoptionData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      if (response.status === 201) {
+        setErrors({});
+        setGlobalError('');
+        setShowSuccessModal(true);
+        // Redirect after 2 seconds
+        setTimeout(() => {
+          navigate('/profile', { state: { adoptionSuccess: true } });
+        }, 2000);
+      }
+    } catch (error) {
+      if (error.response) {
+        const { status, data } = error.response;
+        if (status === 401) {
+          setGlobalError('Please log in to submit an adoption application.');
+        } else if (data.message) {
+          setGlobalError(data.message);
+        } else {
+          setGlobalError('An error occurred while submitting your application. Please try again.');
+        }
+      } else {
+        setGlobalError('Network error. Please check your connection and try again.');
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -95,7 +199,7 @@ const PetAdoptionForm = () => {
           We will review your application and contact you soon.
         </p>
         <button 
-          onClick={() => setSubmissionStatus(null)}
+          onClick={() => setShowSuccessModal(false)}
           className="bg-[#B3704D] text-white px-8 py-3 rounded-xl hover:bg-[#D08860] transition-colors"
         >
           Close
@@ -106,7 +210,8 @@ const PetAdoptionForm = () => {
 
   return (
     <>
-      {submissionStatus === 'success' && <SuccessMessage />}
+      <ToastContainer position="top-right" autoClose={3000} />
+      {showSuccessModal && <SuccessMessage />}
       
       <div className="min-h-screen bg-gradient-to-br from-[#F4E4D8] to-[#E6D5C1] pt-24 flex items-center justify-center p-6">
         <div className="w-full max-w-10xl bg-white shadow-2xl rounded-3xl overflow-hidden flex border-2 border-[] mt-6">
@@ -150,6 +255,16 @@ const PetAdoptionForm = () => {
               <h2 className="text-3xl font-bold text-[#80533b]">Pet Adoption Application</h2>
             </div>
 
+            {/* Global Error Message */}
+            {globalError && (
+              <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded">
+                <div className="flex items-center">
+                  <AlertCircle className="text-red-500 mr-2" size={20} />
+                  <p className="text-red-700">{globalError}</p>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-2 gap-6">
                 <div>
@@ -161,16 +276,9 @@ const PetAdoptionForm = () => {
                     id="firstName"
                     name="firstName"
                     value={formData.firstName}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-3 rounded-xl border-2 ${
-                      errors.firstName ? 'border-red-500' : 'border-[]'
-                    } focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md`}
+                    readOnly
+                    className="w-full px-4 py-3 rounded-xl border-2 border-[] bg-gray-100 cursor-not-allowed"
                   />
-                  {errors.firstName && (
-                    <p className="mt-2 text-sm text-red-500 flex items-center">
-                      <AlertCircle className="mr-2" size={18} /> {errors.firstName}
-                    </p>
-                  )}
                 </div>
 
                 <div>
@@ -182,16 +290,9 @@ const PetAdoptionForm = () => {
                     id="lastName"
                     name="lastName"
                     value={formData.lastName}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-3 rounded-xl border-2 ${
-                      errors.lastName ? 'border-red-500' : 'border-[]'
-                    } focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md`}
+                    readOnly
+                    className="w-full px-4 py-3 rounded-xl border-2 border-[] bg-gray-100 cursor-not-allowed"
                   />
-                  {errors.lastName && (
-                    <p className="mt-2 text-sm text-red-500 flex items-center">
-                      <AlertCircle className="mr-2" size={18} /> {errors.lastName}
-                    </p>
-                  )}
                 </div>
               </div>
 
@@ -205,16 +306,9 @@ const PetAdoptionForm = () => {
                     id="email"
                     name="email"
                     value={formData.email}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-3 rounded-xl border-2 ${
-                      errors.email ? 'border-red-500' : 'border-[]'
-                    } focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md`}
+                    readOnly
+                    className="w-full px-4 py-3 rounded-xl border-2 border-[] bg-gray-100 cursor-not-allowed"
                   />
-                  {errors.email && (
-                    <p className="mt-2 text-sm text-red-500 flex items-center">
-                      <AlertCircle className="mr-2" size={18} /> {errors.email}
-                    </p>
-                  )}
                 </div>
 
                 <div>
@@ -226,17 +320,9 @@ const PetAdoptionForm = () => {
                     id="phone"
                     name="phone"
                     value={formData.phone}
-                    onChange={handleChange}
-                    placeholder="(+94) 456-7890"
-                    className={`w-full px-4 py-3 rounded-xl border-2 ${
-                      errors.phone ? 'border-red-500' : 'border-[]'
-                    } focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md`}
+                    readOnly
+                    className="w-full px-4 py-3 rounded-xl border-2 border-[] bg-gray-100 cursor-not-allowed"
                   />
-                  {errors.phone && (
-                    <p className="mt-2 text-sm text-red-500 flex items-center">
-                      <AlertCircle className="mr-2" size={18} /> {errors.phone}
-                    </p>
-                  )}
                 </div>
               </div>
 
@@ -245,25 +331,14 @@ const PetAdoptionForm = () => {
                   <label htmlFor="petType" className="block text-md font-medium text-[] mb-2">
                     Preferred Pet Type
                   </label>
-                  <select
+                  <input
+                    type="text"
                     id="petType"
                     name="petType"
                     value={formData.petType}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-3 rounded-xl border-2 ${
-                      errors.petType ? 'border-red-500' : 'border-[]'
-                    } focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md`}
-                  >
-                    <option value="">Select Pet Type</option>
-                    {petTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
-                  {errors.petType && (
-                    <p className="mt-2 text-sm text-red-500 flex items-center">
-                      <AlertCircle className="mr-2" size={18} /> {errors.petType}
-                    </p>
-                  )}
+                    readOnly
+                    className="w-full px-4 py-3 rounded-xl border-2 border-[] bg-gray-100 cursor-not-allowed"
+                  />
                 </div>
 
                 <div>
@@ -275,10 +350,8 @@ const PetAdoptionForm = () => {
                     id="preferredPet"
                     name="preferredPet"
                     value={formData.preferredPet}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-[] focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md"
-                    placeholder="Selected Pet Name"
                     readOnly
+                    className="w-full px-4 py-3 rounded-xl border-2 border-[] bg-gray-100 cursor-not-allowed"
                   />
                 </div>
               </div>
@@ -383,9 +456,24 @@ const PetAdoptionForm = () => {
               <div className="flex justify-center pt-4">
                 <button
                   type="submit"
-                  className="w-full bg-[#B3704D] text-white px-8 py-4 rounded-xl text-lg font-semibold hover:bg-[#D08860] transition-colors flex items-center justify-center shadow-lg hover:shadow-xl"
+                  disabled={isSubmitting}
+                  className={`w-full px-8 py-4 rounded-xl text-lg font-semibold flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 ${
+                    isSubmitting 
+                      ? 'bg-gray-400 cursor-not-allowed' 
+                      : 'bg-[#B3704D] hover:bg-[#D08860] text-white'
+                  }`}
                 >
-                  <Dog className="mr-3" size={24} /> Submit Adoption Application
+                  {isSubmitting ? (
+                    <>
+                      <Loader className="animate-spin mr-3" size={24} />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Dog className="mr-3" size={24} />
+                      Submit Adoption Application
+                    </>
+                  )}
                 </button>
               </div>
             </form>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { AlertCircle, Dog, Cat, Heart, CheckCircle, Camera, Upload, X } from 'lucide-react';
+import { AlertCircle, Dog, Cat, Heart, CheckCircle, Camera, Upload, X, PawPrint } from 'lucide-react';
 
 const EditPetForm = () => {
   const { id } = useParams();
@@ -10,12 +10,9 @@ const EditPetForm = () => {
   const [error, setError] = useState(null);
   const [submissionStatus, setSubmissionStatus] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
+  const [errors, setErrors] = useState({});
 
   const [formData, setFormData] = useState({
-    ownerFirstName: '',
-    ownerLastName: '',
-    email: '',
-    phone: '',
     petName: '',
     petAge: '',
     petGender: '',
@@ -36,7 +33,9 @@ const EditPetForm = () => {
   useEffect(() => {
     const fetchPetData = async () => {
       try {
+        console.log('Fetching pet data for ID:', id);
         const response = await axios.get(`http://localhost:5000/api/foradoption/${id}`);
+        console.log('Received pet data:', response.data);
         setFormData(response.data);
         if (response.data.petImage) {
           setPreviewImage(`http://localhost:5000${response.data.petImage}`);
@@ -44,7 +43,7 @@ const EditPetForm = () => {
         setLoading(false);
       } catch (err) {
         console.error("Error fetching pet data:", err);
-        setError("Failed to load pet data");
+        setError("Failed to load pet data. Please try again later.");
         setLoading(false);
       }
     };
@@ -78,23 +77,6 @@ const EditPetForm = () => {
 
   const validateForm = () => {
     const newErrors = {};
-
-    if (!formData.ownerFirstName.trim()) newErrors.ownerFirstName = 'First name is required';
-    if (!formData.ownerLastName.trim()) newErrors.ownerLastName = 'Last name is required';
-    
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
-    }
-
-    const phoneRegex = /^[0-9]{10}$/;
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    } else if (!phoneRegex.test(formData.phone.replace(/[^\d]/g, ''))) {
-      newErrors.phone = 'Invalid phone number (10 digits)';
-    }
     
     if (!formData.petName.trim()) newErrors.petName = 'Pet name is required';
     if (!formData.petAge.trim()) newErrors.petAge = 'Pet age is required';
@@ -104,6 +86,7 @@ const EditPetForm = () => {
     if (!formData.petDescription.trim()) newErrors.petDescription = 'Pet description is required';
     if (!formData.reason.trim()) newErrors.reason = 'Reason for giving up for adoption is required';
 
+    setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -112,7 +95,7 @@ const EditPetForm = () => {
     if (validateForm()) {
       try {
         const data = new FormData();
-        // Only include pet-related fields, exclude owner information
+        // Only include pet-related fields
         const petFields = [
           'petName',
           'petAge',
@@ -133,9 +116,11 @@ const EditPetForm = () => {
           }
         }
 
-        await axios.put(`http://localhost:5000/api/foradoption/${id}`, data, {
+        console.log('Submitting form data:', Object.fromEntries(data));
+        const response = await axios.put(`http://localhost:5000/api/foradoption/${id}`, data, {
           headers: { "Content-Type": "multipart/form-data" },
         });
+        console.log('Update response:', response.data);
         
         setSubmissionStatus('success');
         setTimeout(() => {
@@ -143,7 +128,7 @@ const EditPetForm = () => {
         }, 2000);
       } catch (err) {
         console.error("Error updating pet:", err);
-        setError("Failed to update pet listing");
+        setError("Failed to update pet listing. Please try again.");
       }
     }
   };
@@ -159,6 +144,26 @@ const EditPetForm = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#F4E4D8] to-[#E6D5C1] pt-24 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
+          <div className="text-center">
+            <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
+            <h2 className="text-2xl font-bold text-[#80533b] mb-4">Error</h2>
+            <p className="text-gray-600 mb-6">{error}</p>
+            <button
+              onClick={() => navigate('/pet-owner-dashboard')}
+              className="bg-[#B3704D] text-white px-6 py-2 rounded-lg hover:bg-[#D08860] transition-colors"
+            >
+              Return to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F4E4D8] to-[#E6D5C1] pt-24 p-6">
       <div className="max-w-4xl mx-auto">
@@ -168,13 +173,6 @@ const EditPetForm = () => {
             <h2 className="text-3xl font-bold text-[#80533b]">Edit Pet Listing</h2>
           </div>
 
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6">
-              <AlertCircle className="inline-block mr-2" size={20} />
-              {error}
-            </div>
-          )}
-
           {submissionStatus === 'success' && (
             <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6">
               <CheckCircle className="inline-block mr-2" size={20} />
@@ -183,74 +181,14 @@ const EditPetForm = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Owner Information */}
+            {/* Pet Information Section */}
             <div className="bg-[#FFF5E6]/50 rounded-2xl p-6 space-y-6">
-              <h3 className="text-xl font-semibold text-[#80533b] mb-4">Owner Information</h3>
-              
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="ownerFirstName" className="block text-md font-medium mb-2">
-                    First Name
-                  </label>
-                  <input
-                    type="text"
-                    id="ownerFirstName"
-                    name="ownerFirstName"
-                    value={formData.ownerFirstName}
-                    readOnly
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50"
-                  />
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-[#B3704D]/10 rounded-xl">
+                  <PawPrint className="h-6 w-6 text-[#B3704D]" />
                 </div>
-
-                <div>
-                  <label htmlFor="ownerLastName" className="block text-md font-medium mb-2">
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    id="ownerLastName"
-                    name="ownerLastName"
-                    value={formData.ownerLastName}
-                    readOnly
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50"
-                  />
-                </div>
+                <h3 className="text-xl font-semibold text-[#80533b]">Pet Information</h3>
               </div>
-
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="email" className="block text-md font-medium mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    readOnly
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="phone" className="block text-md font-medium mb-2">
-                    Phone
-                  </label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
-                    readOnly
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Pet Information */}
-            <div className="bg-[#FFF5E6]/50 rounded-2xl p-6 space-y-6">
-              <h3 className="text-xl font-semibold text-[#80533b] mb-4">Pet Information</h3>
               
               <div className="grid grid-cols-2 gap-6">
                 <div>
@@ -263,13 +201,20 @@ const EditPetForm = () => {
                     name="petName"
                     value={formData.petName}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md"
+                    className={`w-full px-4 py-3 rounded-xl border-2 ${
+                      errors.petName ? 'border-red-500' : 'border-gray-200'
+                    } focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md`}
                   />
+                  {errors.petName && (
+                    <p className="mt-2 text-sm text-red-500 flex items-center">
+                      <AlertCircle className="mr-2" size={18} /> {errors.petName}
+                    </p>
+                  )}
                 </div>
 
                 <div>
                   <label htmlFor="petAge" className="block text-md font-medium mb-2">
-                    Age
+                    Pet Age
                   </label>
                   <input
                     type="text"
@@ -277,52 +222,74 @@ const EditPetForm = () => {
                     name="petAge"
                     value={formData.petAge}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md"
+                    placeholder="e.g., 2 years"
+                    className={`w-full px-4 py-3 rounded-xl border-2 ${
+                      errors.petAge ? 'border-red-500' : 'border-gray-200'
+                    } focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md`}
                   />
+                  {errors.petAge && (
+                    <p className="mt-2 text-sm text-red-500 flex items-center">
+                      <AlertCircle className="mr-2" size={18} /> {errors.petAge}
+                    </p>
+                  )}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="petSpecies" className="block text-md font-medium mb-2">
-                    Species
+                    Pet Species
                   </label>
                   <select
                     id="petSpecies"
                     name="petSpecies"
                     value={formData.petSpecies}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md"
+                    className={`w-full px-4 py-3 rounded-xl border-2 ${
+                      errors.petSpecies ? 'border-red-500' : 'border-gray-200'
+                    } focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md`}
                   >
                     <option value="">Select Species</option>
                     {petSpeciesOptions.map(species => (
                       <option key={species} value={species}>{species}</option>
                     ))}
                   </select>
+                  {errors.petSpecies && (
+                    <p className="mt-2 text-sm text-red-500 flex items-center">
+                      <AlertCircle className="mr-2" size={18} /> {errors.petSpecies}
+                    </p>
+                  )}
                 </div>
 
                 <div>
                   <label htmlFor="petGender" className="block text-md font-medium mb-2">
-                    Gender
+                    Pet Gender
                   </label>
                   <select
                     id="petGender"
                     name="petGender"
                     value={formData.petGender}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md"
+                    className={`w-full px-4 py-3 rounded-xl border-2 ${
+                      errors.petGender ? 'border-red-500' : 'border-gray-200'
+                    } focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md`}
                   >
                     <option value="">Select Gender</option>
                     {petGenderOptions.map(gender => (
                       <option key={gender} value={gender}>{gender}</option>
                     ))}
                   </select>
+                  {errors.petGender && (
+                    <p className="mt-2 text-sm text-red-500 flex items-center">
+                      <AlertCircle className="mr-2" size={18} /> {errors.petGender}
+                    </p>
+                  )}
                 </div>
               </div>
 
               <div>
                 <label htmlFor="petBreed" className="block text-md font-medium mb-2">
-                  Breed
+                  Pet Breed
                 </label>
                 <input
                   type="text"
@@ -330,39 +297,117 @@ const EditPetForm = () => {
                   name="petBreed"
                   value={formData.petBreed}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md"
+                  placeholder="e.g., Golden Retriever, Siamese"
+                  className={`w-full px-4 py-3 rounded-xl border-2 ${
+                    errors.petBreed ? 'border-red-500' : 'border-gray-200'
+                  } focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md`}
                 />
+                {errors.petBreed && (
+                  <p className="mt-2 text-sm text-red-500 flex items-center">
+                    <AlertCircle className="mr-2" size={18} /> {errors.petBreed}
+                  </p>
+                )}
               </div>
 
               <div>
                 <label htmlFor="petDescription" className="block text-md font-medium mb-2">
-                  Description
+                  Pet Description
                 </label>
                 <textarea
                   id="petDescription"
                   name="petDescription"
+                  rows={4}
                   value={formData.petDescription}
                   onChange={handleChange}
-                  rows={4}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md"
+                  className={`w-full px-4 py-3 rounded-xl border-2 ${
+                    errors.petDescription ? 'border-red-500' : 'border-gray-200'
+                  } focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md`}
+                  placeholder="Describe your pet's personality, habits, likes and dislikes..."
                 ></textarea>
+                {errors.petDescription && (
+                  <p className="mt-2 text-sm text-red-500 flex items-center">
+                    <AlertCircle className="mr-2" size={18} /> {errors.petDescription}
+                  </p>
+                )}
               </div>
 
               <div>
                 <label htmlFor="reason" className="block text-md font-medium mb-2">
-                  Reason for Giving Up
+                  Reason for Adoption
                 </label>
                 <textarea
                   id="reason"
                   name="reason"
+                  rows={3}
                   value={formData.reason}
                   onChange={handleChange}
-                  rows={3}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md"
+                  className={`w-full px-4 py-3 rounded-xl border-2 ${
+                    errors.reason ? 'border-red-500' : 'border-gray-200'
+                  } focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md`}
+                  placeholder="Why are you putting your pet up for adoption?"
                 ></textarea>
+                {errors.reason && (
+                  <p className="mt-2 text-sm text-red-500 flex items-center">
+                    <AlertCircle className="mr-2" size={18} /> {errors.reason}
+                  </p>
+                )}
               </div>
 
-              <div className="grid grid-cols-3 gap-6">
+              {/* Pet Image Upload */}
+              <div>
+                <label htmlFor="petImage" className="block text-md font-medium mb-2">
+                  Pet Image
+                </label>
+                <div className="mt-2">
+                  <div className={`flex items-center justify-center w-full border-2 border-dashed rounded-xl p-6 ${
+                    errors.petImage ? 'border-red-500' : 'border-gray-300'
+                  } hover:border-[#B3704D] transition-colors`}>
+                    <div className="space-y-2 text-center">
+                      {previewImage ? (
+                        <div className="relative mx-auto">
+                          <img 
+                            src={previewImage} 
+                            alt="Pet preview" 
+                            className="h-48 w-48 object-cover rounded-lg mx-auto"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPreviewImage(null);
+                              setFormData({...formData, petImage: null});
+                            }}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <Camera className="mx-auto h-12 w-12 text-gray-400" />
+                          <div className="flex justify-center text-sm text-gray-600">
+                            <label htmlFor="file-upload" className="relative cursor-pointer rounded-md font-medium text-[#B3704D] hover:text-[#D08860] focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#B3704D]">
+                              <span>Upload a photo</span>
+                              <input 
+                                id="file-upload" 
+                                name="petImage" 
+                                type="file" 
+                                className="sr-only" 
+                                accept="image/*" 
+                                onChange={handleFileChange}
+                              />
+                            </label>
+                            <p className="pl-1">or drag and drop</p>
+                          </div>
+                          <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pet Health Information */}
+              <div className="grid grid-cols-3 gap-4">
                 <div className="flex items-center">
                   <input
                     type="checkbox"
@@ -401,63 +446,13 @@ const EditPetForm = () => {
                     className="h-5 w-5 text-[#B3704D] focus:ring-[#D08860] border-gray-300 rounded"
                   />
                   <label htmlFor="neutered" className="ml-3 text-md text-gray-900">
-                    Neutered
+                    Neutered/Spayed
                   </label>
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="petImage" className="block text-md font-medium mb-2">
-                  Pet Image
-                </label>
-                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl">
-                  <div className="space-y-1 text-center">
-                    {previewImage ? (
-                      <div className="relative">
-                        <img
-                          src={previewImage}
-                          alt="Pet preview"
-                          className="mx-auto h-32 w-32 object-cover rounded-lg"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPreviewImage(null);
-                            setFormData(prev => ({ ...prev, petImage: null }));
-                          }}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <Camera className="mx-auto h-12 w-12 text-gray-400" />
-                        <div className="flex text-sm text-gray-600">
-                          <label
-                            htmlFor="petImage"
-                            className="relative cursor-pointer bg-white rounded-md font-medium text-[#B3704D] hover:text-[#D08860] focus-within:outline-none"
-                          >
-                            <span>Upload a file</span>
-                            <input
-                              id="petImage"
-                              name="petImage"
-                              type="file"
-                              className="sr-only"
-                              accept="image/*"
-                              onChange={handleFileChange}
-                            />
-                          </label>
-                          <p className="pl-1">or drag and drop</p>
-                        </div>
-                        <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-                      </>
-                    )}
-                  </div>
                 </div>
               </div>
             </div>
 
+            {/* Submit Button */}
             <div className="flex justify-center pt-6">
               <button
                 type="submit"
