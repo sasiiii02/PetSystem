@@ -93,7 +93,19 @@ const StaffLogin = () => {
         setpassword("");
         setIsAdminModalOpen(false);
 
-        navigate(`/admin/redirect/${data.admin.role}`);
+        if (data.admin.role === 'user_admin') {
+          navigate('/user_admin/SysAdminDashboard');
+        } else if (data.admin.role === 'event_manager') {
+          navigate('/event_manager/events');
+        } else if (data.admin.role === 'store_manager') {
+          navigate('/store_manager/pets');
+        }else if (data.admin.role === 'adoption_manager') {
+          navigate('/adoption_manager/pets');
+        }else if (data.admin.role === 'appointment_manager') {
+          navigate('/appointment_manager/pets');
+        }else {
+          navigate('/stafflogin');
+        }
       } else {
         setAdminError(data.message || "Invalid email or password");
       }

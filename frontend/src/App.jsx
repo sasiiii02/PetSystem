@@ -153,6 +153,15 @@ const App = () => {
             </PrivateRoute>
           }
         />
+
+        {/* Admin Routes */}
+        <Route path="/user_admin/SysAdminDashboard" element={
+          <adminAuth>
+            <SysAdminDashboard />
+          </adminAuth>
+        } />
+
+
           </Routes>
           <UserFooter />
     </BrowserRouter>
