@@ -92,7 +92,7 @@ const Success = () => {
                 : "Event Registration Confirmed Successfully!"
             );
             setTimeout(() => {
-              navigate(appointmentId ? "/home" : `/my-events`, {
+              navigate(appointmentId ? "/profile" : `/my-events`, {
                 replace: true,
               });
             }, 3000);

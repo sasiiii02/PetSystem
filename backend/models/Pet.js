@@ -4,7 +4,7 @@ const medicalReportSchema = new mongoose.Schema({
   type: { 
     type: String, 
     required: true, 
-    enum: ['Medical', 'Grooming', 'Training', 'vaccination'] // Added 'vaccination' to enum
+    enum: ['Medical', 'Grooming', 'Training', 'vaccination']
   },
   date: { type: Date, required: true },
   diagnosis: { type: String, required: function() { return this.type === 'Medical'; } },
@@ -13,19 +13,44 @@ const medicalReportSchema = new mongoose.Schema({
   groomerNotes: { type: String, required: function() { return this.type === 'Grooming'; } },
   trainingFocus: { type: String, required: function() { return this.type === 'Training'; } },
   trainerNotes: { type: String, required: function() { return this.type === 'Training'; } },
-  description: { type: String, required: function() { return this.type === 'vaccination'; } }, // Added for vaccination records
-  doctorId: { type: String, required: function() { return this.type === 'vaccination'; } } // Added for vaccination records
+  description: { type: String, required: function() { return this.type === 'vaccination'; } },
+  doctorId: { type: String, required: function() { return this.type === 'vaccination'; } }
 });
 
 const petSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User' },
-  name: { type: String, required: true },
-  gender:{ type : String, required: true },
-  breed: { type: String, required: true },
-  petBYear: { type: Number, required: true },
-  vaccinations: { type: String, required: true },
-  specialNotes: { type: String },
-  petimage:{type: String},
+  petId: { 
+    type: String, 
+    required: true, 
+    unique: true // Add petId for searching
+  },
+  userId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    required: true, 
+    ref: 'User' 
+  },
+  name: { 
+    type: String, 
+    required: true 
+  },
+  gender: { 
+    type: String, 
+    required: true 
+  },
+  breed: { 
+    type: String, 
+    required: true 
+  },
+  petBYear: { 
+    type: Number, 
+    required: true 
+  },
+  petimage: { 
+    type: String, 
+    default: 'https://via.placeholder.com/150' // Default placeholder image
+  },
+  specialNotes: { 
+    type: String 
+  },
   medicalRecords: [medicalReportSchema],
 });
 

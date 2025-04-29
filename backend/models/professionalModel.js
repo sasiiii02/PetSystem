@@ -1,13 +1,25 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const professionalSchema = new mongoose.Schema({
-  // Basic Information
-  name: {
+  pName: {
     type: String,
-    required: [true, 'Name is required'],
-    trim: true
+    required: [true, 'Professional name is required'],
+    trim: true,
   },
-  email: {
+  role: {
+    type: String,
+    required: true,
+    enum: ['groomer', 'vet', 'pet-trainer'], // Changed "veterinarian" to "vet"
+    default: 'groomer',
+    lowercase: true,
+  },
+  pID: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  pemail: {
     type: String,
     required: [true, 'Email is required'],
     unique: true,
@@ -15,92 +27,77 @@ const professionalSchema = new mongoose.Schema({
     lowercase: true,
     validate: {
       validator: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
-      message: props => `${props.value} is not a valid email!`
-    }
+      message: (props) => `${props.value} is not a valid email!`,
+    },
   },
-  password: {
+  ppassword: {
     type: String,
     required: [true, 'Password is required'],
     minlength: [6, 'Password must be at least 6 characters'],
-    select: false // Never return password in queries
   },
-  phone: {
+  pphoneNumber: {
     type: String,
-    required: [true, 'Phone number is required'],
     validate: {
-      validator: (v) => /^\d{10}$/.test(v),
-      message: props => `${props.value} is not a valid phone number!`
-    }
+      validator: (v) => /^[0-9]{10,15}$/.test(v),
+      message: (props) => `${props.value} is not a valid phone number!`,
+    },
   },
-
-  // Professional Details
-  role: {
+  qualification: {
     type: String,
-    required: true,
-    enum: ['groomer', 'veterinarian', 'pet-trainer'],
-    default: 'groomer'
-  },
-  professionalId: {  // e.g., "vet001", "groom002", "trainer003"
-    type: String,
-    required: [true, 'Professional ID is required'],
-    unique: true,
-    trim: true
-  },
-  specialization: {  // e.g., "Dog Grooming", "Exotic Pets", "Obedience Training"
-    type: String,
-    required: [true, 'Specialization is required'],
-    trim: true
+    required: [true, 'Qualification is required'],
   },
   experience: {
-    type: String,  // Could be "2 years" or "5 months"
-    required: [true, 'Experience is required']
-  },
-  qualifications: {  // e.g., "Certified Vet", "Master Groomer"
-    type: [String],  // Array to store multiple qualifications
-    required: true
-  },
-  bio: {
     type: String,
-    maxlength: [500, 'Bio cannot exceed 500 characters'],
-    trim: true
+    required: [true, 'Experience is required'],
   },
-
-  // Status & Metadata
+  description: {
+    type: String,
+  },
   isVerified: {
     type: Boolean,
-    default: false
+    default: false,
   },
-  isAvailable: {
-    type: Boolean,
-    default: true
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
-  servicesOffered: {  // e.g., ["Bathing", "Nail Trimming", "Checkup"]
-    type: [String],
-    required: true
+  updatedAt: {
+    type: Date,
+    default: Date.now,
   },
-  hourlyRate: {
-    type: Number,
-    min: [0, 'Hourly rate cannot be negative']
-  },
-  profileImage: {
-    type: String,  // URL to image
-    default: 'default-profile.jpg'
-  }
 }, {
-  timestamps: true,  // Adds createdAt & updatedAt
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  timestamps: true,
+  toJSON: {
+    virtuals: true,
+    transform: (doc, ret) => {
+      delete ret.ppassword;
+      delete ret.__v;
+      return ret;
+    },
+  },
 });
 
-// Remove password from JSON responses
-professionalSchema.methods.toJSON = function() {
-  const professional = this.toObject();
-  delete professional.password;
-  return professional;
-};
+// Hash password before saving
+professionalSchema.pre('save', async function (next) {
+  if (!this.isModified('ppassword')) {
+    console.log('Password not modified, skipping hash');
+    return next();
+  }
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.ppassword = await bcrypt.hash(this.ppassword, salt);
+    console.log('Password hashed successfully:', this.ppassword);
+    next();
+  } catch (err) {
+    console.error('Error hashing password:', err);
+    next(err);
+  }
+});
 
-// Indexes for faster querying
-professionalSchema.index({ email: 1, professionalId: 1, role: 1 });
+// Method to compare passwords
+professionalSchema.methods.comparePassword = async function (candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.ppassword);
+};
 
 const Professional = mongoose.model('Professional', professionalSchema);
 export default Professional;
