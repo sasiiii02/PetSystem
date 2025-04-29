@@ -5,8 +5,7 @@ import { Dialog, DialogPanel } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Link, useNavigate } from "react-router-dom";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
-import { FaShoppingCart } from 'react-icons/fa';
-import { useShopContext } from '../context/ShopContext';
+
 import { toast } from 'react-toastify';
 
 export default function UserHeader() {
@@ -30,7 +29,7 @@ export default function UserHeader() {
   const [showPassword, setShowPassword] = useState(false);
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showConPassword, setShowConPassword] = useState(false);
-  const { getCartCount } = useShopContext();
+
 
   // Toggle password visibility
   const togglePasswordVisibility = (field) => {
@@ -257,17 +256,7 @@ export default function UserHeader() {
           >
             Profile
           </Link>
-          <Link
-            to="/cart"
-            className="flex text-sm/6 font-semibold text-gray-900 hover:text-amber-700 transition-colors duration-200"
-          >
-            <FaShoppingCart size={20} />
-            {getCartCount() > 0 && (
-              <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none transform  rounded-full">
-                {getCartCount()}
-              </span>
-            )}
-          </Link>
+         
         </div>
 
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">

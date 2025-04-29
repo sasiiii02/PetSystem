@@ -14,13 +14,6 @@ import SysAdminDashboard from "./Pages/SysAdminDashboard";
 import UsersList from "./Pages/UsersList";
 import ProfessionalsList from "./Pages/ProfessionalsList";
 import AdminRegister from "./Pages/AdminRegister";
-import { ProductProvider } from "./Context/ProductContext";
-import { ShopProvider } from "./context/ShopContext";
-import Collection from "./Pages/Collection";
-import ProductDetails from "./Pages/ProductDetails";
-import PlaceOrder from "./Pages/PlaceOrder";
-import TrackOrder from "./Pages/TrackOrder";
-import Cart from "./Pages/Cart";
 import UserPageView from "./Pages/UserPageView";
 import AdoptablePetList from "./Pages/AdoptablePetList";
 import AddForAdoption from "./Pages/AddForAdoption";
@@ -37,12 +30,11 @@ import UserRegisteredEventsPage from "./Pages/UserRegisteredEventsPage";
 import Notifications from "./Pages/Notifications";
 import PetRegisterUserDashboard from "./Pages/PetRegisterUserDashboard";
 import EditAdoptionForm from "./Pages/EditAdoptionForm";
-
+import PetAdoptionCoordinatorDashboard from "./Pages/AdoptionCoordinatorDashBoard";
+import AdoptionScheduler from "./Pages/HomeVisitScheduler";
 const App = () => {
   return (
     <BrowserRouter>
-      <ProductProvider>
-        <ShopProvider>
           <UserHeader />
           <Routes>
             {/* Public Routes */}
@@ -58,12 +50,6 @@ const App = () => {
             <Route path="/ProfessionalRegistration" element={<ProfessionalRegistration />} />
             <Route path="/ProfessionalsList" element={<ProfessionalsList />} />
             
-            {/* Collection Routes */}
-            <Route path="/collection" element={<Collection />} />
-            <Route path="/product/:id" element={<ProductDetails />} />
-            <Route path="/placeorder" element={<PlaceOrder />} />
-            <Route path="/track-order/:orderId" element={<TrackOrder />} />
-            <Route path="/cart" element={<Cart />} />
 
             <Route path="/events" element={<UserEventsPage />} />
             <Route path="/appointment" element={<AppointmentPrfList />} />
@@ -74,6 +60,8 @@ const App = () => {
             <Route path="/info_select_pet" element={<UserPageView />} />
             <Route path="/adopt" element={<AdoptionForm />} />
             <Route path="/Submit_adoption_Form" element={<UserPageView />} />
+            <Route path="/AdoptionCoordinatorDashboard" element={<PetAdoptionCoordinatorDashboard />} />
+            <Route path="/schedule-visit" element={<AdoptionScheduler />} />
             
             <Route
           path="/event/:id"
@@ -167,8 +155,6 @@ const App = () => {
         />
           </Routes>
           <UserFooter />
-        </ShopProvider>
-      </ProductProvider>
     </BrowserRouter>
   );
 };

@@ -18,7 +18,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 
-const PetAdoptionDashboard = () => {
+const PetAdoptionCoordinatorDashboard = () => {
   const [pets, setPets] = useState([]);
   const [homeVisits, setHomeVisits] = useState([]);
   const [activeSection, setActiveSection] = useState('pets');
@@ -719,4 +719,4 @@ const PetAdoptionDashboard = () => {
   );
 };
 
-export default PetAdoptionDashboard;
+export default PetAdoptionCoordinatorDashboard;
