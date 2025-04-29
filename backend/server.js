@@ -8,7 +8,7 @@ import multer from 'multer';
 
 import userRoutes from "./routes/userRoutes.js";
 import petRoutes from "./routes/petRoutes.js";
-import professionalRoutes from "./routes/professionalRoutes.js";
+import profRoutes from './routes/profRoutes.js'; // Professional auth routes
 import adminRoutes from "./routes/adminRoutes.js";
 
 import appointmentRoutes from './routes/appointmentRoutes.js';
@@ -19,6 +19,7 @@ import forAdoptionRoutes from './routes/forAdoptionRoutes.js';
 import passDataAdoptablePetTable from './routes/passDataAdoptablePetTable.js';
 import eventRoutes from "./routes/eventRoutes.js"; // Import event routes
 import registrationRoutes from "./routes/registrationRoutes.js";
+import professionalAppointmentRoutes from './routes/appointmentRoutes.js';
 
 dotenv.config();
 
@@ -41,11 +42,13 @@ cloudinary.config({
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/pets", petRoutes);
-app.use("/api/professionals", professionalRoutes);
 app.use("/api/admins", adminRoutes);
 
 
-app.use('/api/appointments', appointmentRoutes);
+app.use('/api/appointments', appointmentRoutes); // User appointments
+app.use('/api/professional-appointments', professionalAppointmentRoutes); // Professional appointments
+app.use('/api/professionals', profRoutes); // Professional auth routes
+
  // Add the admin routes here
 app.use("/api/events", eventRoutes);
 app.use("/api/registrations", registrationRoutes);

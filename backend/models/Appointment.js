@@ -72,8 +72,8 @@ const appointmentSchema = new mongoose.Schema({
     type: String,
     default: "scheduled",
     enum: {
-      values: ["scheduled", "completed", "cancelled"],
-      message: "Status must be scheduled, completed, or cancelled",
+      values: ["scheduled", "completed", "cancelled", "missed"],
+      message: "Status must be scheduled, completed, cancelled, or missed",
     },
   },
   paymentStatus: {
@@ -86,7 +86,7 @@ const appointmentSchema = new mongoose.Schema({
   },
   paymentIntentId: {
     type: String,
-    sparse: true, // Allows null values without enforcing uniqueness
+    sparse: true,
   },
 }, {
   timestamps: true,
@@ -94,7 +94,6 @@ const appointmentSchema = new mongoose.Schema({
   toObject: { virtuals: true },
 });
 
-// Prevent duplicate bookings for the same doctor, date, and time (excluding cancelled)
 appointmentSchema.index(
   { doctorId: 1, appointmentDate: 1, appointmentTime: 1 },
   { unique: true, partialFilterExpression: { status: { $ne: "cancelled" } } }

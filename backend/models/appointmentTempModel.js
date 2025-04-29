@@ -1,41 +1,40 @@
-// models/appointmentTempModel.js
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const appointmentTempSchema = new mongoose.Schema({
-  doctorId: {
+  professionalId: {
     type: String,
-    required: true
+    required: true,
   },
   professionalType: {
     type: String,
-    enum: ['vet', 'groomer', 'pet-trainer'],
-    required: true
+    enum: ["vet", "groomer", "pet-trainer"], // Updated to use "vet"
+    required: true,
   },
   appointmentDate: {
     type: Date,
-    required: true
+    required: true,
   },
   startTime: {
     type: String,
-    required: true
+    required: true,
   },
   endTime: {
     type: String,
-    required: true
+    required: true,
   },
   chargePerAppointment: {
     type: Number,
     required: true,
-    min: 0
+    min: 0,
   },
   specialNotes: {
     type: String,
-    default: ''
+    default: "",
   },
   createdAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
-export default mongoose.model('Appointment_temp_availibility', appointmentTempSchema);
+export default mongoose.model("Appointment_temp_availability", appointmentTempSchema);
