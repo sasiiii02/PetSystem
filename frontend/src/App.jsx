@@ -13,13 +13,7 @@ import SysAdminDashboard from "./Pages/SysAdminDashboard";
 import UsersList from "./Pages/UsersList";
 import ProfessionalsList from "./Pages/ProfessionalsList";
 import AdminRegister from "./Pages/AdminRegister";
-import { ProductProvider } from "./context/ProductContext";
-import { ShopProvider } from "./context/ShopContext";
-import Collection from "./Pages/Collection";
-import ProductDetails from "./Pages/ProductDetails";
-import PlaceOrder from "./Pages/PlaceOrder";
-import TrackOrder from "./Pages/TrackOrder";
-import Cart from "./Pages/Cart";
+
 import UserPageView from "./Pages/UserPageView";
 import AdoptablePetList from "./Pages/AdoptablePetList";
 import AddForAdoption from "./Pages/AddForAdoption";
@@ -34,6 +28,7 @@ import UserEventsPage from "./Pages/UserEventsPage";
 import UserEventDetailsPage from "./Pages/UserEventDetails";
 import UserRegisteredEventsPage from "./Pages/UserRegisteredEventsPage";
 import Notifications from "./Pages/Notifications";
+
 import AppointmentManagerLayout from "./Component/AppointmentManagerLayout";
 import Appointment_dashboard from "./Pages/Appointment_dashboard";
 import Appointment_report from "./Pages/Appointment_report";
@@ -251,6 +246,30 @@ const App = () => {
               }
             />
 
+import PetRegisterUserDashboard from "./Pages/PetRegisterUserDashboard";
+import EditAdoptionForm from "./Pages/EditAdoptionForm";
+import PetAdoptionCoordinatorDashboard from "./Pages/AdoptionCoordinatorDashBoard";
+import AdoptionScheduler from "./Pages/HomeVisitScheduler";
+const App = () => {
+  return (
+    <BrowserRouter>
+          <UserHeader />
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<PetPlatformHomePage />} />
+            <Route path="/stafflogin" element={<StaffLogin />} />
+            <Route path="/AdminRegister" element={<AdminRegister />} />
+            <Route path="/admin/redirect/user_admin" element={<SysAdminDashboard />} />
+            <Route path="/aboutus" element={<AboutUs />} />
+            <Route path="/UserEdit" element={<UserEdit />} />
+            <Route path="/UsersList" element={<UsersList />} />
+            <Route path="/contactus" element={<ContactUs />} />
+            <Route path="/PetRegister" element={<PetRegister />} />
+            <Route path="/ProfessionalRegistration" element={<ProfessionalRegistration />} />
+            <Route path="/ProfessionalsList" element={<ProfessionalsList />} />
+            
+
+
             {/* Admin Dashboard Routes */}
             <Route
               path="/admin/redirect/user_admin"
@@ -260,6 +279,7 @@ const App = () => {
                 </PrivateRoute>
               }
             />
+
 
             {/* Appointment Manager Routes with AppointmentManagerLayout */}
             <Route
@@ -378,6 +398,108 @@ const App = () => {
           </Routes>
         </ShopProvider>
       </ProductProvider>
+=======
+            <Route path="/adoption" element={<UserPageView />} />
+            <Route path="/info_adoptable_pet" element={<AdoptablePetList />} />
+            <Route path="/add_adoptable_pet" element={<AddForAdoption />} />
+            <Route path="/info_select_pet" element={<UserPageView />} />
+            <Route path="/adopt" element={<AdoptionForm />} />
+            <Route path="/Submit_adoption_Form" element={<UserPageView />} />
+            <Route path="/AdoptionCoordinatorDashboard" element={<PetAdoptionCoordinatorDashboard />} />
+            <Route path="/schedule-visit" element={<AdoptionScheduler />} />
+            
+            <Route
+          path="/event/:id"
+          element={
+            <PrivateRoute>
+              <UserEventDetailsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/my-events"
+          element={
+            <PrivateRoute>
+              <UserRegisteredEventsPage />
+            </PrivateRoute>
+          }
+        />
+          <Route
+    path="/notifications"
+    element={
+      <PrivateRoute>
+        <Notifications />
+      </PrivateRoute>
+    }
+  />
+       
+        <Route
+          path="/appointment-form"
+          element={
+            <PrivateRoute>
+              <AppointmentForm />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <ProfilePage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/success"
+          element={
+            <PrivateRoute>
+              <Success />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/cancel"
+          element={
+            <PrivateRoute>
+              <Cancel />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/pet-owner-dashboard"
+          element={
+            <PrivateRoute>
+              <PetOwnerDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/pet-register-dashboard"
+          element={
+            <PrivateRoute>
+              <PetRegisterUserDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/edit-adoption-form/:id"
+          element={
+            <PrivateRoute>
+              <EditAdoptionForm />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/edit-pet/:id"
+          element={
+            <PrivateRoute>
+              <EditPetForm />
+            </PrivateRoute>
+          }
+        />
+          </Routes>
+          <UserFooter />
     </BrowserRouter>
   );
 };

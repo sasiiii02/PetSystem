@@ -158,78 +158,113 @@ const PetOwnerDashboard = () => {
         )}
 
         {/* Pet Listings */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {pets.map((pet) => (
             <div key={pet._id} className="bg-white rounded-xl shadow-lg overflow-hidden">
-              {/* Pet Image with Species Icon */}
-              <div className="h-48 relative">
-                <img
-                  src={pet.petImage ? `http://localhost:5000${pet.petImage}` : '/placeholder-pet.jpg'}
-                  alt={pet.petName}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-2 right-2 bg-white/90 rounded-lg p-2">
-                  {getPetIcon(pet.petSpecies)}
-                </div>
-              </div>
-
-              {/* Pet Details */}
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-xl font-semibold text-[#80533b]">{pet.petName}</h3>
-                    <p className="text-gray-600">{pet.petBreed}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleEditClick(pet._id)}
-                      className="p-2 text-[#B3704D] hover:bg-[#B3704D]/10 rounded-lg transition-colors"
-                    >
-                      <Edit size={20} />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteClick(pet._id)}
-                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <Trash2 size={20} />
-                    </button>
+              <div className="flex min-h-[250px]">
+                {/* Pet Image with Species Icon */}
+                <div className="w-1/4  relative">
+                  <img
+                    src={pet.petImage ? `http://localhost:5000${pet.petImage}` : '/placeholder-pet.jpg'}
+                    alt={pet.petName}
+                    className="w-full h-full object-contain"
+                  />
+                  <div className="absolute top-2 right-2 bg-white/90 rounded-lg p-2">
+                    {getPetIcon(pet.petSpecies)}
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-[#B3704D]" />
-                    <p><span className="font-medium">Age:</span> {pet.petAge}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Heart className="w-5 h-5 text-[#B3704D]" />
-                    <p><span className="font-medium">Gender:</span> {pet.petGender}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-5 h-5 text-[#B3704D]" />
-                    <p><span className="font-medium">Status:</span> {pet.status || 'Available'}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Syringe className="w-5 h-5 text-[#B3704D]" />
-                    <p><span className="font-medium">Vaccinated:</span> {pet.vaccinated ? 'Yes' : 'No'}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Scissors className="w-5 h-5 text-[#B3704D]" />
-                    <p><span className="font-medium">Neutered:</span> {pet.neutered ? 'Yes' : 'No'}</p>
-                  </div>
-                </div>
-
-                {/* Owner Contact Information */}
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Owner Contact</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-[#B3704D]" />
-                      <p className="text-sm">{pet.email}</p>
+                {/* Content Container */}
+                <div className="flex-1 p-6">
+                  {/* Header with Name and Actions */}
+                  <div className="flex justify-between items-start mb-6">
+                    <div>
+                      <h3 className="text-2xl font-semibold text-[#80533b] mb-1">{pet.petName}</h3>
+                      <p className="text-gray-600">{pet.petBreed}</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="w-4 h-4 text-[#B3704D]" />
-                      <p className="text-sm">{pet.phone}</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEditClick(pet._id)}
+                        className="p-2 text-[#B3704D] hover:bg-[#B3704D]/10 rounded-lg transition-colors"
+                      >
+                        <Edit size={20} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick(pet._id)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Two Column Layout for Details */}
+                  <div className="grid grid-cols-2 gap-x-6">
+                    {/* Pet Details Column */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <Clock className="w-5 h-5 text-[#B3704D]" />
+                        <div>
+                          <span className="font-medium">Age:</span> {pet.petAge}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Heart className="w-5 h-5 text-[#B3704D]" />
+                        <div>
+                          <span className="font-medium">Gender:</span> {pet.petGender}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Shield className="w-5 h-5 text-[#B3704D]" />
+                        <div>
+                          <span className="font-medium">Status:</span> {pet.status || 'Available'}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Syringe className="w-5 h-5 text-[#B3704D]" />
+                        <div>
+                          <span className="font-medium">Vaccinated:</span> {pet.vaccinated ? 'Yes' : 'No'}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Scissors className="w-5 h-5 text-[#B3704D]" />
+                        <div>
+                          <span className="font-medium">Neutered:</span> {pet.neutered ? 'Yes' : 'No'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Owner Contact Column */}
+                    <div>
+                      <h4 className="font-medium text-[#80533b] mb-4">Owner Contact</h4>
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <Mail className="w-5 h-5 text-[#B3704D]" />
+                          <p>{pet.email}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Phone className="w-5 h-5 text-[#B3704D]" />
+                          <p>{pet.phone}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Additional Pet Information */}
+                  <div className="mt-6 border-t border-gray-100 pt-6">
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-medium text-[#80533b] mb-2">Pet Description</h4>
+                        <p className="text-gray-600">
+                          {pet.petDescription || 'No description available'}
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-[#80533b] mb-2">Reason for Adoption</h4>
+                        <p className="text-gray-600">
+                          {pet.reason || 'No reason specified'}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
