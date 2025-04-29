@@ -14,7 +14,7 @@ import SysAdminDashboard from "./Pages/SysAdminDashboard";
 import UsersList from "./Pages/UsersList";
 import ProfessionalsList from "./Pages/ProfessionalsList";
 import AdminRegister from "./Pages/AdminRegister";
-import UserPageView from "./Pages/UserPageView";
+import AdoptionHomePage from "./Pages/AdoptionHomePage";
 import AdoptablePetList from "./Pages/AdoptablePetList";
 import AddForAdoption from "./Pages/AddForAdoption";
 import AdoptionForm from "./Pages/AdoptionForm";
@@ -32,6 +32,9 @@ import PetRegisterUserDashboard from "./Pages/PetRegisterUserDashboard";
 import EditAdoptionForm from "./Pages/EditAdoptionForm";
 import PetAdoptionCoordinatorDashboard from "./Pages/AdoptionCoordinatorDashBoard";
 import AdoptionScheduler from "./Pages/HomeVisitScheduler";
+import Login from "./Pages/Login";
+import Signup from "./Pages/Signup";
+
 const App = () => {
   return (
     <BrowserRouter>
@@ -39,6 +42,8 @@ const App = () => {
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<PetPlatformHomePage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
             <Route path="/stafflogin" element={<StaffLogin />} />
             <Route path="/AdminRegister" element={<AdminRegister />} />
             <Route path="/admin/redirect/user_admin" element={<SysAdminDashboard />} />
@@ -54,12 +59,12 @@ const App = () => {
             <Route path="/events" element={<UserEventsPage />} />
             <Route path="/appointment" element={<AppointmentPrfList />} />
 
-            <Route path="/adoption" element={<UserPageView />} />
+            <Route path="/adoption" element={<AdoptionHomePage />} />
             <Route path="/info_adoptable_pet" element={<AdoptablePetList />} />
             <Route path="/add_adoptable_pet" element={<AddForAdoption />} />
-            <Route path="/info_select_pet" element={<UserPageView />} />
+            <Route path="/info_select_pet" element={<AdoptionHomePage />} />
             <Route path="/adopt" element={<AdoptionForm />} />
-            <Route path="/Submit_adoption_Form" element={<UserPageView />} />
+            <Route path="/Submit_adoption_Form" element={<AdoptionHomePage />} />
             <Route path="/AdoptionCoordinatorDashboard" element={<PetAdoptionCoordinatorDashboard />} />
             <Route path="/schedule-visit" element={<AdoptionScheduler />} />
             
@@ -153,6 +158,7 @@ const App = () => {
             </PrivateRoute>
           }
         />
+       
           </Routes>
           <UserFooter />
     </BrowserRouter>

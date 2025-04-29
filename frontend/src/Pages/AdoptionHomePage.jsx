@@ -6,7 +6,7 @@ import Grid from "../Component/BentoGrid";
 import { useNavigate } from "react-router-dom";
 import { FileText } from "lucide-react";
 
-const UserPageView = () => {
+const AdoptionHomePage = () => {
   const navigate = useNavigate();
 
   return (
@@ -29,4 +29,4 @@ const UserPageView = () => {
   );
 };
 
-export default UserPageView;
+export default AdoptionHomePage;
