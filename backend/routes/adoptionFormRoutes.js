@@ -4,7 +4,8 @@ import {
   getUserApplications,
   updateApplication,
   deleteApplication,
-  getAllApplications
+  getAllApplications,
+  getApplicationById
 } from '../controllers/adoptionFormControllers.js';
 import authMiddleware from "../middleware/authMiddleware.js";
 
@@ -12,8 +13,9 @@ const router = express.Router();
 
 router.post('/apply', createApplication);
 router.get('/my-applications', authMiddleware, getUserApplications);
-router.put('/update/:id', updateApplication);
-router.delete('/delete/:id', deleteApplication);
-router.get('/all', getAllApplications);
+router.get('/:id', authMiddleware, getApplicationById);
+router.put('/update/:id', authMiddleware, updateApplication);
+router.delete('/delete/:id', authMiddleware, deleteApplication);
+router.get('/all', authMiddleware, getAllApplications);
 
 export default router;
