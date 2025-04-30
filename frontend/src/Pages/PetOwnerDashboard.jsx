@@ -260,7 +260,7 @@ const PetOwnerDashboard = () => {
                         </p>
                       </div>
                       <div>
-                        <h4 className="font-medium text-[#80533b] mb-2">Reason for Adoption</h4>
+                        <h4 className="font-medium text-[#80533b] mb-2">Reason  Adoption</h4>
                         <p className="text-gray-600">
                           {pet.reason || 'No reason specified'}
                         </p>
