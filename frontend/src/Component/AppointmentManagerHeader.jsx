@@ -1,5 +1,5 @@
-'use client';
-
+//edited
+// src/Component/AppointmentManagerSidebar.jsx
 import { Link, useLocation } from 'react-router-dom';
 import {
   Disclosure,
@@ -50,22 +50,20 @@ export default function AppointmentManagerSidebar() {
   const location = useLocation();
 
   const handleLogout = () => {
-    localStorage.removeItem('token'); // Updated to match StaffLogin.js
-    localStorage.removeItem('user');  // Updated to match StaffLogin.js
-    window.location.href = '/stafflogin'; // Redirect to staff login page
+    // Clear admin-specific keys
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminUser');
+    window.location.href = '/stafflogin';
   };
 
   return (
     <>
-      {/* Sidebar for Desktop */}
       <div className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:w-64 lg:bg-white lg:shadow-md">
         <div className="flex flex-col h-full">
-          {/* Logo */}
           <div className="flex items-center justify-center h-16 border-b border-gray-200">
             <img alt="Logo" src={image4} className="h-10 w-auto" />
           </div>
 
-          {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-2">
             {NAV_ITEMS.map((item) => (
               <Link
@@ -82,7 +80,6 @@ export default function AppointmentManagerSidebar() {
               </Link>
             ))}
 
-            {/* Appointments Disclosure */}
             <Disclosure as="div" className="space-y-1">
               {({ open }) => (
                 <>
@@ -118,7 +115,6 @@ export default function AppointmentManagerSidebar() {
               )}
             </Disclosure>
 
-            {/* Professionals Availability Disclosure */}
             <Disclosure as="div" className="space-y-1">
               {({ open }) => (
                 <>
@@ -155,10 +151,8 @@ export default function AppointmentManagerSidebar() {
             </Disclosure>
           </nav>
 
-          {/* Bottom Section: Logout, Notifications & Profile */}
           <div className="p-4 border-t border-gray-200">
             <div className="space-y-4">
-              {/* Logout Button */}
               <button
                 onClick={handleLogout}
                 className="w-full bg-amber-950 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-amber-900 transition"
@@ -166,7 +160,6 @@ export default function AppointmentManagerSidebar() {
                 Logout
               </button>
 
-              {/* Notifications & Profile */}
               <div className="flex items-center justify-between">
                 <button className="relative p-2 rounded-full bg-white text-gray-900 hover:text-white hover:bg-amber-950 focus:outline-none focus:ring-2 focus:ring-white">
                   <span className="sr-only">View notifications</span>
@@ -230,11 +223,9 @@ export default function AppointmentManagerSidebar() {
         </div>
       </div>
 
-      {/* Mobile Sidebar */}
       <Disclosure as="div" className="lg:hidden">
         {({ open }) => (
           <>
-            {/* Mobile Menu Button */}
             <div className="flex items-center justify-between p-4 bg-white shadow-md">
               <img alt="Logo" src={image4} className="h-10 w-auto" />
               <DisclosureButton className="p-2 rounded-md bg-white text-gray-900 hover:bg-amber-950 hover:text-white focus:outline-none focus:ring-2 focus:ring-white">
@@ -242,7 +233,6 @@ export default function AppointmentManagerSidebar() {
               </DisclosureButton>
             </div>
 
-            {/* Mobile Menu Panel */}
             <DisclosurePanel className="bg-white shadow-md">
               <div className="px-4 py-6 space-y-2">
                 {NAV_ITEMS.map((item) => (
@@ -260,7 +250,6 @@ export default function AppointmentManagerSidebar() {
                   </Link>
                 ))}
 
-                {/* Mobile Appointments Disclosure */}
                 <Disclosure as="div" className="space-y-1">
                   {({ open: disclosureOpen }) => (
                     <>
@@ -296,7 +285,6 @@ export default function AppointmentManagerSidebar() {
                   )}
                 </Disclosure>
 
-                {/* Mobile Professionals Availability Disclosure */}
                 <Disclosure as="div" className="space-y-1">
                   {({ open: disclosureOpen }) => (
                     <>
@@ -334,7 +322,6 @@ export default function AppointmentManagerSidebar() {
               </div>
               <div className="p-4 border-t border-gray-200">
                 <div className="space-y-4">
-                  {/* Logout Button */}
                   <button
                     onClick={handleLogout}
                     className="w-full bg-amber-950 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-amber-900 transition"
@@ -342,7 +329,6 @@ export default function AppointmentManagerSidebar() {
                     Logout
                   </button>
 
-                  {/* Notifications & Profile */}
                   <div className="flex items-center justify-between">
                     <button className="relative p-2 rounded-full bg-white text-gray-900 hover:text-white hover:bg-amber-950 focus:outline-none focus:ring-2 focus:ring-white">
                       <span className="sr-only">View notifications</span>

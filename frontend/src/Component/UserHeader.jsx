@@ -1,12 +1,9 @@
-"use client";
-
+//edited
+// src/Component/UserHeader.jsx
 import { useState, useEffect } from "react";
 import { Dialog, DialogPanel } from "@headlessui/react";
-import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Bars3Icon, XMarkIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { Link, useNavigate } from "react-router-dom";
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
-
-import { toast } from 'react-toastify';
 
 export default function UserHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -21,17 +18,17 @@ export default function UserHeader() {
   const [regCity, setRegCity] = useState("");
   const [regPassword, setRegPassword] = useState("");
   const [conPassword, setConPassword] = useState("");
-  const [profilePic, setprofilePic] = useState("");
+  const [profilePic, setProfilePic] = useState("");
   const [regError, setRegError] = useState("");
-  const navigate = useNavigate();
-  const [token, setToken] = useState(localStorage.getItem("token")); // Added state to manage token
   const [intendedPath, setIntendedPath] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showConPassword, setShowConPassword] = useState(false);
+  const navigate = useNavigate();
 
+  // Use pet owner-specific token
+  const [petOwnerToken, setPetOwnerToken] = useState(localStorage.getItem("petOwnerToken"));
 
-  // Toggle password visibility
   const togglePasswordVisibility = (field) => {
     if (field === "login") {
       setShowPassword(!showPassword);
@@ -42,12 +39,11 @@ export default function UserHeader() {
     }
   };
 
-  // Validate token by checking profile endpoint
   const validateToken = async () => {
     try {
       const response = await fetch("http://localhost:5000/api/users/profile", {
         headers: {
-          "Authorization": `Bearer ${token}`,
+          "Authorization": `Bearer ${petOwnerToken}`,
           "Content-Type": "application/json",
         },
       });
@@ -68,15 +64,17 @@ export default function UserHeader() {
       });
       const data = await response.json();
       if (response.ok) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify({
+        // Store pet owner data with user-type-specific keys
+        localStorage.setItem("petOwnerToken", data.token);
+        localStorage.setItem("petOwnerUser", JSON.stringify({
           _id: data._id,
           name: data.name,
           email: data.email,
           phoneNumber: data.phoneNumber,
           city: data.city,
+          role: "pet_owner"
         }));
-        setToken(data.token);
+        setPetOwnerToken(data.token);
         setLoginOpen(false);
         setEmail("");
         setPassword("");
@@ -110,17 +108,19 @@ export default function UserHeader() {
       });
       const data = await response.json();
       if (response.ok) {
-        localStorage.setItem("token", data.user.token);
-        localStorage.setItem("user", JSON.stringify({
+        // Store pet owner data with user-type-specific keys
+        localStorage.setItem("petOwnerToken", data.user.token);
+        localStorage.setItem("petOwnerUser", JSON.stringify({
           _id: data.user._id,
           name: data.user.name,
           email: data.user.email,
           phoneNumber: data.user.phoneNumber,
           city: data.user.city,
-        })); // Store user data in localStorage
-        setToken(data.user.token); // Update token state
+          role: "pet_owner"
+        }));
+        setPetOwnerToken(data.user.token);
         setRegisterOpen(false);
-        setRegName(""); // Clear form fields
+        setRegName("");
         setRegEmail("");
         setRegPhoneNumber("");
         setRegCity("");
@@ -136,9 +136,10 @@ export default function UserHeader() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setToken(null);
+    // Clear pet owner-specific keys
+    localStorage.removeItem("petOwnerToken");
+    localStorage.removeItem("petOwnerUser");
+    setPetOwnerToken(null);
     setIntendedPath("");
     setLoginOpen(false);
     setRegisterOpen(false);
@@ -156,19 +157,19 @@ export default function UserHeader() {
   };
 
   const handleNavClick = async (path) => {
-    const publicRoutes = ["/", "/aboutus", "/contactus", "/events", "/appointment", "/adoption"];
-    if (!token && !publicRoutes.includes(path)) {
+    const publicRoutes = ["/", "/aboutus", "/contactus", "/events", "/appointment", "/adoption", "/collection"];
+    if (!petOwnerToken && !publicRoutes.includes(path)) {
       setIntendedPath(path);
       setLoginOpen(true);
-    } else if (path === "/profile" && token) {
+    } else if (path === "/profile" && petOwnerToken) {
       const isValid = await validateToken();
       if (isValid) {
         setMobileMenuOpen(false);
         navigate(path);
       } else {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        setToken(null);
+        localStorage.removeItem("petOwnerToken");
+        localStorage.removeItem("petOwnerUser");
+        setPetOwnerToken(null);
         setIntendedPath(path);
         setLoginOpen(true);
       }
@@ -256,11 +257,10 @@ export default function UserHeader() {
           >
             Profile
           </Link>
-         
         </div>
 
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
-          {token ? (
+          {petOwnerToken ? (
             <button
               onClick={handleLogout}
               className="px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-colors duration-200 font-medium"
@@ -364,7 +364,7 @@ export default function UserHeader() {
                 </Link>
               </div>
               <div className="py-6 space-y-2">
-                {token ? (
+                {petOwnerToken ? (
                   <button
                     onClick={handleLogout}
                     className="w-full px-3 py-2.5 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-colors duration-200 font-medium"
@@ -621,7 +621,7 @@ export default function UserHeader() {
                     type="file"
                     className="w-full px-4 py-2 border border-amber-200 rounded-lg focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 bg-white text-gray-900"
                     value={profilePic}
-                    onChange={(e) => setprofilePic(e.target.value)}
+                    onChange={(e) => setProfilePic(e.target.value)}
                     placeholder="Upload your Photo"
                   />
                 </div>
