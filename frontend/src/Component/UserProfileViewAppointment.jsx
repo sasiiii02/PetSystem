@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, List, X, CalendarClock, ChevronDown, ChevronUp, FileText, User, Mail, Phone, MapPin, CreditCard, PawPrint, ShoppingBag, Ticket, Edit } from 'lucide-react';
 import axios from 'axios';
-import { Link } from 'react-router-dom'; // Added for navigation
+import { Link, useNavigate } from 'react-router-dom'; // Added useNavigate for logout
 
 const theme = {
   primary: "bg-[#D08860]",
@@ -19,7 +19,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('petOwnerToken'); // Use petOwnerToken
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -32,16 +32,27 @@ const ProfilePage = () => {
   const [showProductSection, setShowProductSection] = useState(false);
   const [showEventSection, setShowEventSection] = useState(false);
   const [appointments, setAppointments] = useState([]);
+  const [adoptions, setAdoptions] = useState([]); // Added state for adoptions
+  const [products, setProducts] = useState([]); // Added state for products
+  const [events, setEvents] = useState([]); // Added state for events
   const [searchError, setSearchError] = useState('');
+  const [adoptionError, setAdoptionError] = useState(''); // Added error state for adoptions
+  const [productError, setProductError] = useState(''); // Added error state for products
+  const [eventError, setEventError] = useState(''); // Added error state for events
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingAdoptions, setIsLoadingAdoptions] = useState(false); // Added loading state for adoptions
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false); // Added loading state for products
+  const [isLoadingEvents, setIsLoadingEvents] = useState(false); // Added loading state for events
   const [isCancelling, setIsCancelling] = useState(false);
-  const [user, setUser] = useState(null); // State to hold user profile data
-  const [userError, setUserError] = useState(''); // State for user fetch errors
-  const [pets, setPets] = useState([]); // Added state for pets
-  const [isLoadingPets, setIsLoadingPets] = useState(false); // Added state for pets loading
-  const [petsError, setPetsError] = useState(''); // Added state for pets fetch errors
+  const [user, setUser] = useState(null);
+  const [userError, setUserError] = useState('');
+  const [pets, setPets] = useState([]);
+  const [isLoadingPets, setIsLoadingPets] = useState(false);
+  const [petsError, setPetsError] = useState('');
 
-  // Fetch user profile and pets data on component mount
+  const navigate = useNavigate(); // Added for logout navigation
+
+  // Fetch user profile, pets, adoptions, products, and events on component mount
   useEffect(() => {
     const fetchUserProfile = async () => {
       setIsLoading(true);
@@ -51,12 +62,12 @@ const ProfilePage = () => {
         const response = await api.get('/users/profile');
         setUser({
           ...response.data,
-          phone: response.data.phoneNumber, 
-          address: response.data.city, 
+          phone: response.data.phoneNumber,
+          address: response.data.city,
           membership: "Premium",
           memberSince: "2021-03-15",
           paymentMethod: "Visa •••• 4242",
-          profilePic: response.data.profilePic || "https://randomuser.me/api/portraits/women/42.jpg" 
+          profilePic: response.data.profilePic || "https://randomuser.me/api/portraits/women/42.jpg"
         });
       } catch (error) {
         if (error.response?.status === 401) {
@@ -77,7 +88,7 @@ const ProfilePage = () => {
       setPetsError('');
 
       try {
-        const response = await api.get('/pets'); // Adjust endpoint as per your backend
+        const response = await api.get('/pets');
         setPets(response.data || []);
       } catch (error) {
         if (error.response?.status === 404) {
@@ -116,6 +127,72 @@ const ProfilePage = () => {
       console.error('Fetch error:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchAdoptions = async () => {
+    setIsLoadingAdoptions(true);
+    setAdoptionError('');
+
+    try {
+      const response = await api.get('/adoptionform'); // Adjust endpoint as per your backend
+      setAdoptions(response.data || []);
+    } catch (error) {
+      if (error.response?.status === 401) {
+        setAdoptionError('Please log in to view adoptions');
+      } else if (error.response?.status === 404) {
+        setAdoptionError('No adoption records found');
+        setAdoptions([]);
+      } else {
+        setAdoptionError(error.response?.data?.message || 'Failed to fetch adoptions');
+      }
+      console.error('Fetch adoptions error:', error);
+    } finally {
+      setIsLoadingAdoptions(false);
+    }
+  };
+
+  const fetchProducts = async () => {
+    setIsLoadingProducts(true);
+    setProductError('');
+
+    try {
+      const response = await api.get('/products'); // Adjust endpoint as per your backend (you may need to create this route)
+      setProducts(response.data || []);
+    } catch (error) {
+      if (error.response?.status === 401) {
+        setProductError('Please log in to view products');
+      } else if (error.response?.status === 404) {
+        setProductError('No purchased products found');
+        setProducts([]);
+      } else {
+        setProductError(error.response?.data?.message || 'Failed to fetch products');
+      }
+      console.error('Fetch products error:', error);
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  };
+
+  const fetchEvents = async () => {
+    setIsLoadingEvents(true);
+    setEventError('');
+
+    try {
+      const response = await api.get('/registrations'); // Adjust endpoint as per your backend
+      setEvents(response.data || []);
+    } catch (error) {
+      if (error.response?.status === 401) {
+        setEventError('Please log in to view events');
+      } else if (error.response?.status === 404) {
+        setEventError('No event registrations found');
+        setEvents([]);
+      } else {
+        setEventError(error.response?.data?.message || 'Failed to fetch events');
+      }
+      console.error('Fetch events error:', error);
+    } finally {
+      setIsLoadingEvents(false);
     }
   };
 
@@ -179,14 +256,39 @@ const ProfilePage = () => {
 
   const toggleAdoptionSection = () => {
     setShowAdoptionSection(!showAdoptionSection);
+    if (!showAdoptionSection) {
+      fetchAdoptions();
+    } else {
+      setAdoptions([]);
+      setAdoptionError('');
+    }
   };
 
   const toggleProductSection = () => {
     setShowProductSection(!showProductSection);
+    if (!showProductSection) {
+      fetchProducts();
+    } else {
+      setProducts([]);
+      setProductError('');
+    }
   };
 
   const toggleEventSection = () => {
     setShowEventSection(!showEventSection);
+    if (!showEventSection) {
+      fetchEvents();
+    } else {
+      setEvents([]);
+      setEventError('');
+    }
+  };
+
+  const handleLogout = () => {
+    // Clear pet owner-specific keys
+    localStorage.removeItem("petOwnerToken");
+    localStorage.removeItem("petOwnerUser");
+    navigate("/"); // Redirect to home page
   };
 
   const formatDate = (dateString) => {
@@ -195,14 +297,15 @@ const ProfilePage = () => {
   };
 
   const formatTime = (timeString) => {
+    if (!timeString) return 'N/A';
     const [hours, minutes] = timeString.split(':');
     const hour = parseInt(hours);
     return `${hour > 12 ? hour - 12 : hour}:${minutes} ${hour >= 12 ? 'PM' : 'AM'}`;
   };
 
-  // Placeholder images (replace with actual image paths)
-  const defaultPetImage = "https://via.placeholder.com/150?text=Pet+Image"; // Replace with actual default pet image
-  const addPetImage = "https://via.placeholder.com/150?text=Add+Pet"; // Replace with actual add pet image
+  // Placeholder images
+  const defaultPetImage = "https://via.placeholder.com/150?text=Pet+Image";
+  const addPetImage = "https://via.placeholder.com/150?text=Add+Pet";
 
   return (
     <div className={`min-h-screen bg-amber-50 py-12 px-4 sm:px-6 lg:px-8 mt-30`}>
@@ -215,18 +318,26 @@ const ProfilePage = () => {
             <div className="text-center py-8 text-red-500">{userError}</div>
           ) : user ? (
             <>
-              <div className={`${theme.primary} p-4 flex items-center`}>
-                <div className="relative">
-                  <img
-                    src={user.profilePic}
-                    alt="Profile"
-                    className="w-20 h-20 rounded-full border-4 border-white mr-4 object-cover"
-                  />
+              <div className={`${theme.primary} p-4 flex items-center justify-between`}>
+                <div className="flex items-center">
+                  <div className="relative">
+                    <img
+                      src={user.profilePic}
+                      alt="Profile"
+                      className="w-20 h-20 rounded-full border-4 border-white mr-4 object-cover"
+                    />
+                  </div>
+                  <div>
+                    <h1 className={`text-2xl font-bold ${theme.textPrimary}`}>{user.name}</h1>
+                    <p className={`${theme.textPrimary} opacity-90`}>{user.membership} Member</p>
+                  </div>
                 </div>
-                <div>
-                  <h1 className={`text-2xl font-bold ${theme.textPrimary}`}>{user.name}</h1>
-                  <p className={`${theme.textPrimary} opacity-90`}>{user.membership} Member</p>
-                </div>
+                <button
+                  onClick={handleLogout}
+                  className="bg-white text-amber-800 px-4 py-2 rounded-lg hover:bg-amber-50 transition shadow-md border border-amber-200"
+                >
+                  Log Out
+                </button>
               </div>
               <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
@@ -300,7 +411,7 @@ const ProfilePage = () => {
                                 </div>
                               ))}
                               <div className="flex flex-col items-center">
-                                <Link to="/RegisterPet">
+                                <Link to="/PetRegister">
                                   <img
                                     src={addPetImage}
                                     alt="Add Pet"
@@ -318,17 +429,20 @@ const ProfilePage = () => {
                 </div>
               </div>
               <div className="px-6 pb-6 flex justify-between">
-              <Link to="/UserEdit">
+                <Link to="/UserEdit">
+                  <button
+                    className={`${theme.primary} ${theme.textPrimary} px-6 py-2 rounded-lg hover:${theme.secondary} transition shadow-md flex items-center`}
+                  >
+                    <Edit className="mr-2" size={18} />
+                    Edit Profile
+                  </button>
+                </Link>
                 <button
-                  className={`${theme.primary} ${theme.textPrimary} px-6 py-2 rounded-lg hover:${theme.secondary} transition shadow-md flex items-center`}>
-                  <Edit className="mr-2" size={18} />
-                  Edit Profile
-                </button>
-                <button
-                  className="bg-white text-amber-800 px-6 py-2 rounded-lg hover:bg-amber-50 transition shadow-md border border-amber-200 flex items-center">
+                  className="bg-white text-amber-800 px-6 py-2 rounded-lg hover:bg-amber-50 transition shadow-md border border-amber-200 flex items-center"
+                >
                   <CreditCard className="mr-2" size={18} />
                   Payment Methods
-                </button></Link>
+                </button>
               </div>
             </>
           ) : (
@@ -336,7 +450,7 @@ const ProfilePage = () => {
           )}
         </div>
 
-        {/* Activity Sections (unchanged) */}
+        {/* Activity Sections */}
         <div className="space-y-6">
           <div className="bg-white shadow-xl rounded-xl overflow-hidden border-2 border-amber-200">
             <div className="p-6">
@@ -412,7 +526,7 @@ const ProfilePage = () => {
                                 <button
                                   onClick={() => handleCancelWithRefund(appointment._id)}
                                   disabled={isCancelling}
-                                  className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition flex items-center justify-center disabled:bg-gray-300 shadow-sm"
+                                  className="px-4 py-2 bg-red-100 text-red-700  rounded-lg hover:bg-red-200 transition flex items-center justify-center disabled:bg-gray-300 shadow-sm"
                                 >
                                   <X className="mr-2" size={18} />
                                   {isCancelling ? 'Processing...' : 'Cancel & Request Refund'}
@@ -473,28 +587,33 @@ const ProfilePage = () => {
                     <PawPrint className="mr-3" size={24} />
                     Your Adoption History
                   </h2>
-                  {adoptions.length > 0 ? (
+                  {adoptionError && (
+                    <div className="text-red-500 mb-6 text-center font-medium">{adoptionError}</div>
+                  )}
+                  {isLoadingAdoptions ? (
+                    <div className="text-center py-8 text-amber-800">Loading adoptions...</div>
+                  ) : adoptions.length > 0 ? (
                     <div className="space-y-4">
                       {adoptions.map((adoption) => (
-                        <div key={adoption.id} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition border border-amber-100">
+                        <div key={adoption._id} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition border border-amber-100">
                           <div className="flex justify-between items-start">
                             <div>
                               <h3 className="font-bold text-lg text-amber-800">
-                                {adoption.petName} - {adoption.breed}
+                                {adoption.petName || 'N/A'} - {adoption.petBreed || 'N/A'}
                               </h3>
-                              <p className="text-amber-700">Adoption ID: {adoption.id}</p>
-                              <p className="text-amber-700">From: {adoption.shelter}</p>
+                              <p className="text-amber-700">Adoption ID: {adoption._id.slice(-6)}</p>
+                              <p className="text-amber-700">From: {adoption.shelter || 'N/A'}</p>
                             </div>
                             <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                              adoption.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-amber-200 text-amber-800'
+                              adoption.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-amber-200 text-amber-800'
                             }`}>
-                              {adoption.status}
+                              {adoption.status || 'Pending'}
                             </span>
                           </div>
                           <div className="mt-4 flex items-center">
                             <Calendar className="mr-2 text-amber-600" size={18} />
                             <span className="text-amber-700">
-                              Adopted on {formatDate(adoption.date)}
+                              Adopted on {formatDate(adoption.createdAt)}
                             </span>
                           </div>
                         </div>
@@ -532,34 +651,39 @@ const ProfilePage = () => {
                     <ShoppingBag className="mr-3" size={24} />
                     Your Purchased Products
                   </h2>
-                  {products.length > 0 ? (
+                  {productError && (
+                    <div className="text-red-500 mb-6 text-center font-medium">{productError}</div>
+                  )}
+                  {isLoadingProducts ? (
+                    <div className="text-center py-8 text-amber-800">Loading products...</div>
+                  ) : products.length > 0 ? (
                     <div className="space-y-4">
                       {products.map((product) => (
-                        <div key={product.id} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition border border-amber-100">
-                          <div Old Testament className="flex justify-between items-start">
+                        <div key={product._id} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition border border-amber-100">
+                          <div className="flex justify-between items-start">
                             <div>
                               <h3 className="font-bold text-lg text-amber-800">
-                                {product.name}
+                                {product.name || 'N/A'}
                               </h3>
-                              <p className="text-amber-700">Order ID: {product.id}</p>
-                              <p className="text-amber-700">Seller: {product.seller}</p>
+                              <p className="text-amber-700">Order ID: {product._id.slice(-6)}</p>
+                              <p className="text-amber-700">Seller: {product.seller || 'N/A'}</p>
                             </div>
                             <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                              product.status === 'Delivered' ? 'bg-green-100 text-green-800' : 'bg-amber-200 text-amber-800'
+                              product.status === 'delivered' ? 'bg-green-100 text-green-800' : 'bg-amber-200 text-amber-800'
                             }`}>
-                              {product.status}
+                              {product.status || 'Pending'}
                             </span>
                           </div>
                           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="flex items-center">
                               <Calendar className="mr-2 text-amber-600" size={18} />
                               <span className="text-amber-700">
-                                Purchased on {formatDate(product.date)}
+                                Purchased on {formatDate(product.createdAt)}
                               </span>
                             </div>
                             <div className="flex items-center">
                               <FileText className="mr-2 text-amber-600" size={18} />
-                              <span className="text-amber-700">Price: {product.price}</span>
+                              <span className="text-amber-700">Price: ${product.price || 'N/A'}</span>
                             </div>
                           </div>
                         </div>
@@ -597,39 +721,46 @@ const ProfilePage = () => {
                     <Ticket className="mr-3" size={24} />
                     Your Registered Events
                   </h2>
-                  {events.length > 0 ? (
+                  {eventError && (
+                    <div className="text-red-500 mb-6 text-center font-medium">{eventError}</div>
+                  )}
+                  {isLoadingEvents ? (
+                    <div className="text-center py-8 text-amber-800">Loading events...</div>
+                  ) : events.length > 0 ? (
                     <div className="space-y-4">
                       {events.map((event) => (
-                        <div key={event.id} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition border border-amber-100">
+                        <div key={event._id} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition border border-amber-100">
                           <div className="flex justify-between items-start">
                             <div>
                               <h3 className="font-bold text-lg text-amber-800">
-                                {event.name}
+                                {event.event?.title || 'N/A'}
                               </h3>
-                              <p className="text-amber-700">Location: {event.location}</p>
+                              <p className="text-amber-700">Location: {event.event?.location || 'N/A'}</p>
                             </div>
                             <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                              event.status === 'Confirmed' ? 'bg-green-100 text-green-800' : 'bg-amber-200 text-amber-800'
+                              event.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-amber-200 text-amber-800'
                             }`}>
-                              {event.status}
+                              {event.status || 'Pending'}
                             </span>
                           </div>
                           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="flex items-center">
                               <Calendar className="mr-2 text-amber-600" size={18} />
                               <span className="text-amber-700">
-                                {formatDate(event.date)}
+                                {formatDate(event.event?.date)}
                               </span>
                             </div>
                             <div className="flex items-center">
                               <Clock className="mr-2 text-amber-600" size={18} />
-                              <span className="text-amber-700">Time: {event.time}</span>
+                              <span className="text-amber-700">Time: {formatTime(event.event?.time)}</span>
                             </div>
                           </div>
                           <div className="mt-4 pt-3 border-t border-amber-200">
-                            <button className={`${theme.primary} ${theme.textPrimary} px-4 py-2 rounded-lg hover:${theme.secondary} transition shadow-sm`}>
-                              View Event Details
-                            </button>
+                            <Link to={`/events/${event.event?._id}`}>
+                              <button className={`${theme.primary} ${theme.textPrimary} px-4 py-2 rounded-lg hover:${theme.secondary} transition shadow-sm`}>
+                                View Event Details
+                              </button>
+                            </Link>
                           </div>
                         </div>
                       ))}
