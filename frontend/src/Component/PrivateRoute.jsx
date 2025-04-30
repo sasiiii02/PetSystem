@@ -8,7 +8,7 @@ const PrivateRoute = ({ children }) => {
 
   // Check if user is authenticated
   if (!token || !user) {
-    return <Navigate to="/stafflogin" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Check role for Appointment Manager routes

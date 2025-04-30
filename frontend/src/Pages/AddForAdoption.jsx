@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Right_side from '../assets/Dog1.jpeg'
+import Right_side from '../assets/ForAdoption01.jpeg'
 import { AlertCircle, Dog, Cat, Heart, CheckCircle, Camera, Upload, PawPrint } from 'lucide-react';
 import axios from 'axios';
 
@@ -37,7 +37,7 @@ const PetOwnerForm = () => {
   const [submissionStatus, setSubmissionStatus] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
 
-  const petSpeciesOptions = ['Dog', 'Cat', 'Bird', 'Rabbit', 'Other'];
+  const petSpeciesOptions = ['Dog', 'Cat'];
   const petGenderOptions = ['Male', 'Female'];
 
   // Fetch user data on component mount
@@ -273,10 +273,8 @@ const PetOwnerForm = () => {
                         id="ownerFirstName"
                         name="ownerFirstName"
                         value={formData.ownerFirstName}
-                        onChange={handleChange}
-                        className={`w-full px-4 py-3 rounded-xl border-2 ${
-                          errors.ownerFirstName ? 'border-red-500' : 'border-gray-200'
-                        } focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md`}
+                        readOnly
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50 cursor-not-allowed"
                       />
                       {errors.ownerFirstName && (
                         <p className="mt-2 text-sm text-red-500 flex items-center">
@@ -294,10 +292,8 @@ const PetOwnerForm = () => {
                         id="ownerLastName"
                         name="ownerLastName"
                         value={formData.ownerLastName}
-                        onChange={handleChange}
-                        className={`w-full px-4 py-3 rounded-xl border-2 ${
-                          errors.ownerLastName ? 'border-red-500' : 'border-gray-200'
-                        } focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md`}
+                        readOnly
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50 cursor-not-allowed"
                       />
                       {errors.ownerLastName && (
                         <p className="mt-2 text-sm text-red-500 flex items-center">
@@ -317,10 +313,8 @@ const PetOwnerForm = () => {
                         id="email"
                         name="email"
                         value={formData.email}
-                        onChange={handleChange}
-                        className={`w-full px-4 py-3 rounded-xl border-2 ${
-                          errors.email ? 'border-red-500' : 'border-gray-200'
-                        } focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md`}
+                        readOnly
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50 cursor-not-allowed"
                       />
                       {errors.email && (
                         <p className="mt-2 text-sm text-red-500 flex items-center">
@@ -338,11 +332,8 @@ const PetOwnerForm = () => {
                         id="phone"
                         name="phone"
                         value={formData.phone}
-                        onChange={handleChange}
-                        placeholder="(123) 456-7890"
-                        className={`w-full px-4 py-3 rounded-xl border-2 ${
-                          errors.phone ? 'border-red-500' : 'border-gray-200'
-                        } focus:outline-none focus:ring-2 focus:ring-[#B3704D] transition-all duration-300 hover:shadow-md`}
+                        readOnly
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50 cursor-not-allowed"
                       />
                       {errors.phone && (
                         <p className="mt-2 text-sm text-red-500 flex items-center">

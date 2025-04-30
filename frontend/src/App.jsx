@@ -14,7 +14,7 @@ import SysAdminDashboard from "./Pages/SysAdminDashboard";
 import UsersList from "./Pages/UsersList";
 import ProfessionalsList from "./Pages/ProfessionalsList";
 import AdminRegister from "./Pages/AdminRegister";
-import UserPageView from "./Pages/UserPageView";
+import AdoptionHomePage from "./Pages/AdoptionHomePage";
 import AdoptablePetList from "./Pages/AdoptablePetList";
 import AddForAdoption from "./Pages/AddForAdoption";
 import AdoptionForm from "./Pages/AdoptionForm";
@@ -42,6 +42,8 @@ import Availability_for_groomer from "./Pages/AvailabilityGroomerTable";
 import Availability_for_trainer from "./Pages/AvailabilityTrainerTable";
 import CancelationReq from "./Pages/CancelationReqPage";
 import ActiveProfessionals from "./Pages/ActiveProfessionals";
+import Login from "./Pages/Login";
+ import Signup from "./Pages/Signup";
 
 // Layout for pet owner routes with UserHeader and UserFooter
 const MainLayout = ({ children }) => {
@@ -67,6 +69,10 @@ const App = () => {
             </MainLayout>
           }
         />
+
+        <Route path="/login" element={<MainLayout><Login /></MainLayout>} />
+        <Route path="/signup" element={<MainLayout><Signup /></MainLayout>} />
+
         <Route
           path="/stafflogin"
           element={
@@ -159,7 +165,7 @@ const App = () => {
           path="/adoption"
           element={
             <MainLayout>
-              <UserPageView />
+              <AdoptionHomePage />
             </MainLayout>
           }
         />
@@ -183,7 +189,7 @@ const App = () => {
           path="/info_select_pet"
           element={
             <MainLayout>
-              <UserPageView />
+              <AdoptionHomePage />
             </MainLayout>
           }
         />
@@ -199,7 +205,7 @@ const App = () => {
           path="/Submit_adoption_Form"
           element={
             <MainLayout>
-              <UserPageView />
+              <AdoptionHomePage />
             </MainLayout>
           }
         />
