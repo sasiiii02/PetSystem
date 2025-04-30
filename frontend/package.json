@@ -12,8 +12,10 @@
   "dependencies": {
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
-    "axios": "^1.8.4",
+    "axios": "^1.9.0",
+    "buffer": "^6.0.3",
     "chart.js": "^4.4.9",
+    "events": "^3.3.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.1",
     "lucide-react": "^0.484.0",
@@ -23,8 +25,11 @@
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.4.0",
     "react-toastify": "^11.0.5",
+    "stream-browserify": "^3.0.0",
     "tailwindcss": "^4.0.17",
+    "util": "^0.12.5",
     "uuid": "^11.1.0",
+    "vite-plugin-node-polyfills": "^0.23.0",
     "xml-js": "^1.6.11"
   },
   "devDependencies": {

@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // Add this import
+import { useNavigate } from 'react-router-dom';
 import MarketplaceTitle from '../Component/MarketplaceTitle';
 import { ShopContext } from '../context/ShopContext';
 import { assets } from '../assets/assets';
@@ -7,7 +7,7 @@ import CartTotal from '../Component/CartTotal';
 
 const Cart = () => {
   const { products, currency, cartItems, updateQuantity } = useContext(ShopContext);
-  const navigate = useNavigate(); // Use useNavigate directly
+  const navigate = useNavigate();
   const [cartData, setCartData] = useState([]);
 
   useEffect(() => {
@@ -23,7 +23,7 @@ const Cart = () => {
         }
       }
     }
-    console.log(tempData);
+    console.log('Cart data:', tempData);
     setCartData(tempData);
   }, [cartItems]);
 
@@ -43,15 +43,24 @@ const Cart = () => {
               className='py-4 border-t border-b text-gray-700 grid grid-cols-[4fr_0.5fr_0.5fr] sm:grid-cols-[4fr_2fr_0.5fr] items-center gap-4'
             >
               <div className='flex items-start gap-6'>
-                {productData && (
-                  <img src={productData.image} alt={productData.name} className='w-16 sm:w-20' />
+                {productData && productData.image && productData.image[0] ? (
+                  <img
+                    src={productData.image[0]}
+                    alt={productData.name}
+                    className='w-16 sm:w-20'
+                    onError={() => console.error('Failed to load image:', productData.image[0])}
+                  />
+                ) : (
+                  <div className='w-16 sm:w-20 h-16 sm:h-20 bg-gray-200 flex items-center justify-center'>
+                    <span>No Image</span>
+                  </div>
                 )}
                 <div>
-                  <p className='text-xs sm:text-lg font-medium'>{productData?.name}</p>
+                  <p className='text-xs sm:text-lg font-medium'>{productData?.name || 'Unknown Product'}</p>
                   <div className='flex items-center gap-5 mt-2'>
                     <p>
                       {currency}
-                      {productData?.price}
+                      {productData?.price || 'N/A'}
                     </p>
                     <p className='px-2 sm:px-3 sm:py-1 border bg-slate-50'>{item.size}</p>
                   </div>
