@@ -17,17 +17,20 @@ const UsersList = () => {
     const fetchUsers = async () => {
       try {
         const token = localStorage.getItem('token');
+        console.log('Token:', token); // Debug log
         if (!token) {
           throw new Error('No authentication token found');
         }
         const response = await axios.get('http://localhost:5000/api/users/all', {
           headers: { Authorization: `Bearer ${token}` },
         });
+        console.log('Response:', response.data); // Debug log
         setUsers(response.data);
         setFilteredUsers(response.data);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching users:', err);
+        console.error('Error response:', err.response); // Debug log
         setError(err.response?.data?.message || 'Error fetching users');
         setLoading(false);
       }
@@ -166,7 +169,7 @@ const UsersList = () => {
               <h3 className="text-xl sm:text-2xl font-bold text-amber-950">Confirm Deletion</h3>
             </div>
             <p className="text-gray-900 mb-6 text-center">
-              Are you sure you want to delete this user’s profile? This action cannot be undone.
+              Are you sure you want to delete this user's profile? This action cannot be undone.
             </p>
             <div className="flex justify-center space-x-4">
               <button
