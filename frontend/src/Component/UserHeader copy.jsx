@@ -5,10 +5,9 @@ import { Dialog, DialogPanel } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Link, useNavigate } from "react-router-dom";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
-import { ShopContext } from "../context/ShopContext";
 import { assets } from "../assets/assets";
-
 import { toast } from "react-toastify";
+import { ShopContext } from "../context/ShopContext";
 
 export default function UserHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -31,7 +30,8 @@ export default function UserHeader() {
   const [showPassword, setShowPassword] = useState(false);
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showConPassword, setShowConPassword] = useState(false);
-  const { getCartCount } = useContext(ShopContext);
+
+  const { getCartCount } = useContext(ShopContext); // getting cart count
 
   // Toggle password visibility
   const togglePasswordVisibility = (field) => {
@@ -397,7 +397,6 @@ export default function UserHeader() {
                 >
                   Profile
                 </Link>
-
                 <Link to="/cart" className="relative inline-block p-2">
                   <img
                     src={assets.cart_icon}

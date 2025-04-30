@@ -43,6 +43,15 @@ import Availability_for_trainer from "./Pages/AvailabilityTrainerTable";
 import CancelationReq from "./Pages/CancelationReqPage";
 import ActiveProfessionals from "./Pages/ActiveProfessionals";
 
+import { ToastContainer } from 'react-toastify';
+
+
+import Collection from "./Pages/Collection";
+import Product from "./Pages/Product";
+import Cart from "./Pages/Cart";
+import PlaceOrder from "./Pages/PlaceOrder";
+import Orders from "./Pages/Orders";
+
 // Layout for pet owner routes with UserHeader and UserFooter
 const MainLayout = ({ children }) => {
   return (
@@ -238,6 +247,13 @@ const App = () => {
           <Route path="availability/trainer" element={<Availability_for_trainer />} />
           <Route path="refund-request" element={<CancelationReq />} />
         </Route>
+
+         {/* Marketplace */}
+         <Route path = "/collection" element={<Collection/>}/>
+          <Route path = '/product/:ProductId'element = {<Product/>}/>
+          <Route path = "/cart" element={<Cart/>}/>
+          <Route path = "/placeOrder" element={<PlaceOrder/>}/>
+          <Route path = "/orders" element={<Orders/>}/>
 
         {/* Protected Routes with MainLayout */}
         <Route
