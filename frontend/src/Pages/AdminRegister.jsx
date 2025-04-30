@@ -21,7 +21,7 @@ const AdminRegister = () => {
     try {
       const response = await axios.post('http://localhost:5000/api/admins/register', formData);
       console.log('Admin registered:', response.data);
-      navigate('/admin/redirect/user_admin');
+      navigate('/user_admin/SysAdminDashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Error registering admin');
     }

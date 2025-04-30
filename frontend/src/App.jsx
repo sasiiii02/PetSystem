@@ -41,7 +41,6 @@ const App = () => {
             <Route path="/" element={<PetPlatformHomePage />} />
             <Route path="/stafflogin" element={<StaffLogin />} />
             <Route path="/AdminRegister" element={<AdminRegister />} />
-            <Route path="/admin/redirect/user_admin" element={<SysAdminDashboard />} />
             <Route path="/aboutus" element={<AboutUs />} />
             <Route path="/UserEdit" element={<UserEdit />} />
             <Route path="/UsersList" element={<UsersList />} />
