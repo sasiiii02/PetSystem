@@ -26,6 +26,7 @@ const PetAdoptionCoordinatorDashboard = () => {
   const [error, setError] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showAddPetModal, setShowAddPetModal] = useState(false);
+  const [adoptionForms, setAdoptionForms] = useState([]);
   const [newPet, setNewPet] = useState({
     petName: '',
     petSpecies: 'Dog',
@@ -63,8 +64,25 @@ const PetAdoptionCoordinatorDashboard = () => {
     }
   };
 
+  // Fetch adoption forms
+  const fetchAdoptionForms = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:5000/api/adoptionform/all', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setAdoptionForms(response.data);
+    } catch (err) {
+      console.error("Error fetching adoption forms:", err);
+      setError("Failed to load adoption forms");
+    }
+  };
+
   useEffect(() => {
     fetchPets();
+    fetchAdoptionForms();
   }, []);
 
   // For now, we'll keep using the initial visits data
@@ -463,6 +481,80 @@ const PetAdoptionCoordinatorDashboard = () => {
     </div>
   );
 
+  const renderAdoptionForms = () => (
+    <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-extrabold text-gray-800 flex items-center">
+          <FileText className="mr-3 text-gray-600" /> Adoption Applications
+        </h2>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-10">Loading applications...</div>
+      ) : error ? (
+        <div className="text-center py-10 text-red-500">{error}</div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6">
+          {adoptionForms.length === 0 ? (
+            <div className="text-center py-10">No adoption applications received</div>
+          ) : (
+            adoptionForms.map((form) => (
+              <div 
+                key={form._id} 
+                className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">
+                      {form.firstName} {form.lastName}
+                    </h3>
+                    <p className="text-gray-600">Email: {form.email}</p>
+                    <p className="text-gray-600">Phone: {form.phoneNumber}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Pet Type: {form.petType}</p>
+                    <p className="text-gray-600">Preferred Pet: {form.petName}</p>
+                    <p className="text-gray-600">Home Type: {form.homeType}</p>
+                    <p className="text-gray-600">Employment: {form.employmentStatus}</p>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <p className="text-gray-600">
+                    <span className="font-semibold">Has Yard:</span> {form.hasYard ? 'Yes' : 'No'}
+                  </p>
+                  <p className="text-gray-600">
+                    <span className="font-semibold">Has Other Pets:</span> {form.hasOtherPets ? 'Yes' : 'No'}
+                  </p>
+                  {form.additionalInfo && (
+                    <p className="text-gray-600 mt-2">
+                      <span className="font-semibold">Additional Info:</span> {form.additionalInfo}
+                    </p>
+                  )}
+                </div>
+                <div className="mt-4 flex justify-end space-x-3">
+                  <button 
+                    className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
+                    onClick={() => handleApproveApplication(form._id)}
+                  >
+                    <CheckCircle className="inline-block mr-2" size={18} />
+                    Approve
+                  </button>
+                  <button 
+                    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
+                    onClick={() => handleRejectApplication(form._id)}
+                  >
+                    <XCircle className="inline-block mr-2" size={18} />
+                    Reject
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+
   const renderHomeVisits = () => (
     <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="flex justify-between items-center mb-6">
@@ -630,6 +722,62 @@ const PetAdoptionCoordinatorDashboard = () => {
     </div>
   );
 
+  const handleApproveApplication = async (formId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(
+        `http://localhost:5000/api/adoptionform/update/${formId}`,
+        { status: 'approved' },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      fetchAdoptionForms();
+      setNotification({
+        show: true,
+        message: 'Application approved successfully',
+        type: 'success'
+      });
+    } catch (error) {
+      console.error('Error approving application:', error);
+      setNotification({
+        show: true,
+        message: 'Failed to approve application',
+        type: 'error'
+      });
+    }
+  };
+
+  const handleRejectApplication = async (formId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(
+        `http://localhost:5000/api/adoptionform/update/${formId}`,
+        { status: 'rejected' },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      fetchAdoptionForms();
+      setNotification({
+        show: true,
+        message: 'Application rejected successfully',
+        type: 'success'
+      });
+    } catch (error) {
+      console.error('Error rejecting application:', error);
+      setNotification({
+        show: true,
+        message: 'Failed to reject application',
+        type: 'error'
+      });
+    }
+  };
+
   // Add this CSS animation at the top of your file after the imports
   const style = document.createElement('style');
   style.textContent = `
@@ -658,6 +806,12 @@ const PetAdoptionCoordinatorDashboard = () => {
                 name: 'Pets', 
                 icon: Dog, 
                 section: 'pets',
+                color: 'hover:bg-gray-600' 
+              },
+              { 
+                name: 'Adoption Forms', 
+                icon: FileText, 
+                section: 'forms',
                 color: 'hover:bg-gray-600' 
               },
               { 
@@ -695,6 +849,7 @@ const PetAdoptionCoordinatorDashboard = () => {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
         {activeSection === 'pets' && renderPetList()}
+        {activeSection === 'forms' && renderAdoptionForms()}
         {activeSection === 'visits' && renderHomeVisits()}
         {activeSection === 'reports' && renderReports()}
       </div>

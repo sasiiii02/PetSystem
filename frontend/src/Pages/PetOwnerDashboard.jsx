@@ -158,12 +158,12 @@ const PetOwnerDashboard = () => {
         )}
 
         {/* Pet Listings */}
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 gap-6 h-1/2">
           {pets.map((pet) => (
             <div key={pet._id} className="bg-white rounded-xl shadow-lg overflow-hidden">
               <div className="flex min-h-[250px]">
                 {/* Pet Image with Species Icon */}
-                <div className="w-1/4  relative">
+                <div className="w-30/100  relative">
                   <img
                     src={pet.petImage ? `http://localhost:5000${pet.petImage}` : '/placeholder-pet.jpg'}
                     alt={pet.petName}

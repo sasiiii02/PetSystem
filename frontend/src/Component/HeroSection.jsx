@@ -1,27 +1,10 @@
 'use client'
-import React, { useRef } from 'react'
+import React from 'react'
 import { Heart, PawPrint, Shield } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
 import Right_side from '../assets/Dog1.jpeg'
 import Grid from './BentoGrid'
 
 export default function HeroSection() {
-  const gridSectionRef = useRef(null);
-  const navigate = useNavigate();
-
-  const scrollToGrid = () => {
-    gridSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const handleAddPetClick = () => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      navigate('/pet-owner-dashboard');
-    } else {
-      navigate('/login');
-    }
-  };
-
   return (
     <>
       <div className="bg-gradient-to-br from-[#FFF5E6] via-[#FCF0E4] to-[#F5EFEA] min-h-screen flex items-center overflow-hidden relative pt-30 pb-15">
@@ -90,58 +73,11 @@ export default function HeroSection() {
                 </div>
               ))}
             </div>
-            
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button 
-                onClick={handleAddPetClick}
-                className="rounded-2xl bg-gradient-to-r from-[#D08860] to-[#B3704D] p-1 shadow-lg hover:shadow-xl 
-                         transform hover:-translate-y-1 transition-all duration-300 group overflow-hidden"
-              >
-                <div className="px-6 py-3 rounded-xl flex items-center justify-center gap-2 
-                              bg-gradient-to-r from-[#D08860] to-[#B3704D] group-hover:bg-transparent
-                              transition-all duration-300">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  <span className="text-white font-semibold">Add Your Pet For Adoption</span>
-                </div>
-              </button>
-
-              <Link 
-                to="/info_adoptable_pet"
-                className="rounded-2xl bg-gradient-to-r from-[#D08860] to-[#B3704D] p-1 shadow-lg hover:shadow-xl 
-                         transform hover:-translate-y-1 transition-all duration-300 group overflow-hidden"
-              >
-                <div className="px-6 py-3 rounded-xl flex items-center justify-center gap-2 
-                              bg-gradient-to-r from-[#D08860] to-[#B3704D] group-hover:bg-transparent
-                              transition-all duration-300">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <span className="text-white font-semibold">Find Your Perfect Companion</span>
-                </div>
-              </Link>
-              
-              <button 
-                onClick={scrollToGrid}
-                className="rounded-2xl border-2 border-[#D08860] px-6 py-3 text-[#D08860] font-semibold
-                         relative overflow-hidden group"
-              >
-                <span className="absolute inset-0 bg-gradient-to-r from-[#D08860] to-[#B3704D] transform -translate-x-full 
-                               group-hover:translate-x-0 transition-transform duration-300"/>
-                <div className="relative flex items-center justify-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:translate-y-1 transition-transform group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                  </svg>
-                  <span className="group-hover:text-white transition-colors duration-300">Learn More</span>
-                </div>
-              </button>
-            </div>
           </div>
         </div>
       </div>
 
-      <div ref={gridSectionRef}>
+      <div id="grid-section">
         <Grid />
       </div>
     </>
