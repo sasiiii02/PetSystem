@@ -1,22 +1,23 @@
+// src/Pages/StaffLogin.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle, Heart, X, Eye, EyeOff } from "lucide-react";
 
 const StaffLogin = () => {
-  const [pemail, setpemail] = useState("");
-  const [ppassword, setppassword] = useState("");
-  const [professionalErrors, setprofessionalErrors] = useState({});
-  const [showppassword, setShowppassword] = useState(false);
+  const [pemail, setPemail] = useState("");
+  const [ppassword, setPpassword] = useState("");
+  const [professionalErrors, setProfessionalErrors] = useState({});
+  const [showPpassword, setShowPpassword] = useState(false);
 
-  const [email, setemail] = useState("");
-  const [password, setpassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [adminError, setAdminError] = useState("");
   const [showAdminPassword, setShowAdminPassword] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
 
   const navigate = useNavigate();
 
-  const validateprofessionalForm = () => {
+  const validateProfessionalForm = () => {
     const newErrors = {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -26,15 +27,15 @@ const StaffLogin = () => {
     if (!ppassword.trim()) newErrors.password = "Password is required";
     else if (ppassword.length < 8) newErrors.password = "Password must be at least 8 characters long";
 
-    setprofessionalErrors(newErrors);
+    setProfessionalErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleprofessionalSubmit = async (e) => {
+  const handleProfessionalSubmit = async (e) => {
     e.preventDefault();
-    setprofessionalErrors({});
+    setProfessionalErrors({});
 
-    if (validateprofessionalForm()) {
+    if (validateProfessionalForm()) {
       try {
         const response = await fetch("http://localhost:5000/api/professionals/login", {
           method: "POST",
@@ -47,21 +48,22 @@ const StaffLogin = () => {
         const data = await response.json();
 
         if (response.ok) {
-          localStorage.setItem("token", data.token);
-          localStorage.setItem("user", JSON.stringify({
+          // Store professional data with user-type-specific keys
+          localStorage.setItem("professionalToken", data.token);
+          localStorage.setItem("professionalUser", JSON.stringify({
             _id: data._id,
             name: data.name,
             email: data.email,
             role: "professional"
           }));
-          setpemail("");
-          setppassword("");
+          setPemail("");
+          setPpassword("");
           navigate("/professional/dashboard");
         } else {
-          setprofessionalErrors({ submit: data.message || "Invalid email or password" });
+          setProfessionalErrors({ submit: data.message || "Invalid email or password" });
         }
       } catch (error) {
-        setprofessionalErrors({ submit: "Server error. Please try again." });
+        setProfessionalErrors({ submit: "Server error. Please try again." });
       }
     }
   };
@@ -82,17 +84,17 @@ const StaffLogin = () => {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify({
+        // Store admin data with user-type-specific keys
+        localStorage.setItem("adminToken", data.token);
+        localStorage.setItem("adminUser", JSON.stringify({
           _id: data.admin._id,
           name: data.admin.name,
           email: data.admin.email,
           role: data.admin.role
         }));
-        setemail("");
-        setpassword("");
+        setEmail("");
+        setPassword("");
         setIsAdminModalOpen(false);
-
         navigate(`/admin/redirect/${data.admin.role}`);
       } else {
         setAdminError(data.message || "Invalid email or password");
@@ -120,7 +122,7 @@ const StaffLogin = () => {
             <h2 className="text-2xl sm:text-3xl font-bold text-amber-950">Professional Login</h2>
           </div>
 
-          <form onSubmit={handleprofessionalSubmit} className="space-y-4 sm:space-y-6">
+          <form onSubmit={handleProfessionalSubmit} className="space-y-4 sm:space-y-6">
             <div>
               <label htmlFor="pemail" className="block text-sm sm:text-md font-medium text-amber-950 mb-2">
                 Email Address
@@ -129,7 +131,7 @@ const StaffLogin = () => {
                 type="email"
                 id="pemail"
                 value={pemail}
-                onChange={(e) => setpemail(e.target.value)}
+                onChange={(e) => setPemail(e.target.value)}
                 className={`w-full px-4 py-3 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
                   professionalErrors.email ? "border-red-500" : "border-amber-200"
                 }`}
@@ -147,10 +149,10 @@ const StaffLogin = () => {
                 Password
               </label>
               <input
-                type={showppassword ? "text" : "password"}
+                type={showPpassword ? "text" : "password"}
                 id="ppassword"
                 value={ppassword}
-                onChange={(e) => setppassword(e.target.value)}
+                onChange={(e) => setPpassword(e.target.value)}
                 className={`w-full px-4 py-3 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
                   professionalErrors.password ? "border-red-500" : "border-amber-200"
                 }`}
@@ -158,11 +160,11 @@ const StaffLogin = () => {
               />
               <button
                 type="button"
-                onClick={() => setShowppassword(!showppassword)}
+                onClick={() => setShowPpassword(!showPpassword)}
                 className="absolute right-3 top-12 text-gray-500 hover:text-amber-700"
-                aria-label={showppassword ? "Hide password" : "Show password"}
+                aria-label={showPpassword ? "Hide password" : "Show password"}
               >
-                {showppassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                {showPpassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
               {professionalErrors.password && (
                 <p className="mt-2 text-sm text-red-500 flex items-center">
@@ -223,7 +225,7 @@ const StaffLogin = () => {
                   type="email"
                   id="email"
                   value={email}
-                  onChange={(e) => setemail(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value)}
                   className={`w-full px-4 py-3 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
                     adminError ? "border-red-500" : "border-amber-200"
                   }`}
@@ -240,7 +242,7 @@ const StaffLogin = () => {
                   type={showAdminPassword ? "text" : "password"}
                   id="password"
                   value={password}
-                  onChange={(e) => setpassword(e.target.value)}
+                  onChange={(e) => setPassword(e.target.value)}
                   className={`w-full px-4 py-3 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
                     adminError ? "border-red-500" : "border-amber-200"
                   }`}
