@@ -2,7 +2,8 @@ import { createContext, useState } from "react";
 import { products } from "../assets/assets";
 import { toast } from "react-toastify";
 
-export const ShopContext = createContext();
+export const ShopContext = createContext(); 
+
 
 const ShopContextProvider = (props) => {
   const currency = '$';

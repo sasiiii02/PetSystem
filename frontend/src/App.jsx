@@ -67,6 +67,7 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
+        
         {/* Public Routes with MainLayout */}
         <Route
           path="/"
@@ -153,6 +154,14 @@ const App = () => {
           element={
             <MainLayout>
               <UserEventsPage />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/collection"
+          element={
+            <MainLayout>
+              <Collection />
             </MainLayout>
           }
         />
