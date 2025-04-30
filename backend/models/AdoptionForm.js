@@ -11,7 +11,12 @@ const adoptionFormSchema = new mongoose.Schema({
     employmentStatus: { type: String, required: true },
     hasYard: { type: Boolean, required: true },
     hasOtherPets: { type: Boolean, required: true },
-    additionalInfo: { type: String }
+    additionalInfo: { type: String },
+    status: { 
+        type: String, 
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'pending'
+    }
 }, { timestamps: true });
 
 const AdoptionForm = mongoose.model('adoptionForm', adoptionFormSchema);
