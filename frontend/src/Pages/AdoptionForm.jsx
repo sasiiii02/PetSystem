@@ -12,8 +12,8 @@ const PetAdoptionForm = () => {
 
   // Check authentication on component mount
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    const token = localStorage.getItem('petOwnerToken');
+    const userData = JSON.parse(localStorage.getItem('petOwnerUser') || '{}');
     
     if (!token || !userData) {
       navigate('/login');

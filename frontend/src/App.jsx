@@ -43,7 +43,9 @@ import Availability_for_trainer from "./Pages/AvailabilityTrainerTable";
 import CancelationReq from "./Pages/CancelationReqPage";
 import ActiveProfessionals from "./Pages/ActiveProfessionals";
 import Login from "./Pages/Login";
- import Signup from "./Pages/Signup";
+import Signup from "./Pages/Signup";
+import PetAdoptionCoordinatorDashboard from "./Pages/AdoptionCoordinatorDashBoard";
+import AdoptionScheduler from "./Pages/HomeVisitScheduler";
 
 // Layout for pet owner routes with UserHeader and UserFooter
 const MainLayout = ({ children }) => {
@@ -209,6 +211,9 @@ const App = () => {
             </MainLayout>
           }
         />
+
+          <Route path="/AdoptionCoordinatorDashboard" element={<PetAdoptionCoordinatorDashboard />} />
+          <Route path="/schedule-visit" element={<AdoptionScheduler />} />
 
         {/* Admin Dashboard Routes */}
         <Route

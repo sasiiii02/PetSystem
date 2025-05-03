@@ -7,7 +7,7 @@ import Grid from './BentoGrid'
 export default function HeroSection() {
   return (
     <>
-      <div className="bg-gradient-to-br from-[#FFF5E6] via-[#FCF0E4] to-[#F5EFEA] min-h-screen flex items-center overflow-hidden relative pt-30 pb-15">
+      <div className="bg-gradient-to-br from-[#FFF5E6] via-[#FCF0E4] to-[#F5EFEA] min-h-screen flex items-center overflow-hidden relative pt-15 pb-15">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -left-20 -top-20 w-96 h-96 bg-[#D08860]/10 rounded-full blur-3xl animate-pulse"/>
           <div className="absolute right-1/4 top-1/3 w-72 h-72 bg-[#B3704D]/10 rounded-full blur-2xl animate-pulse delay-700"/>

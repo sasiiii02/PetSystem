@@ -20,7 +20,7 @@ const AdoptionHomePage = () => {
 
   return (
     <>
-      <div className="bg-gradient-to-br from-[#F4E4D8] to-[#E6D5C1] py-4 mt-23">
+      <div className="bg-gradient-to-br from-[#FFF5E6] to-[#FFF5E6] py-4 pt-30">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-wrap justify-center gap-4">
             <button

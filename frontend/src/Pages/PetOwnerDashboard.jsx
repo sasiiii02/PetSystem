@@ -30,8 +30,8 @@ const PetOwnerDashboard = () => {
   const navigate = useNavigate();
 
   // Get token and user data from localStorage
-  const token = localStorage.getItem('token');
-  const userData = JSON.parse(localStorage.getItem('user') || '{}');
+  const token = localStorage.getItem('petOwnerToken');
+  const userData = JSON.parse(localStorage.getItem('petOwnerUser') || '{}');
   const userId = userData._id;
   console.log('User data from localStorage:', userData);
   console.log('UserId from localStorage:', userId);
