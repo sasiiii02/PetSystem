@@ -45,6 +45,12 @@ import ActiveProfessionals from "./Pages/ActiveProfessionals";
 import Login from "./Pages/Login";
  import Signup from "./Pages/Signup";
 
+ import Collection from "./Pages/Collection";
+import Product from "./Pages/Product";
+import Cart from "./Pages/Cart";
+import PlaceOrder from "./Pages/PlaceOrder";
+import Orders from "./Pages/Orders";
+
 // Layout for pet owner routes with UserHeader and UserFooter
 const MainLayout = ({ children }) => {
   return (
@@ -245,6 +251,14 @@ const App = () => {
           <Route path="refund-request" element={<CancelationReq />} />
         </Route>
 
+           {/* Marketplace */}
+         
+          <Route path = '/product/:ProductId'element = {<Product/>}/>
+          <Route path = "/cart" element={<Cart/>}/>
+          <Route path = "/placeOrder" element={<PlaceOrder/>}/>
+          <Route path = "/orders" element={<Orders/>}/>
+
+
         {/* Protected Routes with MainLayout */}
         <Route
           path="/event/:id"
@@ -356,6 +370,16 @@ const App = () => {
             </PrivateRoute>
           }
         />
+
+           <Route
+          path="/collection"
+          element={
+            <MainLayout>
+              <Collection />
+            </MainLayout>
+          }
+        />
+
       </Routes>
     </BrowserRouter>
   );

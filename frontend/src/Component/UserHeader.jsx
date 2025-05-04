@@ -1,9 +1,16 @@
 //edited
 // src/Component/UserHeader.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Dialog, DialogPanel } from "@headlessui/react";
-import { Bars3Icon, XMarkIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import {
+  Bars3Icon,
+  XMarkIcon,
+  EyeIcon,
+  EyeSlashIcon,
+} from "@heroicons/react/24/outline";
 import { Link, useNavigate } from "react-router-dom";
+import { ShopContext } from "../context/ShopContext";
+import { assets } from "../assets/assets";
 
 export default function UserHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -25,9 +32,12 @@ export default function UserHeader() {
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showConPassword, setShowConPassword] = useState(false);
   const navigate = useNavigate();
+  const { getCartCount } = useContext(ShopContext);
 
   // Use pet owner-specific token
-  const [petOwnerToken, setPetOwnerToken] = useState(localStorage.getItem("petOwnerToken"));
+  const [petOwnerToken, setPetOwnerToken] = useState(
+    localStorage.getItem("petOwnerToken")
+  );
 
   const togglePasswordVisibility = (field) => {
     if (field === "login") {
@@ -43,7 +53,7 @@ export default function UserHeader() {
     try {
       const response = await fetch("http://localhost:5000/api/users/profile", {
         headers: {
-          "Authorization": `Bearer ${petOwnerToken}`,
+          Authorization: `Bearer ${petOwnerToken}`,
           "Content-Type": "application/json",
         },
       });
@@ -66,14 +76,17 @@ export default function UserHeader() {
       if (response.ok) {
         // Store pet owner data with user-type-specific keys
         localStorage.setItem("petOwnerToken", data.token);
-        localStorage.setItem("petOwnerUser", JSON.stringify({
-          _id: data._id,
-          name: data.name,
-          email: data.email,
-          phoneNumber: data.phoneNumber,
-          city: data.city,
-          role: "pet_owner"
-        }));
+        localStorage.setItem(
+          "petOwnerUser",
+          JSON.stringify({
+            _id: data._id,
+            name: data.name,
+            email: data.email,
+            phoneNumber: data.phoneNumber,
+            city: data.city,
+            role: "pet_owner",
+          })
+        );
         setPetOwnerToken(data.token);
         setLoginOpen(false);
         setEmail("");
@@ -110,14 +123,17 @@ export default function UserHeader() {
       if (response.ok) {
         // Store pet owner data with user-type-specific keys
         localStorage.setItem("petOwnerToken", data.user.token);
-        localStorage.setItem("petOwnerUser", JSON.stringify({
-          _id: data.user._id,
-          name: data.user.name,
-          email: data.user.email,
-          phoneNumber: data.user.phoneNumber,
-          city: data.user.city,
-          role: "pet_owner"
-        }));
+        localStorage.setItem(
+          "petOwnerUser",
+          JSON.stringify({
+            _id: data.user._id,
+            name: data.user.name,
+            email: data.user.email,
+            phoneNumber: data.user.phoneNumber,
+            city: data.user.city,
+            role: "pet_owner",
+          })
+        );
         setPetOwnerToken(data.user.token);
         setRegisterOpen(false);
         setRegName("");
@@ -157,7 +173,15 @@ export default function UserHeader() {
   };
 
   const handleNavClick = async (path) => {
-    const publicRoutes = ["/", "/aboutus", "/contactus", "/events", "/appointment", "/adoption", "/collection"];
+    const publicRoutes = [
+      "/",
+      "/aboutus",
+      "/contactus",
+      "/events",
+      "/appointment",
+      "/adoption",
+      "/collection",
+    ];
     if (!petOwnerToken && !publicRoutes.includes(path)) {
       setIntendedPath(path);
       setLoginOpen(true);
@@ -181,11 +205,18 @@ export default function UserHeader() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md shadow-md">
-      <nav aria-label="Global" className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8">
+      <nav
+        aria-label="Global"
+        className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8"
+      >
         <div className="flex lg:flex-1">
           <Link to="/" className="-m-1.5 p-1.5">
             <span className="sr-only">Pet Care</span>
-            <img src="/logo.jpg" alt="Pet Care Logo" className="h-10 w-auto rounded-md shadow-sm hover:shadow-md transition" />
+            <img
+              src="/logo.jpg"
+              alt="Pet Care Logo"
+              className="h-10 w-auto rounded-md shadow-sm hover:shadow-md transition"
+            />
           </Link>
         </div>
 
@@ -257,6 +288,13 @@ export default function UserHeader() {
           >
             Profile
           </Link>
+
+          <Link to="/cart" className="relative inline-block p-2">
+            <img src={assets.cart_icon} className="w-4 min-w-4" alt="Cart" />
+            <p className="absolute right-[-3px] bottom-[-3px] w-4 h-4 flex items-center justify-center bg-black text-white rounded-full text-[8px] z-10 font-bold">
+              {getCartCount()}
+            </p>
+          </Link>
         </div>
 
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
@@ -286,13 +324,21 @@ export default function UserHeader() {
         </div>
       </nav>
 
-      <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="lg:hidden">
+      <Dialog
+        open={mobileMenuOpen}
+        onClose={setMobileMenuOpen}
+        className="lg:hidden"
+      >
         <div className="fixed inset-0 z-10" />
         <DialogPanel className="fixed inset-y-0 right-0 z-10 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-amber-900/10">
           <div className="flex items-center justify-between">
             <Link to="/" className="-m-1.5 p-1.5">
               <span className="sr-only">Pet Care</span>
-              <img src="/logo.jpg" alt="Logo" className="h-8 w-auto rounded-md" />
+              <img
+                src="/logo.jpg"
+                alt="Logo"
+                className="h-8 w-auto rounded-md"
+              />
             </Link>
             <button
               type="button"
@@ -362,6 +408,17 @@ export default function UserHeader() {
                 >
                   Profile
                 </Link>
+
+                <Link to="/cart" className="relative inline-block p-2">
+                  <img
+                    src={assets.cart_icon}
+                    className="w-4 min-w-4"
+                    alt="Cart"
+                  />
+                  <p className="absolute right-[-3px] bottom-[-3px] w-4 h-4 flex items-center justify-center bg-black text-white rounded-full text-[8px] z-10 font-bold">
+                    {getCartCount()}
+                  </p>
+                </Link>
               </div>
               <div className="py-6 space-y-2">
                 {petOwnerToken ? (
@@ -399,19 +456,34 @@ export default function UserHeader() {
         </DialogPanel>
       </Dialog>
 
-      <Dialog open={loginOpen} onClose={() => setLoginOpen(false)} className="relative z-50">
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true"/>
+      <Dialog
+        open={loginOpen}
+        onClose={() => setLoginOpen(false)}
+        className="relative z-50"
+      >
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+          aria-hidden="true"
+        />
         <div className="fixed inset-0 flex items-center justify-center p-8">
           <DialogPanel className="bg-white p-0 rounded-2xl shadow-2xl w-full max-w-[780px] border border-amber-100 max-h-[100vh] overflow-y-auto flex flex-col md:flex-row">
             <div
-              className="w-full md:w-1/2 h-64 md:h-auto bg-cover bg-center rounded-lg bg-[url('./assets/UserLogin.jpg')]" aria-hidden="true">
+              className="w-full md:w-1/2 h-64 md:h-auto bg-cover bg-center rounded-lg bg-[url('./assets/UserLogin.jpg')]"
+              aria-hidden="true"
+            >
               <div className="text-white text-center p-8">
-                <h1 className="text-3xl md:text-4xl font-bold mb-4">Welcome Back</h1>
-                <p className="text-lg md:text-xl">Login to continue your journey</p>
+                <h1 className="text-3xl md:text-4xl font-bold mb-4">
+                  Welcome Back
+                </h1>
+                <p className="text-lg md:text-xl">
+                  Login to continue your journey
+                </p>
               </div>
             </div>
             <div className="w-full md:w-1/2 p-8 md:max-w-96">
-              <h1 className="text-2xl font-semibold text-center text-amber-950 mb-6">Welcome Back</h1>
+              <h1 className="text-2xl font-semibold text-center text-amber-950 mb-6">
+                Welcome Back
+              </h1>
               {loginError && (
                 <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
                   <p>{loginError}</p>
@@ -419,15 +491,22 @@ export default function UserHeader() {
               )}
               <form onSubmit={handleLoginSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-amber-950 font-medium mb-1">Email</label>
+                  <label className="block text-amber-950 font-medium mb-1">
+                    Email
+                  </label>
                   <input
                     type="email"
                     className="w-full px-4 py-3 border border-amber-200 rounded-lg focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 bg-white text-gray-900"
-                    value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="your@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="your@email.com"
                   />
                 </div>
                 <div className="relative">
-                  <label className="block text-amber-950 font-medium mb-1">Password</label>
+                  <label className="block text-amber-950 font-medium mb-1">
+                    Password
+                  </label>
                   <input
                     type={showPassword ? "text" : "password"}
                     className="w-full px-4 py-3 border border-amber-200 rounded-lg focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 bg-white text-gray-900"
@@ -440,7 +519,9 @@ export default function UserHeader() {
                     type="button"
                     onClick={() => togglePasswordVisibility("login")}
                     className="absolute right-3 top-10 text-gray-500 hover:text-amber-700"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
                   >
                     {showPassword ? (
                       <EyeSlashIcon className="h-5 w-5" />
@@ -452,17 +533,22 @@ export default function UserHeader() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <input
-                      id="remember-me" type="checkbox" 
+                      id="remember-me"
+                      type="checkbox"
                       className="h-4 w-4 text-amber-700 focus:ring-amber-700 border-amber-300 rounded"
                     />
-                    <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                    <label
+                      htmlFor="remember-me"
+                      className="ml-2 block text-sm text-gray-900"
+                    >
                       Remember me
                     </label>
                   </div>
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-amber-700 text-white py-3 rounded-lg hover:bg-amber-800 transition-colors duration-300 font-medium mt-2">
+                  className="w-full bg-amber-700 text-white py-3 rounded-lg hover:bg-amber-800 transition-colors duration-300 font-medium mt-2"
+                >
                   Log In
                 </button>
               </form>
@@ -505,7 +591,12 @@ export default function UserHeader() {
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -513,12 +604,21 @@ export default function UserHeader() {
         </div>
       </Dialog>
 
-      <Dialog open={registerOpen} onClose={() => setRegisterOpen(false)} className="relative z-50">
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
+      <Dialog
+        open={registerOpen}
+        onClose={() => setRegisterOpen(false)}
+        className="relative z-50"
+      >
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+          aria-hidden="true"
+        />
         <div className="fixed inset-0 flex items-center justify-center p-8">
           <DialogPanel className="bg-white p-0 rounded-2xl shadow-2xl w-full max-w-[770px] border border-amber-100 max-h-[90vh] overflow-y-auto flex flex-col md:flex-row">
             <div className="w-full md:w-1/2 p-8 md:max-w-96 overflow-y-auto scrollbar-hide">
-              <h2 className="text-2xl font-semibold text-center text-amber-950 mb-6">Create Your Account</h2>
+              <h2 className="text-2xl font-semibold text-center text-amber-950 mb-6">
+                Create Your Account
+              </h2>
               {regError && (
                 <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
                   <p>{regError}</p>
@@ -526,7 +626,9 @@ export default function UserHeader() {
               )}
               <form onSubmit={handleRegisterSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-amber-950 font-medium mb-1">Name</label>
+                  <label className="block text-amber-950 font-medium mb-1">
+                    Name
+                  </label>
                   <input
                     type="text"
                     className="w-full px-4 py-2 border border-amber-200 rounded-lg focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 bg-white text-gray-900"
@@ -537,7 +639,9 @@ export default function UserHeader() {
                   />
                 </div>
                 <div>
-                  <label className="block text-amber-950 font-medium mb-1">Email</label>
+                  <label className="block text-amber-950 font-medium mb-1">
+                    Email
+                  </label>
                   <input
                     type="email"
                     className="w-full px-4 py-2 border border-amber-200 rounded-lg focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 bg-white text-gray-900"
@@ -548,7 +652,9 @@ export default function UserHeader() {
                   />
                 </div>
                 <div>
-                  <label className="block text-amber-950 font-medium mb-1">Phone Number</label>
+                  <label className="block text-amber-950 font-medium mb-1">
+                    Phone Number
+                  </label>
                   <input
                     type="text"
                     className="w-full px-4 py-2.5 border border-amber-200 rounded-lg focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 bg-white text-gray-900"
@@ -559,7 +665,9 @@ export default function UserHeader() {
                   />
                 </div>
                 <div>
-                  <label className="block text-amber-950 font-medium mb-1">City</label>
+                  <label className="block text-amber-950 font-medium mb-1">
+                    City
+                  </label>
                   <input
                     type="text"
                     className="w-full px-4 py-2 border border-amber-200 rounded-lg focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 bg-white text-gray-900"
@@ -570,7 +678,9 @@ export default function UserHeader() {
                   />
                 </div>
                 <div className="relative">
-                  <label className="block text-amber-950 font-medium mb-1">Password</label>
+                  <label className="block text-amber-950 font-medium mb-1">
+                    Password
+                  </label>
                   <input
                     type={showRegPassword ? "text" : "password"}
                     className="w-full px-4 py-2 border border-amber-200 rounded-lg focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 bg-white text-gray-900"
@@ -583,7 +693,9 @@ export default function UserHeader() {
                     type="button"
                     onClick={() => togglePasswordVisibility("register")}
                     className="absolute right-3 top-9 text-gray-500 hover:text-amber-700"
-                    aria-label={showRegPassword ? "Hide password" : "Show password"}
+                    aria-label={
+                      showRegPassword ? "Hide password" : "Show password"
+                    }
                   >
                     {showRegPassword ? (
                       <EyeSlashIcon className="h-5 w-5" />
@@ -593,7 +705,9 @@ export default function UserHeader() {
                   </button>
                 </div>
                 <div className="relative">
-                  <label className="block text-amber-950 font-medium mb-1">Confirm Password</label>
+                  <label className="block text-amber-950 font-medium mb-1">
+                    Confirm Password
+                  </label>
                   <input
                     type={showConPassword ? "text" : "password"}
                     className="w-full px-4 py-2 border border-amber-200 rounded-lg focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 bg-white text-gray-900"
@@ -606,7 +720,9 @@ export default function UserHeader() {
                     type="button"
                     onClick={() => togglePasswordVisibility("confirm")}
                     className="absolute right-3 top-9 text-gray-500 hover:text-amber-700"
-                    aria-label={showConPassword ? "Hide password" : "Show password"}
+                    aria-label={
+                      showConPassword ? "Hide password" : "Show password"
+                    }
                   >
                     {showConPassword ? (
                       <EyeSlashIcon className="h-5 w-5" />
@@ -616,7 +732,9 @@ export default function UserHeader() {
                   </button>
                 </div>
                 <div>
-                  <label className="block text-amber-950 font-medium mb-1">Profile Picture</label>
+                  <label className="block text-amber-950 font-medium mb-1">
+                    Profile Picture
+                  </label>
                   <input
                     type="file"
                     className="w-full px-4 py-2 border border-amber-200 rounded-lg focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 bg-white text-gray-900"
@@ -658,15 +776,26 @@ export default function UserHeader() {
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
             <div
-              className="w-full md:w-1/2 h-64 md:h-auto bg-cover bg-center rounded-lg bg-[url('./assets/UserRegister.jpg')]" aria-hidden="true">
+              className="w-full md:w-1/2 h-64 md:h-auto bg-cover bg-center rounded-lg bg-[url('./assets/UserRegister.jpg')]"
+              aria-hidden="true"
+            >
               <div className="text-white text-center p-8">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">Join with Us</h2>
-                <p className="text-lg md:text-xl">Register to start your journey</p>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                  Join with Us
+                </h2>
+                <p className="text-lg md:text-xl">
+                  Register to start your journey
+                </p>
               </div>
             </div>
           </DialogPanel>
