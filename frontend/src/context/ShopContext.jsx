@@ -245,7 +245,8 @@ const ShopContextProvider = (props) => {
   };
 
   const checkAuth = () => {
-    if (!getToken()) {
+    const token = getToken();
+    if (!token) {
       toast.error('Please login to continue');
       return false;
     }
@@ -270,7 +271,7 @@ const ShopContextProvider = (props) => {
     updateQuantity,
     getCartAmount,
     backendUrl,
-    checkAuth: () => !!getToken(),
+    checkAuth,
   };
 
   return <ShopContext.Provider value={value}>{props.children}</ShopContext.Provider>;

@@ -22,6 +22,7 @@ import registrationRoutes from "./routes/registrationRoutes.js";
 import professionalAppointmentRoutes from './routes/appointmentRoutes.js';
 import productRouter from "./routes/productRoute.js";
 import cartRouter from "./routes/cartRoute.js";
+import orderRouter from "./routes/orderRoute.js";
 
 dotenv.config();
 
@@ -65,6 +66,7 @@ app.use('/api', passDataAdoptablePetTable);
 //api endpoints for marketplace
 app.use('/api/product',productRouter)
 app.use('/api/cart', cartRouter);
+app.use('/api/order',orderRouter)
 
 // MongoDB connection
 mongoose

@@ -4,6 +4,7 @@ import MarketplaceTitle from '../Component/MarketplaceTitle';
 import { ShopContext } from '../context/ShopContext';
 import { assets } from '../assets/assets';
 import CartTotal from '../Component/CartTotal';
+import { toast } from 'react-toastify';
 
 const Cart = () => {
   const { products, currency, cartItems, updateQuantity, checkAuth } = useContext(ShopContext);
@@ -28,10 +29,17 @@ const Cart = () => {
   }, [cartItems]);
 
   const handleCheckout = () => {
-    if (checkAuth()) {
-      navigate('/placeOrder');
+    console.log('Checkout button clicked');
+    const token = localStorage.getItem('petOwnerToken');
+    console.log('Token in handleCheckout:', token);
+    
+    if (token) {
+      console.log('User is logged in, navigating to placeOrder');
+      navigate('/placeOrder', { replace: true });
     } else {
-      navigate('/login');
+      console.log('User is not logged in, navigating to login');
+      toast.error('Please login to continue');
+      navigate('/login', { replace: true });
     }
   };
 
