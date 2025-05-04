@@ -6,7 +6,7 @@ import { assets } from '../assets/assets';
 import CartTotal from '../Component/CartTotal';
 
 const Cart = () => {
-  const { products, currency, cartItems, updateQuantity } = useContext(ShopContext);
+  const { products, currency, cartItems, updateQuantity, checkAuth } = useContext(ShopContext);
   const navigate = useNavigate();
   const [cartData, setCartData] = useState([]);
 
@@ -26,6 +26,14 @@ const Cart = () => {
     console.log('Cart data:', tempData);
     setCartData(tempData);
   }, [cartItems]);
+
+  const handleCheckout = () => {
+    if (checkAuth()) {
+      navigate('/placeOrder');
+    } else {
+      navigate('/login');
+    }
+  };
 
   return (
     <div className='border-t pt-14 ml-10 mr-10'>
@@ -92,7 +100,7 @@ const Cart = () => {
           <CartTotal />
           <div className='w-full text-end'>
             <button
-              onClick={() => navigate('/placeOrder')}
+              onClick={handleCheckout}
               className='bg-black text-white text-sm my-8 px-8 py-3 cursor-pointer'
             >
               PROCEED TO CHECKOUT

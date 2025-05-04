@@ -64,7 +64,7 @@ const MainLayout = ({ children }) => {
 
 const App = () => {
   return (
-    <BrowserRouter>
+   
       <Routes>
         {/* Public Routes with MainLayout */}
         <Route
@@ -251,12 +251,7 @@ const App = () => {
           <Route path="refund-request" element={<CancelationReq />} />
         </Route>
 
-           {/* Marketplace */}
-         
-          <Route path = '/product/:ProductId'element = {<Product/>}/>
-          <Route path = "/cart" element={<Cart/>}/>
-          <Route path = "/placeOrder" element={<PlaceOrder/>}/>
-          <Route path = "/orders" element={<Orders/>}/>
+          
 
 
         {/* Protected Routes with MainLayout */}
@@ -370,7 +365,7 @@ const App = () => {
             </PrivateRoute>
           }
         />
-
+{/* Marketplace */}
            <Route
           path="/collection"
           element={
@@ -380,8 +375,41 @@ const App = () => {
           }
         />
 
+          <Route
+          path="/product/:ProductId"
+          element={
+            <MainLayout>
+              <Product />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/cart"
+          element={
+            <MainLayout>
+              <Cart/>
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/placeOrder"
+          element={
+            <MainLayout>
+              <PlaceOrder/>
+            </MainLayout>
+          }
+        />
+          <Route
+          path="/orders"
+          element={
+            <MainLayout>
+              <Orders/>
+            </MainLayout>
+          }
+        />
+          
       </Routes>
-    </BrowserRouter>
+   
   );
 };
 

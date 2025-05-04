@@ -22,8 +22,10 @@ const userSchema = new mongoose.Schema(
     },
     city: { type: String, required: true },
     password: { type: String, required: true },
+    cartData: { type: Object, default: {} },
   },
   { timestamps: true } // Add timestamps
+  
 );
 
 // Hash password before saving
