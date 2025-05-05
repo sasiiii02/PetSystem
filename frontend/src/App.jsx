@@ -43,13 +43,13 @@ import Availability_for_trainer from "./Pages/AvailabilityTrainerTable";
 import CancelationReq from "./Pages/CancelationReqPage";
 import ActiveProfessionals from "./Pages/ActiveProfessionals";
 import Login from "./Pages/Login";
- import Signup from "./Pages/Signup";
-
- import Collection from "./Pages/Collection";
+import Signup from "./Pages/Signup";
+import Collection from "./Pages/Collection";
 import Product from "./Pages/Product";
 import Cart from "./Pages/Cart";
 import PlaceOrder from "./Pages/PlaceOrder";
 import Orders from "./Pages/Orders";
+import StoreAdminDashboard from "./Pages/StoreAdminDashboard";
 
 // Layout for pet owner routes with UserHeader and UserFooter
 const MainLayout = ({ children }) => {
@@ -80,6 +80,14 @@ const App = () => {
         <Route path="/signup" element={<MainLayout><Signup /></MainLayout>} />
 
         <Route
+          path="/staff-login"
+          element={
+            <MainLayout>
+              <StaffLogin />
+            </MainLayout>
+          }
+        />
+        <Route
           path="/stafflogin"
           element={
             <MainLayout>
@@ -87,6 +95,7 @@ const App = () => {
             </MainLayout>
           }
         />
+
         <Route
           path="/AdminRegister"
           element={
@@ -228,6 +237,25 @@ const App = () => {
           }
         />
 
+        {/* Store Manager Routes */}
+        <Route
+          path="/admin/redirect/store_manager"
+          element={
+            <PrivateRoute>
+              <StoreAdminDashboard />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/store-admin/*"
+          element={
+            <PrivateRoute>
+              <StoreAdminDashboard />
+            </PrivateRoute>
+          }
+        />
+
         {/* Appointment Manager Routes with AppointmentManagerLayout */}
         <Route
           path="/admin/redirect/appointment_manager"
@@ -250,6 +278,9 @@ const App = () => {
           <Route path="availability/trainer" element={<Availability_for_trainer />} />
           <Route path="refund-request" element={<CancelationReq />} />
         </Route>
+
+        
+        <Route path="/storeStripeVerify" element={<storeStripeVerify />} />
 
           
 

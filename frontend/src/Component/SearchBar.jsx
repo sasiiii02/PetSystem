@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { ShopContext } from '../context/ShopContext';
-import { assets } from '../assets/assets';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 
 const SearchBar = () => {
     const { search, setSearch, showSearch, setShowSearch } = useContext(ShopContext);
@@ -15,11 +15,9 @@ const SearchBar = () => {
                     type='text' 
                     placeholder='Search' 
                 />
-                <img 
+                <XMarkIcon 
                     onClick={() => setShowSearch(false)} 
-                    className='inline w-3 cursor-pointer' 
-                    src={assets.cross_icon} 
-                    alt="Close Search" 
+                    className='w-5 h-5 text-gray-500 cursor-pointer hover:text-gray-700' 
                 />
             </div>
         </div>

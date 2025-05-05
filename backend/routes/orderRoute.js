@@ -4,7 +4,8 @@ import {
   getUserOrders, 
   getOrderDetails, 
   updateOrderStatus,
-  placeOrder
+  placeOrder,
+  verifyStripe
 } from '../controllers/orderController.js';
 import authUser from '../middleware/auth.js';
 
@@ -25,4 +26,6 @@ orderRouter.post('/place',authUser,getUserOrders);
 orderRouter.get('/:orderId', authUser, getOrderDetails);
 orderRouter.put('/:orderId/status', authUser, updateOrderStatus);
 
+
+orderRouter.post('/verify',authUser,verifyStripe);
 export default orderRouter; 

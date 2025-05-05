@@ -44,6 +44,15 @@ const PrivateRoute = ({ children }) => {
     return <Navigate to="/stafflogin" replace />;
   }
 
+  // Store manager role check
+  if (
+    (location.pathname.startsWith("/store-admin") || 
+     location.pathname.startsWith("/admin/redirect/store_manager")) &&
+    user.role !== "store_manager"
+  ) {
+    return <Navigate to="/stafflogin" replace />;
+  }
+
   // Role-based access check for professional routes
   if (
     location.pathname.startsWith("/professional") &&

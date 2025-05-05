@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { assets } from '../assets/assets'; // Ensure this path is correct
-import { backendUrl } from '../App';
 import { toast } from 'react-toastify';
+
+const backendUrl = 'http://localhost:5000';
 
 const StoreAdminAdd = ({ token }) => {
   const [image1, setImage1] = useState(false);

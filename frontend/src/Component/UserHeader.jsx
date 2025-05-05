@@ -7,11 +7,11 @@ import {
   XMarkIcon,
   EyeIcon,
   EyeSlashIcon,
+  ShoppingCartIcon,
 } from "@heroicons/react/24/outline";
 import { Link, useNavigate } from "react-router-dom";
 import { ShopContext } from "../context/ShopContext";
 import { assets } from "../assets/assets";
-
 export default function UserHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
@@ -290,7 +290,7 @@ export default function UserHeader() {
           </Link>
 
           <Link to="/cart" className="relative inline-block p-2">
-            <img src={assets.cart_icon} className="w-4 min-w-4" alt="Cart" />
+            <ShoppingCartIcon className="w-6 h-6 text-gray-700" />
             <p className="absolute right-[-3px] bottom-[-3px] w-4 h-4 flex items-center justify-center bg-black text-white rounded-full text-[8px] z-10 font-bold">
               {getCartCount()}
             </p>
@@ -410,11 +410,7 @@ export default function UserHeader() {
                 </Link>
 
                 <Link to="/cart" className="relative inline-block p-2">
-                  <img
-                    src={assets.cart_icon}
-                    className="w-4 min-w-4"
-                    alt="Cart"
-                  />
+                  <ShoppingCartIcon className="w-6 h-6 text-gray-700" />
                   <p className="absolute right-[-3px] bottom-[-3px] w-4 h-4 flex items-center justify-center bg-black text-white rounded-full text-[8px] z-10 font-bold">
                     {getCartCount()}
                   </p>

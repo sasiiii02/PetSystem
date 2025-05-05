@@ -131,7 +131,29 @@ const placeOrderStripe = async (req, res) => {
         res.json({ success: false, message: error.message });
     }
 };
-
+//verify stripe
+const verifyStripe = async (req, res) => {
+    try {
+        const { session_id } = req.body;
+        const session = await stripe.checkout.sessions.retrieve(session_id);
+        
+        if (session.payment_status === "paid") {
+            const order = await orderModel.findById(session.metadata.orderID);
+            if (order) {
+                order.payment = true;
+                await order.save();
+                res.json({ success: true, message: "Payment verified successfully" });
+            } else {
+                res.status(404).json({ success: false, message: "Order not found" });
+            }
+        } else {
+            res.status(400).json({ success: false, message: "Payment not completed" });
+        }
+    } catch (error) {
+        console.log("Verify stripe error:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
 // Get all orders
 const getAllOrders = async (req, res) => {
     try {
@@ -223,4 +245,4 @@ const updateOrderStatus = async (req, res) => {
 };
 
 
-export { placeOrderStripe, getAllOrders, getUserOrders, getOrderDetails, updateOrderStatus, placeOrder };
+export { placeOrderStripe, getAllOrders, getUserOrders, getOrderDetails, updateOrderStatus, placeOrder, verifyStripe };

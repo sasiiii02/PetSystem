@@ -21,7 +21,6 @@ const Orders = () => {
           return;
         }
 
-        // Get user ID from token
         const tokenData = JSON.parse(atob(token.split('.')[1]));
         const userId = tokenData.userId;
 
@@ -37,7 +36,6 @@ const Orders = () => {
         );
 
         if (response.data.success) {
-          console.log('Orders data:', response.data.orders);
           setOrders(response.data.orders);
         } else {
           toast.error(response.data.message || 'Failed to fetch orders');

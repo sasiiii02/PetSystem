@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { backendUrl, currency } from '../App';
 import { toast } from 'react-toastify';
+
+const backendUrl = 'http://localhost:5000';
+const currency = 'Rs. ';
 
 const StoreAdminOrders = ({ token }) => {
   const [orders, setOrders] = useState([]);
