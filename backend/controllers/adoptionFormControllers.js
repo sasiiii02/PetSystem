@@ -2,7 +2,36 @@ import AdoptionForm from '../models/adoptionForm.js';
 
 export const createApplication = async (req, res) => {
     try {
-        const application = new AdoptionForm(req.body);
+        const {
+            firstName,
+            lastName,
+            email,
+            phoneNumber,
+            petType,
+            petName,
+            petImage,
+            homeType,
+            employmentStatus,
+            hasYard,
+            hasOtherPets,
+            additionalInfo
+        } = req.body;
+
+        const application = new AdoptionForm({
+            firstName,
+            lastName,
+            email,
+            phoneNumber,
+            petType,
+            petName,
+            petImage,
+            homeType,
+            employmentStatus,
+            hasYard,
+            hasOtherPets,
+            additionalInfo
+        });
+
         await application.save();
         res.status(201).json(application);
     } catch (error) {

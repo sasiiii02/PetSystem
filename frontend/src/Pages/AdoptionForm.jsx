@@ -89,7 +89,6 @@ const PetAdoptionForm = () => {
     const newErrors = {};
 
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
-    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email.trim()) {
@@ -140,6 +139,7 @@ const PetAdoptionForm = () => {
         phoneNumber: formData.phone,
         petType: formData.petType,
         petName: formData.preferredPet,
+        petImage: petImage,
         homeType: formData.homeType,
         employmentStatus: formData.employmentStatus,
         hasYard: formData.hasYard,
@@ -165,7 +165,7 @@ const PetAdoptionForm = () => {
         setShowSuccessModal(true);
         // Redirect after 2 seconds
         setTimeout(() => {
-          navigate('/profile', { state: { adoptionSuccess: true } });
+          navigate('/pet-register-dashboard', { state: { adoptionSuccess: true } });
         }, 2000);
       }
     } catch (error) {

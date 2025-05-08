@@ -46,6 +46,13 @@ import Login from "./Pages/Login";
 import Signup from "./Pages/Signup";
 import PetAdoptionCoordinatorDashboard from "./Pages/AdoptionCoordinatorDashBoard";
 import AdoptionScheduler from "./Pages/HomeVisitScheduler";
+import PetLostandfound from "./Pages/PetLostandfound";
+import AddLostPet from "./Pages/AddLostPet";
+import AddFoundPet from "./Pages/AddFoundPet";
+import PetDetails from './Pages/PetDetails';
+import EditLostPet from './Pages/EditLostPet';
+import EditFoundPet from './Pages/EditFoundPet';
+import MyPetReports from './Pages/MyPetReports';
 
 // Layout for pet owner routes with UserHeader and UserFooter
 const MainLayout = ({ children }) => {
@@ -250,6 +257,16 @@ const App = () => {
           <Route path="refund-request" element={<CancelationReq />} />
         </Route>
 
+        {/* Adoption Manager Routes */}
+        <Route
+          path="/admin/redirect/adoption_manager"
+          element={
+            <PrivateRoute>
+              <PetAdoptionCoordinatorDashboard />
+            </PrivateRoute>
+          }
+        />
+
         {/* Protected Routes with MainLayout */}
         <Route
           path="/event/:id"
@@ -361,6 +378,45 @@ const App = () => {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/pet-lost-and-found"
+          element={
+            <MainLayout>
+              <PetLostandfound />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/add-lost-pet"
+          element={
+            <PrivateRoute>
+              <MainLayout>
+                <AddLostPet />
+              </MainLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/add-found-pet"
+          element={
+            <PrivateRoute>
+              <MainLayout>
+                <AddFoundPet />
+              </MainLayout>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/pet-details/:id"
+          element={
+            <MainLayout>
+              <PetDetails />
+            </MainLayout>
+          }
+        />
+        <Route path="/edit-lost-pet/:id" element={<MainLayout><EditLostPet /></MainLayout>} />
+        <Route path="/edit-found-pet/:id" element={<MainLayout><EditFoundPet /></MainLayout>} />
+        <Route path="/my-pet-reports" element={<MainLayout><MyPetReports /></MainLayout>} />
       </Routes>
     </BrowserRouter>
   );

@@ -10,7 +10,9 @@ import {
   Edit, 
   Trash2,
   AlertCircle,
-  Search
+  Search,
+  Dog,
+  CalendarCheck
 } from 'lucide-react';
 
 const PetRegisterUserDashboard = () => {
@@ -20,6 +22,7 @@ const PetRegisterUserDashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState({ show: false, formId: null });
   const [messages, setMessages] = useState([]);
+  const [homeVisits, setHomeVisits] = useState([]);
   const navigate = useNavigate();
 
   // Get token and user data from localStorage
@@ -49,6 +52,20 @@ const PetRegisterUserDashboard = () => {
     }
   };
 
+  // Fetch home visits for the user
+  const fetchHomeVisits = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/homevisits/my-visits', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setHomeVisits(response.data);
+    } catch (err) {
+      console.error("Error fetching home visits:", err);
+    }
+  };
+
   // Fetch messages for the user
   const fetchMessages = async () => {
     try {
@@ -63,6 +80,34 @@ const PetRegisterUserDashboard = () => {
     }
   };
 
+  // Handle home visit response
+  const handleVisitResponse = async (visitId, response) => {
+    try {
+      await axios.put(
+        `http://localhost:5000/api/homevisits/${visitId}`,
+        { userResponse: response },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      fetchHomeVisits();
+      setNotification({
+        show: true,
+        message: `Home visit ${response === 'accepted' ? 'accepted' : 'rejected'} successfully`,
+        type: 'success'
+      });
+    } catch (err) {
+      console.error("Error responding to home visit:", err);
+      setNotification({
+        show: true,
+        message: "Failed to respond to home visit",
+        type: 'error'
+      });
+    }
+  };
+
   useEffect(() => {
     if (!token || !userEmail) {
       navigate('/login');
@@ -70,6 +115,7 @@ const PetRegisterUserDashboard = () => {
     }
     fetchAdoptionForms();
     fetchMessages();
+    fetchHomeVisits();
   }, [token, userEmail, navigate]);
 
   // Handle form deletion
@@ -142,11 +188,29 @@ const PetRegisterUserDashboard = () => {
             <div className="grid gap-4">
               {filteredForms.map((form) => (
                 <div key={form._id} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-4 flex-1">
-                      <div className="flex items-center space-x-3">
-                        <h3 className="text-2xl font-bold text-[#80533b]">{form.petName}</h3>
-                        <span className={`px-4 py-1.5 rounded-full text-sm font-medium ${
+                  <div className="flex flex-col md:flex-row gap-6">
+                    {/* Left Section - Pet Image and Basic Info */}
+                    <div className="flex-shrink-0">
+                      <div className="relative w-40 h-40 rounded-xl overflow-hidden">
+                        {form.petImage ? (
+                          <img 
+                            src={form.petImage.startsWith('http') ? form.petImage : `http://localhost:5000${form.petImage}`} 
+                            alt={form.petName} 
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = 'https://via.placeholder.com/150?text=No+Image';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                            <Dog className="text-gray-400" size={32} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-4 text-center">
+                        <h3 className="text-xl font-bold text-[#80533b]">{form.petName}</h3>
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium mt-2 inline-block ${
                           form.status === 'Approved' ? 'bg-green-100 text-green-800' :
                           form.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
                           'bg-red-100 text-red-800'
@@ -154,32 +218,35 @@ const PetRegisterUserDashboard = () => {
                           {form.status || 'Pending'}
                         </span>
                       </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-3">
-                          <div className="flex items-center space-x-2">
-                            <span className="w-2 h-2 bg-[#D08860] rounded-full"></span>
+                    </div>
+
+                    {/* Right Section - Form Details */}
+                    <div className="flex-grow">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-[#D08860] rounded-full mr-2"></span>
                             <p className="text-gray-700">
                               <span className="font-semibold">Pet Type:</span> {form.petType}
                             </p>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="w-2 h-2 bg-[#D08860] rounded-full"></span>
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-[#D08860] rounded-full mr-2"></span>
                             <p className="text-gray-700">
                               <span className="font-semibold">Home Type:</span> {form.homeType}
                             </p>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="w-2 h-2 bg-[#D08860] rounded-full"></span>
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-[#D08860] rounded-full mr-2"></span>
                             <p className="text-gray-700">
                               <span className="font-semibold">Employment:</span> {form.employmentStatus}
                             </p>
                           </div>
                         </div>
                         
-                        <div className="space-y-3">
-                          <div className="flex items-center space-x-2">
-                            <span className="w-2 h-2 bg-[#D08860] rounded-full"></span>
+                        <div className="space-y-2">
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-[#D08860] rounded-full mr-2"></span>
                             <p className="text-gray-700">
                               <span className="font-semibold">Has Yard:</span> 
                               <span className={`ml-2 ${form.hasYard ? 'text-green-600' : 'text-red-600'}`}>
@@ -187,8 +254,8 @@ const PetRegisterUserDashboard = () => {
                               </span>
                             </p>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="w-2 h-2 bg-[#D08860] rounded-full"></span>
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-[#D08860] rounded-full mr-2"></span>
                             <p className="text-gray-700">
                               <span className="font-semibold">Other Pets:</span>
                               <span className={`ml-2 ${form.hasOtherPets ? 'text-green-600' : 'text-red-600'}`}>
@@ -196,8 +263,8 @@ const PetRegisterUserDashboard = () => {
                               </span>
                             </p>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="w-2 h-2 bg-[#D08860] rounded-full"></span>
+                          <div className="flex items-center">
+                            <span className="w-2 h-2 bg-[#D08860] rounded-full mr-2"></span>
                             <p className="text-gray-700">
                               <span className="font-semibold">Submitted:</span> {new Date(form.createdAt).toLocaleDateString()}
                             </p>
@@ -213,23 +280,106 @@ const PetRegisterUserDashboard = () => {
                           </p>
                         </div>
                       )}
+
+                      <div className="mt-4 flex justify-end space-x-3">
+                        <button
+                          onClick={() => navigate(`/edit-adoption-form/${form._id}`)}
+                          className="px-4 py-2 bg-[#D08860] text-white rounded-lg hover:bg-[#80533b] transition-colors flex items-center space-x-2"
+                        >
+                          <Edit size={18} />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          onClick={() => setShowDeleteConfirm({ show: true, formId: form._id })}
+                          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center space-x-2"
+                        >
+                          <Trash2 size={18} />
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Home Visits Section */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <h2 className="text-2xl font-semibold text-[#80533b] mb-4 flex items-center">
+            <CalendarCheck className="mr-2" size={24} />
+            Home Visit Requests
+          </h2>
+          
+          {loading ? (
+            <div className="text-center py-4">Loading...</div>
+          ) : homeVisits.length === 0 ? (
+            <div className="text-center py-4 text-gray-500">No home visit requests</div>
+          ) : (
+            <div className="grid gap-4">
+              {homeVisits.map((visit) => (
+                <div key={visit._id} className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition">
+                  <div className="flex flex-col md:flex-row gap-6">
+                    {/* Left Section - Visit Details */}
+                    <div className="flex-grow">
+                      <h3 className="text-xl font-bold text-[#80533b] mb-2">{visit.petName} Home Visit</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-gray-600">
+                            <span className="font-semibold">Date:</span> {new Date(visit.date).toLocaleDateString()}
+                          </p>
+                          <p className="text-gray-600">
+                            <span className="font-semibold">Time:</span> {new Date(visit.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600">
+                            <span className="font-semibold">Status:</span> {visit.status}
+                          </p>
+                          <p className="text-gray-600">
+                            <span className="font-semibold">Your Response:</span> {visit.userResponse}
+                          </p>
+                        </div>
+                      </div>
+                      {visit.notes && (
+                        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                          <p className="text-gray-600">
+                            <span className="font-semibold">Notes:</span> {visit.notes}
+                          </p>
+                        </div>
+                      )}
                     </div>
 
-                    <div className="flex flex-col items-end space-y-3 ml-6">
-                      <button
-                        onClick={() => navigate(`/edit-adoption-form/${form._id}`)}
-                        className="p-2.5 text-white bg-[#D08860] hover:bg-[#80533b] rounded-lg transition-colors duration-200 flex items-center space-x-2"
-                      >
-                        <Edit size={18} />
-                        <span>Edit</span>
-                      </button>
-                      <button
-                        onClick={() => setShowDeleteConfirm({ show: true, formId: form._id })}
-                        className="p-2.5 text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors duration-200 flex items-center space-x-2"
-                      >
-                        <Trash2 size={18} />
-                        <span>Delete</span>
-                      </button>
+                    {/* Right Section - Action Buttons */}
+                    <div className="flex flex-col justify-center space-y-3">
+                      {visit.userResponse === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleVisitResponse(visit._id, 'accepted')}
+                            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition flex items-center justify-center space-x-2"
+                          >
+                            <CheckCircle size={18} />
+                            <span>Accept Visit</span>
+                          </button>
+                          <button
+                            onClick={() => handleVisitResponse(visit._id, 'rejected')}
+                            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition flex items-center justify-center space-x-2"
+                          >
+                            <XCircle size={18} />
+                            <span>Reject Visit</span>
+                          </button>
+                        </>
+                      )}
+                      {visit.userResponse !== 'pending' && (
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          visit.userResponse === 'accepted' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {visit.userResponse === 'accepted' ? 'Visit Accepted' : 'Visit Rejected'}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -18,7 +18,7 @@ const UserEdit = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('petOwnerToken');
         const response = await axios.get('http://localhost:5000/api/users/profile', {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -44,14 +44,14 @@ const UserEdit = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('petOwnerToken');
       const response = await axios.post('http://localhost:5000/api/users/updateProfile', formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
       if (response.data && response.data.user) {
-        localStorage.setItem('token', response.data.user.token);
-        localStorage.setItem('user', JSON.stringify({
+        localStorage.setItem('petOwnerToken', response.data.user.token);
+        localStorage.setItem('petOwnerUser', JSON.stringify({
           _id: response.data.user._id,
           name: response.data.user.name,
           email: response.data.user.email,
@@ -70,14 +70,14 @@ const UserEdit = () => {
 
   const handleDeleteProfile = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('petOwnerToken');
       const response = await axios.post('http://localhost:5000/api/users/deleteProfile', {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
       if (response.data.message === 'Profile and associated data deleted successfully') {
         // Clear local storage and redirect to home
-        localStorage.removeItem('token');
+        localStorage.removeItem('petOwnerToken');
         localStorage.removeItem('user');
         navigate('/');
       } else {

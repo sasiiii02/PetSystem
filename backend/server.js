@@ -20,6 +20,8 @@ import passDataAdoptablePetTable from './routes/passDataAdoptablePetTable.js';
 import eventRoutes from "./routes/eventRoutes.js"; // Import event routes
 import registrationRoutes from "./routes/registrationRoutes.js";
 import professionalAppointmentRoutes from './routes/appointmentRoutes.js';
+import lostAndFoundRoutes from './routes/lostAndFoundRoutes.js';
+import homeVisitRoutes from './routes/homeVisitRoutes.js';
 
 dotenv.config();
 
@@ -59,7 +61,10 @@ app.use('/api/adoptablepets', adoptablePetRoutes);
 app.use('/api/adoptionform', adoptionFormRoutes);
 app.use('/api/foradoption', forAdoptionRoutes);
 app.use('/api', passDataAdoptablePetTable);
+app.use('/api/homevisits', homeVisitRoutes);
 
+// Lost and Found routes
+app.use('/api/lost-and-found', lostAndFoundRoutes);
 
 // MongoDB connection
 mongoose

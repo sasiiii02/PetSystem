@@ -24,8 +24,8 @@ export default function Login() {
       });
       const data = await response.json();
       if (response.ok) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify({
+        localStorage.setItem("petOwnerToken", data.token);
+        localStorage.setItem("petOwnerUser", JSON.stringify({
           _id: data._id,
           name: data.name,
           email: data.email,
