@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, Heart, X, Trash2, Search, Edit } from 'lucide-react';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Pie } from 'react-chartjs-2';
+
+// Register ChartJS components
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const ProfessionalsList = () => {
   const [professionals, setProfessionals] = useState([]);
@@ -17,7 +22,7 @@ const ProfessionalsList = () => {
   useEffect(() => {
     const fetchProfessionals = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('adminToken');
         if (!token) {
           throw new Error('No authentication token found');
         }
@@ -40,14 +45,16 @@ const ProfessionalsList = () => {
     let filtered = professionals;
 
     if (roleFilter !== 'All') {
-      filtered = filtered.filter((professional) => professional.role === roleFilter);
+      filtered = filtered.filter((professional) => 
+        professional.role.toLowerCase() === roleFilter.toLowerCase()
+      );
     }
 
     if (searchQuery) {
       filtered = filtered.filter(
         (professional) =>
-          professional.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          professional.professionalEmail.toLowerCase().includes(searchQuery.toLowerCase())
+          professional.pName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          professional.pemail.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -79,6 +86,31 @@ const ProfessionalsList = () => {
     }
   };
 
+  // Calculate role distribution for the pie chart
+  const getRoleDistribution = () => {
+    const roleCounts = professionals.reduce((acc, professional) => {
+      const role = professional.role;
+      acc[role] = (acc[role] || 0) + 1;
+      return acc;
+    }, {});
+
+    const labels = Object.keys(roleCounts);
+    const data = Object.values(roleCounts);
+
+    return {
+      labels,
+      datasets: [
+        {
+          data,
+          backgroundColor: ['#001F3F', '#2E2E2E', '#800020'],
+          hoverBackgroundColor: ['#003366', '#4A4A4A', '#A52A2A'],
+          borderColor: ['#001F3F', '#2E2E2E', '#800020'],
+          borderWidth: 1,
+        },
+      ],
+    };
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#F4E4D8] to-[#E6D5C1] flex items-center justify-center">
@@ -91,15 +123,13 @@ const ProfessionalsList = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F4E4D8] to-[#E6D5C1] flex items-center justify-center p-6 sm:p-12">
-      <div className="w-full max-w-[1300px] bg-white shadow-2xl rounded-2xl p-6 sm:p-12">
-        {/* Header */}
+    <div className="min-h-screen bg-gradient-to-br from-[#F4E4D8] to-[#E6D5C1] flex flex-col items-center justify-center p-6 sm:p-12">
+      <div className="w-full max-w-[1300px] bg-white shadow-2xl rounded-2xl p-6 sm:p-12 mb-8">
         <div className="flex items-center justify-center mb-6 sm:mb-8">
           <Heart className="text-amber-950 mr-3" size={32} />
           <h2 className="text-2xl sm:text-3xl font-bold text-amber-950">Professionals List</h2>
         </div>
 
-        {/* Error Message */}
         {error && (
           <p className="text-center text-sm text-red-500 flex items-center justify-center mb-6">
             <AlertCircle className="mr-2" size={18} /> {error}
@@ -135,7 +165,6 @@ const ProfessionalsList = () => {
           </select>
         </div>
 
-        {/* Professionals Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -143,43 +172,49 @@ const ProfessionalsList = () => {
                 <th className="p-3 text-sm font-semibold">Name</th>
                 <th className="p-3 text-sm font-semibold">Email</th>
                 <th className="p-3 text-sm font-semibold">Phone Number</th>
-                <th className="p-3 text-sm font-semibold">City</th>
+                <th className="p-3 text-sm font-semibold">PID</th>
                 <th className="p-3 text-sm font-semibold">Role</th>
-                <th className="p-3 text-sm font-semibold">Update</th>
-                <th className="p-3 text-sm font-semibold">Delete</th>
+                <th className="p-3 text-sm font-semibold">Qualification</th>
+                <th className="p-3 text-sm font-semibold">Experience</th>
+                <th className="p-3 text-sm font-semibold">Description</th>
+                <th className="p-3 text-sm font-semibold w-[220px]">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredProfessionals.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="p-3 text-center text-gray-700">
+                  <td colSpan="9" className="p-3 text-center text-gray-700">
                     No professionals found
                   </td>
                 </tr>
               ) : (
-                filteredProfessionals.map((professional) => (
-                  <tr key={professional._id} className="border-b border-amber-200">
+                filteredProfessionals.map((professional, index) => (
+                  <tr
+                    key={professional._id}
+                    className={`border-b border-amber-200 ${
+                      index % 2 === 1 ? 'bg-amber-50' : 'bg-white'
+                    } hover:bg-gray-100`}
+                  >
                     <td className="p-3 text-gray-900">{professional.pName}</td>
                     <td className="p-3 text-gray-900">{professional.pemail}</td>
                     <td className="p-3 text-gray-900">{professional.pphoneNumber}</td>
                     <td className="p-3 text-gray-900">{professional.pID}</td>
-                    <td className="p-3 text-gray-900 capitalize">
-                      {professional.role.replace('_', ' ')}
-                    </td>
-                    <td className="p-3">
+                    <td className="p-3 text-gray-900">{professional.role}</td>
+                    <td className="p-3 text-gray-900">{professional.qualification}</td>
+                    <td className="p-3 text-gray-900">{professional.experience}</td>
+                    <td className="p-3 text-gray-900">{professional.description}</td>
+                    <td className="p-3 flex space-x-2">
                       <button
                         onClick={() => navigate(`/admin/professionals/edit/${professional._id}`)}
                         className="bg-amber-600 text-white px-3 py-1 rounded-lg flex items-center text-sm hover:bg-amber-700 transition-colors"
-                        aria-label={`Update professional ${professional.name}`}
+                        aria-label={`Update professional ${professional.pName}`}
                       >
                         <Edit size={16} className="mr-1" /> Update
                       </button>
-                    </td>
-                    <td className="p-3">
                       <button
                         onClick={() => setDeleteConfirm(professional._id)}
                         className="bg-red-600 text-white px-3 py-1 rounded-lg flex items-center text-sm hover:bg-red-700 transition-colors"
-                        aria-label={`Delete professional ${professional.name}`}
+                        aria-label={`Delete professional ${professional.pName}`}
                       >
                         <Trash2 size={16} className="mr-1" /> Delete
                       </button>
@@ -192,7 +227,45 @@ const ProfessionalsList = () => {
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* Pie Chart Section */}
+      <div className="w-full max-w-[800px] bg-white shadow-2xl rounded-2xl p-6 sm:p-12">
+        <div className="flex items-center justify-center mb-6">
+          <Heart className="text-amber-950 mr-3" size={32} />
+          <h2 className="text-2xl sm:text-3xl font-bold text-amber-950">Professional Role Distribution</h2>
+        </div>
+        
+        <div className="w-full max-w-[500px] mx-auto">
+          <Pie 
+            data={getRoleDistribution()} 
+            options={{
+              responsive: true,
+              plugins: {
+                legend: {
+                  position: 'bottom',
+                  labels: {
+                    padding: 20,
+                    font: {
+                      size: 12
+                    }
+                  }
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      const label = context.label || '';
+                      const value = context.raw || 0;
+                      const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                      const percentage = Math.round((value / total) * 100);
+                      return `${label}: ${value} (${percentage}%)`;
+                    }
+                  }
+                }
+              }
+            }}
+          />
+        </div>
+      </div>
+
       {deleteConfirm && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
@@ -200,11 +273,7 @@ const ProfessionalsList = () => {
           onKeyDown={(e) => e.key === 'Escape' && setDeleteConfirm(null)}
           tabIndex={0}
         >
-          <div
-            className="bg-white rounded-2xl p-6 w-full max-w-[550px] border border-amber-100 max-h-[90vh] overflow-y-auto"
-            role="dialog"
-            aria-labelledby="delete-confirm-title"
-          >
+          <div className="bg-white rounded-2xl p-6 w-full max-w-[550px] border border-amber-400 max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setDeleteConfirm(null)}
               className="absolute top-4 right-4 text-gray-400 hover:text-amber-700"
@@ -219,7 +288,7 @@ const ProfessionalsList = () => {
               </h3>
             </div>
             <p className="text-gray-900 mb-6 text-center">
-              Are you sure you want to delete this professional’s profile? This action cannot be undone.
+              Are you sure you want to delete this professional's profile? This action cannot be undone.
             </p>
             <div className="flex justify-center space-x-4">
               <button

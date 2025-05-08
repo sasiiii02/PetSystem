@@ -6,7 +6,8 @@ import AboutUs from "./Component/AboutUs";
 import StaffLogin from "./Pages/StaffLogin";
 import ContactUs from "./Component/ContactUs";
 import PrivateRoute from "./Component/PrivateRoute";
-import ProfessionalRegistration from "./Pages/ProfessionalRegistration";
+import ProfessionalRegistration from "./Pages/professionalRegistration";
+import ProfessionalEdit from "./Pages/ProfessionalEdit";
 import PetRegister from "./Pages/PetRegister";
 import UserEdit from "./Pages/UserEdit";
 import ProfilePage from "./Component/UserProfileViewAppointment";
@@ -211,6 +212,7 @@ const App = () => {
         />
 
         {/* Admin Dashboard Routes */}
+        <Route path="/admin/professionals/edit/:id" element={<ProfessionalEdit />} />
         <Route
           path="/admin/redirect/user_admin"
           element={
