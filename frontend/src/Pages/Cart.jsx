@@ -57,7 +57,7 @@ const Cart = () => {
               key={index}
               className='py-4 mb-4 bg-white rounded-xl shadow-md border border-amber-200 text-gray-700 grid grid-cols-[4fr_0.5fr_0.5fr] sm:grid-cols-[4fr_2fr_0.5fr] items-center gap-4'
             >
-              <div className='flex items-start gap-6'>
+              <div className='ml-5 flex items-start gap-6'>
                 {productData && productData.image && productData.image[0] ? (
                   <img
                     src={productData.image[0]}

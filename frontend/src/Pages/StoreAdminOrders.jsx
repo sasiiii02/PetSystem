@@ -3,7 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 
 const backendUrl = 'http://localhost:5000';
-const currency = 'Rs. ';
+const currency = '$ ';
 
 const StoreAdminOrders = ({ token }) => {
   const [orders, setOrders] = useState([]);
@@ -175,15 +175,23 @@ const StoreAdminOrders = ({ token }) => {
                   <select
                     value={order.status || 'Pending'}
                     onChange={(e) => handleStatusChange(order._id, e.target.value)}
-                    className={`px-2 py-1 rounded-full text-sm ${
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium ${
                       order.status === 'Delivered' ? 'bg-green-100 text-green-800' :
+                      order.status === 'Payment Confirmed' ? 'bg-blue-100 text-blue-800' :
                       order.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}
+                      order.status === 'Shipped' ? 'bg-purple-100 text-purple-800' :
+                      order.status === 'Out for Delivery' ? 'bg-indigo-100 text-indigo-800' :
+                      order.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
+                      'bg-amber-100 text-amber-800'
+                    } border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500`}
                   >
                     <option value="Pending">Pending</option>
+                    <option value="Payment Confirmed">Payment Confirmed</option>
                     <option value="Processing">Processing</option>
+                    <option value="Shipped">Shipped</option>
+                    <option value="Out for Delivery">Out for Delivery</option>
                     <option value="Delivered">Delivered</option>
+                    <option value="Cancelled">Cancelled</option>
                   </select>
                 </td>
                 <td className="py-2 px-4 border-b">{formatDate(order.date || order.createdAt)}</td>

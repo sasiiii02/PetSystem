@@ -4,14 +4,16 @@ import MarketplaceTitle from '../Component/MarketplaceTitle';
 import ProductItem from '../Component/ProductItem';
 import SearchBar from '../Component/SearchBar';
 import { FaPaw, FaFilter } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 const Collection = () => {
-  const { products, search, showSearch } = useContext(ShopContext);
+  const { products, search, showSearch, currency } = useContext(ShopContext);
   const [showFilter, setShowFilter] = useState(false);
   const [filterProducts, setFilterProducts] = useState([]);
   const [category, setCategory] = useState([]);
   const [subCategory, setSubCategory] = useState([]);
   const [sortType, setSortType] = useState('relavant');
+  const navigate = useNavigate();
 
   const toggleCategory = (e) => {
     if(category.includes(e.target.value)){
@@ -46,21 +48,25 @@ const Collection = () => {
     setFilterProducts(productsCopy);
   }
 
-  const sortProducts = () => {
-    let fpCopy = filterProducts.slice();
+    const sortProducts = () => {
+      let fpCopy = filterProducts.slice();
 
-    switch(sortType){
-      case 'low-high':
+      switch(sortType){
+        case 'low-high':
         setFilterProducts(fpCopy.sort((a,b)=>a.price-b.price));
         break;
-      case 'high-low':
+        case 'high-low':
         setFilterProducts(fpCopy.sort((a,b)=>b.price-a.price));
         break;
-      default:
-        applyFilter();
-        break;
+        default:
+          applyFilter();
+          break;
     }
   }
+
+  const handleViewProduct = (productId) => {
+    navigate(`/product/${productId}`);
+  };
 
   useEffect(()=>{
     applyFilter();
@@ -126,7 +132,7 @@ const Collection = () => {
                     OTHER
                   </label>
                 </div>
-              </div>
+        </div>
 
               {/* Type Filter */}
               <div className="border border-amber-200 rounded-xl p-4">
@@ -156,8 +162,26 @@ const Collection = () => {
 
         {/* Products Grid */}
         <div className="grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {filterProducts.map((item, index) => (
-            <ProductItem key={index} name={item.name} id={item._id} price={item.price} image={item.image} />
+          {filterProducts.map((item) => (
+            <div key={item._id} className="product-card bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200">
+              <div className="overflow-hidden rounded-lg">
+                <img 
+                  className="w-full h-48 object-cover hover:scale-110 transition ease-in-out duration-300" 
+                  src={item.image[0]} 
+                  alt={item.name}
+                />
+              </div>
+              <div className="mt-3 space-y-2">
+                <h3 className="text-lg font-semibold text-amber-900 line-clamp-2">{item.name}</h3>
+                <p className="text-xl font-bold text-[#D08860]">{currency}{item.price}</p>
+              </div>
+              <button
+                onClick={() => handleViewProduct(item._id)}
+                className="mt-4 w-full bg-[#D08860] text-white px-4 py-2 rounded-full hover:bg-[#B3714E] transition-all duration-200"
+              >
+                View Product
+              </button>
+            </div>
           ))}
         </div>
       </div>

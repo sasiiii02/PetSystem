@@ -4,10 +4,10 @@ import cloudinary from '../config/cloudinary.js';
 // Function to add a product
 const addProduct = async (req, res) => {
   try {
-    const { name, description, price, category, subCategory, sizes, bestseller } = req.body;
+    const { name, description, price, category, subCategory, sizes, bestseller, quantity } = req.body;
 
     // Validate required fields
-    if (!name || !description || !price || !category || !subCategory || !sizes) {
+    if (!name || !description || !price || !category || !subCategory || !sizes || !quantity) {
       return res.status(400).json({ 
         success: false, 
         message: 'Missing required fields. Please provide all required information.' 
@@ -20,6 +20,15 @@ const addProduct = async (req, res) => {
       return res.status(400).json({ 
         success: false, 
         message: 'Price must be a positive number' 
+      });
+    }
+
+    // Validate quantity is a non-negative number
+    const quantityNum = Number(quantity);
+    if (isNaN(quantityNum) || quantityNum < 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Quantity must be a non-negative number' 
       });
     }
 
@@ -130,6 +139,7 @@ const addProduct = async (req, res) => {
       subCategory,
       bestseller: bestseller === 'true',
       sizes: parsedSizes,
+      quantity: quantityNum,
       image: imagesUrl,
       date: Date.now(),
     };
@@ -270,4 +280,50 @@ const singleProduct = async (req, res) => {
   }
 };
 
-export { listProducts, addProduct, removeProduct, singleProduct };
+// Function to update product quantity
+const updateProductQuantity = async (req, res) => {
+    try {
+        const { id, quantity } = req.body;
+
+        if (!id) {
+            return res.status(400).json({
+                success: false,
+                message: 'Product ID is required'
+            });
+        }
+
+        if (quantity === undefined || isNaN(quantity) || quantity < 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Valid quantity is required'
+            });
+        }
+
+        const product = await Product.findById(id);
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: 'Product not found'
+            });
+        }
+
+        // Convert quantity to number and update
+        const newQuantity = Number(quantity);
+        product.quantity = newQuantity;
+        await product.save();
+
+        return res.json({
+            success: true,
+            message: 'Quantity updated successfully',
+            product
+        });
+    } catch (error) {
+        console.error('Update quantity error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error updating quantity: ' + error.message
+        });
+    }
+};
+
+export { listProducts, addProduct, removeProduct, singleProduct, updateProductQuantity };

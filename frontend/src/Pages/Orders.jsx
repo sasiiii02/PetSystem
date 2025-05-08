@@ -65,10 +65,37 @@ const Orders = () => {
     switch (status) {
       case 'Delivered':
         return 'bg-green-500';
+      case 'Payment Confirmed':
+        return 'bg-blue-500';
       case 'Processing':
         return 'bg-yellow-500';
-      default:
+      case 'Shipped':
+        return 'bg-purple-500';
+      case 'Out for Delivery':
+        return 'bg-indigo-500';
+      case 'Cancelled':
         return 'bg-red-500';
+      default:
+        return 'bg-amber-500';
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'Payment Confirmed':
+        return 'Payment Confirmed';
+      case 'Processing':
+        return 'Processing';
+      case 'Shipped':
+        return 'Shipped';
+      case 'Out for Delivery':
+        return 'Out for Delivery';
+      case 'Delivered':
+        return 'Delivered';
+      case 'Cancelled':
+        return 'Cancelled';
+      default:
+        return 'Pending';
     }
   };
 
@@ -107,7 +134,7 @@ const Orders = () => {
             className="py-6 mb-6 bg-white rounded-xl shadow-md border border-amber-200 text-gray-700 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
           >
             {/* Order Items */}
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 ml-5">
               {order.products.map((product, productIndex) => (
                 <div key={productIndex} className="flex items-start gap-6">
                   {/* Product Image */}
@@ -136,12 +163,15 @@ const Orders = () => {
             <div className="md:w-1/2 flex flex-col gap-4">
               <div className="flex items-center gap-2">
                 <p className={`w-2 h-2 rounded-full ${getStatusColor(order.status)}`}></p>
-                <p className="text-sm md:text-base">{order.status || 'Pending'}</p>
+                <p className="text-sm md:text-base font-medium">{getStatusText(order.status)}</p>
               </div>
               <div className="text-sm text-amber-700">
                 <p>Order Date: {new Date(order.date).toLocaleDateString()}</p>
                 <p>Total: <span className="text-[#D08860] font-bold">{currency}{order.totalPrice}</span></p>
                 <p>Payment Method: {order.paymentMethod}</p>
+                <p>Payment Status: <span className={`font-medium ${order.payment ? 'text-green-600' : 'text-red-600'}`}>
+                  {order.payment ? 'Paid' : 'Pending'}
+                </span></p>
               </div>
               <button 
                 onClick={() => handleTrackOrder(order)}
@@ -162,10 +192,13 @@ const Orders = () => {
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <p className={`w-2 h-2 rounded-full ${getStatusColor(selectedOrder.status)}`}></p>
-                <p className="text-lg text-amber-900">Current Status: {selectedOrder.status || 'Pending'}</p>
+                <p className="text-lg text-amber-900">Current Status: {getStatusText(selectedOrder.status)}</p>
               </div>
               <p className="text-amber-700">Order ID: {selectedOrder._id}</p>
               <p className="text-amber-700">Order Date: {new Date(selectedOrder.date).toLocaleDateString()}</p>
+              <p className="text-amber-700">Payment Status: <span className={`font-medium ${selectedOrder.payment ? 'text-green-600' : 'text-red-600'}`}>
+                {selectedOrder.payment ? 'Paid' : 'Pending'}
+              </span></p>
               <div className="mt-4">
                 <button
                   onClick={() => setSelectedOrder(null)}

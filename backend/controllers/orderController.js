@@ -2,6 +2,7 @@ import orderModel from '../models/orderModel.js';
 import User from '../models/User.js';
 import productModel from '../models/productModel.js';
 import Stripe from "stripe";
+import { updateProductQuantity } from './productController.js';
 
 //global variables
 const currency = 'usd';
@@ -19,12 +20,23 @@ const placeOrder = async (req,res)=>{
             return res.status(400).json({success:false,message:"Missing required fields"});
         }
 
-        // Fetch product details for each item
+        // Fetch product details and update quantities
         const productsWithDetails = await Promise.all(items.map(async (item) => {
             const product = await productModel.findById(item._id);
             if (!product) {
                 throw new Error(`Product not found: ${item._id}`);
             }
+
+            // Check if enough quantity is available
+            if (product.quantity < item.quantity) {
+                throw new Error(`Not enough quantity available for ${product.name}. Available: ${product.quantity}, Requested: ${item.quantity}`);
+            }
+
+            // Update product quantity
+            const newQuantity = product.quantity - item.quantity;
+            product.quantity = newQuantity;
+            await product.save();
+
             return {
                 productId: item._id,
                 name: product.name,
@@ -68,12 +80,23 @@ const placeOrderStripe = async (req, res) => {
             return res.status(400).json({success:false,message:"Missing required fields"});
         }
 
-        // Fetch product details for each item
+        // Fetch product details and update quantities
         const productsWithDetails = await Promise.all(items.map(async (item) => {
             const product = await productModel.findById(item._id);
             if (!product) {
                 throw new Error(`Product not found: ${item._id}`);
             }
+
+            // Check if enough quantity is available
+            if (product.quantity < item.quantity) {
+                throw new Error(`Not enough quantity available for ${product.name}. Available: ${product.quantity}, Requested: ${item.quantity}`);
+            }
+
+            // Update product quantity
+            const newQuantity = product.quantity - item.quantity;
+            product.quantity = newQuantity;
+            await product.save();
+
             return {
                 productId: item._id,
                 name: product.name,
@@ -119,10 +142,13 @@ const placeOrderStripe = async (req, res) => {
         });
 
         const session = await stripe.checkout.sessions.create({
-            success_url: `${origin}/verify?success=true&orderID=${newOrder._id}`,
-            cancel_url: `${origin}/verify?success=false&orderID=${newOrder._id}`,
+            success_url: `${origin}/verify?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${origin}/verify?success=false&session_id={CHECKOUT_SESSION_ID}`,
             line_items,
             mode: 'payment',
+            metadata: {
+                orderId: newOrder._id.toString()
+            }
         });
         res.json({ success: true, session_url: session.url });
 
@@ -131,6 +157,7 @@ const placeOrderStripe = async (req, res) => {
         res.json({ success: false, message: error.message });
     }
 };
+
 //verify stripe
 const verifyStripe = async (req, res) => {
     try {
@@ -138,7 +165,8 @@ const verifyStripe = async (req, res) => {
         const session = await stripe.checkout.sessions.retrieve(session_id);
         
         if (session.payment_status === "paid") {
-            const order = await orderModel.findById(session.metadata.orderID);
+            const orderId = session.metadata.orderId;
+            const order = await orderModel.findById(orderId);
             if (order) {
                 order.payment = true;
                 await order.save();
@@ -147,6 +175,21 @@ const verifyStripe = async (req, res) => {
                 res.status(404).json({ success: false, message: "Order not found" });
             }
         } else {
+            // If payment failed, restore quantities
+            const orderId = session.metadata.orderId;
+            const order = await orderModel.findById(orderId);
+            if (order) {
+                // Restore quantities for each product
+                for (const product of order.products) {
+                    const productDoc = await productModel.findById(product.productId);
+                    if (productDoc) {
+                        productDoc.quantity += product.quantity;
+                        await productDoc.save();
+                    }
+                }
+                // Delete the failed order
+                await orderModel.findByIdAndDelete(orderId);
+            }
             res.status(400).json({ success: false, message: "Payment not completed" });
         }
     } catch (error) {
@@ -154,6 +197,7 @@ const verifyStripe = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
 // Get all orders
 const getAllOrders = async (req, res) => {
     try {

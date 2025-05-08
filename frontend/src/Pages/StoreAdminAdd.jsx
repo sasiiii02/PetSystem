@@ -12,6 +12,7 @@ const StoreAdminAdd = ({ token }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
+  const [quantity, setQuantity] = useState('');
   const [category, setCategory] = useState('Dog');
   const [subCategory, setSubCategory] = useState('Food');
   const [bestseller, setBestSeller] = useState(false);
@@ -27,7 +28,7 @@ const StoreAdminAdd = ({ token }) => {
     e.preventDefault();
     
     // Validate required fields
-    if (!name || !description || !price || !image1) {
+    if (!name || !description || !price || !image1 || !quantity) {
       toast.error('Please fill in all required fields and upload at least one image');
       return;
     }
@@ -40,6 +41,7 @@ const StoreAdminAdd = ({ token }) => {
     formData.append('name', name);
     formData.append('description', description);
     formData.append('price', price);
+    formData.append('quantity', quantity);
     formData.append('category', category);
     formData.append('subCategory', subCategory);
     formData.append('bestseller', bestseller.toString());
@@ -65,6 +67,7 @@ const StoreAdminAdd = ({ token }) => {
         setName('');
         setDescription('');
         setPrice('');
+        setQuantity('');
         setCategory('Dog');
         setSubCategory('Food');
         setBestSeller(false);
@@ -226,6 +229,19 @@ const StoreAdminAdd = ({ token }) => {
             placeholder="25"
             value={price}
             onChange={(e) => setPrice(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="flex-1">
+          <p className="mb-2">Quantity</p>
+          <input
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            type="number"
+            placeholder="0"
+            min="0"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
             required
           />
         </div>

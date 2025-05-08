@@ -6,7 +6,7 @@ import RelatedProducts from '../Component/RelatedProducts';
 
 const Product = () => {
     const { ProductId } = useParams();
-    const { products, currency ,addToCart } = useContext(ShopContext);
+    const { products, currency, addToCart } = useContext(ShopContext);
     const [ProductData, setProductData] = useState(null);
     const [image, setImage] = useState('');
     const [size, setSize] = useState('');
@@ -25,6 +25,8 @@ const Product = () => {
     }, [ProductId, products]);
 
     if (!ProductData) return <div className='opacity-0'></div>;
+
+    const isOutOfStock = ProductData.quantity === 0;
 
     return (
         <div className='bg-amber-50 min-h-screen pt-32 px-4 md:px-16 transition-opacity ease-in duration-500 opacity-100'>
@@ -62,6 +64,16 @@ const Product = () => {
                     </div>
 
                     <p className='mt-5 text-3xl font-bold text-[#D08860]'>{currency}{ProductData.price}</p>
+                    
+                    {/* Stock Status */}
+                    <div className='mt-3'>
+                        {isOutOfStock ? (
+                            <p className='text-red-600 font-medium'>Out of Stock</p>
+                        ) : (
+                            <p className='text-green-600 font-medium'>In Stock ({ProductData.quantity} available)</p>
+                        )}
+                    </div>
+
                     <p className='mt-5 text-amber-800 md:w-4/5'>{ProductData.description}</p>
 
                     {/* Size Selection */}
@@ -80,7 +92,20 @@ const Product = () => {
                         </div>
                     </div>
 
-                    <button onClick={()=>addToCart(ProductData._id,size)} className='bg-[#D08860] hover:bg-[#B3714E] text-white px-8 py-3 text-base rounded-full font-bold shadow-md transition-all duration-200'>ADD TO CART</button>
+                    <button 
+                        onClick={() => addToCart(ProductData._id, size)} 
+                        disabled={isOutOfStock || !size}
+                        className={`${
+                            isOutOfStock 
+                                ? 'bg-gray-400 cursor-not-allowed' 
+                                : !size 
+                                    ? 'bg-gray-400 cursor-not-allowed'
+                                    : 'bg-[#D08860] hover:bg-[#B3714E]'
+                        } text-white px-8 py-3 text-base rounded-full font-bold shadow-md transition-all duration-200`}
+                    >
+                        {isOutOfStock ? 'OUT OF STOCK' : !size ? 'SELECT SIZE' : 'ADD TO CART'}
+                    </button>
+
                     <hr className='mt-8 sm:w-4/5 border-amber-200'/> 
                     <div className='text-sm text-amber-700 mt-5 flex flex-col gap-1'>
                         <p>✅ 100% Original Product</p>

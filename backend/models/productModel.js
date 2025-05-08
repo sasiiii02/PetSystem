@@ -8,6 +8,7 @@ const productSchema = new mongoose.Schema({ // Fixed typo: Scheema -> Schema
     category: { type: String, required: true },
     subCategory: { type: String, required: true },
     sizes: { type: Array, required: true },
+    quantity: { type: Number, required: true, default: 0 },
     bestseller: { type: Boolean },
     date: { type: Number, required: true },
 });

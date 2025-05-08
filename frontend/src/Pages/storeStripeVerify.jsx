@@ -49,28 +49,28 @@ const StoreStripeVerify = () => {
                         );
 
                         if (response.data.success) {
-                            // Clear cart first
+                            // Clear cart only on successful payment
                             setCartItems({});
-                            // Show success message
                             toast.success('Payment successful!');
-                            // Navigate to orders page
                             navigate('/orders', { replace: true });
                         } else {
-                            throw new Error(response.data.message || 'Payment verification failed');
+                            toast.error(response.data.message || 'Payment verification failed');
+                            navigate('/orders', { replace: true });
                         }
                     } catch (error) {
                         console.error('Verification error:', error);
                         toast.error(error.response?.data?.message || 'Payment verification failed');
-                        navigate('/cart');
+                        navigate('/orders', { replace: true });
                     }
                 } else {
-                    toast.error('Payment was cancelled');
-                    navigate('/cart');
+                    // If payment was cancelled or failed, keep cart items and go to orders
+                    toast.error('Payment was not completed');
+                    navigate('/orders', { replace: true });
                 }
             } catch (error) {
                 console.error('Verification error:', error);
                 toast.error('An unexpected error occurred');
-                navigate('/cart');
+                navigate('/orders', { replace: true });
             } finally {
                 setVerifying(false);
             }
