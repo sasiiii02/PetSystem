@@ -1,13 +1,21 @@
 import express from 'express'
-import {listProducts,addProduct,removeProduct,singleProduct} from '../controllers/productController.js'
+import {listProducts, addProduct, removeProduct, singleProduct} from '../controllers/productController.js'
 import upload from '../middleware/multer.js';
 
 const productRouter = express.Router()
 
-productRouter.post('/add',upload.fields([{name:'image1',maxCount:1},{name:'image2',maxCount:1},{name:'image3',maxCount:1},{name:'image4',maxCount:1}]),addProduct);
-productRouter.post('/remove',removeProduct);
-productRouter.post('/single',singleProduct);
-productRouter.get('/list',listProducts)
+// Configure multer for multiple file uploads
+const uploadFields = upload.fields([
+  { name: 'image1', maxCount: 1 },
+  { name: 'image2', maxCount: 1 },
+  { name: 'image3', maxCount: 1 },
+  { name: 'image4', maxCount: 1 }
+]);
+
+productRouter.post('/add', uploadFields, addProduct);
+productRouter.post('/remove', removeProduct);
+productRouter.post('/single', singleProduct);
+productRouter.get('/list', listProducts)
 
 export default productRouter
 

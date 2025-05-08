@@ -5,27 +5,24 @@ import {
   getOrderDetails, 
   updateOrderStatus,
   placeOrder,
-  verifyStripe
+  verifyStripe,
+  getAllOrders
 } from '../controllers/orderController.js';
 import authUser from '../middleware/auth.js';
 
-
 const orderRouter = express.Router();
 
-// Admin routes
-
+// Get all orders route
+orderRouter.get('/all', authUser, getAllOrders);
 
 // User routes
 orderRouter.post('/user', authUser, getUserOrders);
 orderRouter.post('/stripe', authUser, placeOrderStripe);
 orderRouter.post('/cod', authUser, placeOrder);
-orderRouter.post('/details', authUser, getOrderDetails);
+orderRouter.post('/verify', authUser, verifyStripe);
 
-orderRouter.post('/place',authUser,getUserOrders);
+// Order details and status routes
+orderRouter.get('/details/:orderId', authUser, getOrderDetails);
+orderRouter.put('/status/:orderId', authUser, updateOrderStatus);
 
-orderRouter.get('/:orderId', authUser, getOrderDetails);
-orderRouter.put('/:orderId/status', authUser, updateOrderStatus);
-
-
-orderRouter.post('/verify',authUser,verifyStripe);
 export default orderRouter; 

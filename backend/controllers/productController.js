@@ -6,15 +6,42 @@ const addProduct = async (req, res) => {
   try {
     const { name, description, price, category, subCategory, sizes, bestseller } = req.body;
 
+    // Validate required fields
+    if (!name || !description || !price || !category || !subCategory || !sizes) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Missing required fields. Please provide all required information.' 
+      });
+    }
+
+    // Validate price is a positive number
+    const priceNum = Number(price);
+    if (isNaN(priceNum) || priceNum <= 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Price must be a positive number' 
+      });
+    }
+
     // Debug: Log received body and files
     console.log('Received body:', req.body);
     console.log('Received files:', req.files);
-    console.log('Raw req.files object:', JSON.stringify(req.files, null, 2));
 
     // Check if multer rejected files
     if (req.fileValidationError) {
       console.error('Multer validation error:', req.fileValidationError);
-      return res.status(400).json({ success: false, message: `File validation error: ${req.fileValidationError.message}` });
+      return res.status(400).json({ 
+        success: false, 
+        message: `File validation error: ${req.fileValidationError.message}` 
+      });
+    }
+
+    // Validate files
+    if (!req.files || Object.keys(req.files).length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'No files were uploaded' 
+      });
     }
 
     const image1 = req.files?.image1?.[0];
@@ -24,47 +51,85 @@ const addProduct = async (req, res) => {
 
     const images = [image1, image2, image3, image4].filter((item) => item !== undefined);
 
-    // Debug: Log filtered images and individual file fields
-    console.log('Filtered images:', images);
-    console.log('image1:', req.files?.image1);
-    console.log('image2:', req.files?.image2);
-    console.log('image3:', req.files?.image3);
-    console.log('image4:', req.files?.image4);
-
     if (images.length === 0) {
-      return res.status(400).json({ success: false, message: 'At least one image is required' });
+      return res.status(400).json({ 
+        success: false, 
+        message: 'At least one image is required' 
+      });
     }
 
-    let imagesUrl = await Promise.all(
-      images.map(async (item, index) => {
-        try {
-          // Convert buffer to base64 for Cloudinary upload
-          const base64Image = `data:${item.mimetype};base64,${item.buffer.toString('base64')}`;
-          let result = await cloudinary.uploader.upload(base64Image, {
-            resource_type: 'image',
-            folder: 'products',
-          });
-          // Debug: Log Cloudinary result
-          console.log(`Cloudinary upload result for image ${index + 1}:`, result);
-          return result.secure_url;
-        } catch (uploadError) {
-          console.error(`Cloudinary upload error for image ${index + 1}:`, uploadError.message, uploadError.stack);
-          throw new Error(`Failed to upload image ${index + 1}: ${uploadError.message}`);
-        }
-      })
-    );
+    // Upload images to Cloudinary
+    let imagesUrl = [];
+    try {
+      // Log Cloudinary configuration (without sensitive data)
+      console.log('Cloudinary config:', {
+        cloud_name: cloudinary.config().cloud_name,
+        api_key: cloudinary.config().api_key ? '***' : 'missing',
+        api_secret: cloudinary.config().api_secret ? '***' : 'missing'
+      });
 
-    // Debug: Log generated image URLs
-    console.log('Image URLs:', imagesUrl);
+      imagesUrl = await Promise.all(
+        images.map(async (item, index) => {
+          try {
+            // Log file details
+            console.log(`File ${index + 1} details:`, {
+              mimetype: item.mimetype,
+              size: item.size,
+              originalname: item.originalname
+            });
+
+            // Convert buffer to base64 for Cloudinary upload
+            const base64Image = `data:${item.mimetype};base64,${item.buffer.toString('base64')}`;
+            const result = await cloudinary.uploader.upload(base64Image, {
+              resource_type: 'image',
+              folder: 'products',
+              use_filename: true,
+              unique_filename: true
+            });
+            console.log(`Cloudinary upload result for image ${index + 1}:`, result);
+            return result.secure_url;
+          } catch (uploadError) {
+            console.error(`Cloudinary upload error for image ${index + 1}:`, {
+              message: uploadError.message,
+              error: uploadError.error,
+              http_code: uploadError.http_code,
+              name: uploadError.name,
+              stack: uploadError.stack
+            });
+            throw new Error(`Failed to upload image ${index + 1}: ${uploadError.message}`);
+          }
+        })
+      );
+    } catch (uploadError) {
+      console.error('Cloudinary upload error:', uploadError);
+      return res.status(500).json({ 
+        success: false, 
+        message: `Failed to upload images to Cloudinary: ${uploadError.message}` 
+      });
+    }
+
+    // Parse sizes array
+    let parsedSizes;
+    try {
+      parsedSizes = JSON.parse(sizes);
+      if (!Array.isArray(parsedSizes)) {
+        throw new Error('Sizes must be an array');
+      }
+    } catch (parseError) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid sizes format. Must be a valid JSON array' 
+      });
+    }
 
     const productData = {
       name,
       description,
       category,
-      price: Number(price),
+      price: priceNum,
       subCategory,
       bestseller: bestseller === 'true',
-      sizes: JSON.parse(sizes),
+      sizes: parsedSizes,
       image: imagesUrl,
       date: Date.now(),
     };
@@ -74,21 +139,86 @@ const addProduct = async (req, res) => {
     const product = new Product(productData);
     await product.save();
 
-    return res.json({ success: true, message: 'Product Added' });
+    return res.json({ 
+      success: true, 
+      message: 'Product Added Successfully',
+      product 
+    });
   } catch (error) {
     console.error('Add product error:', error.message, error.stack);
-    return res.status(500).json({ success: false, message: error.message });
+    
+    // Handle specific error types
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Validation error: ${error.message}` 
+      });
+    }
+
+    if (error.name === 'MongoError' && error.code === 11000) {
+      return res.status(409).json({ 
+        success: false, 
+        message: 'A product with this name already exists' 
+      });
+    }
+
+    return res.status(500).json({ 
+      success: false, 
+      message: 'An error occurred while adding the product' 
+    });
   }
 };
 
 // Function to list all products
 const listProducts = async (req, res) => {
   try {
-    const products = await Product.find({});
-    return res.json({ success: true, products });
+    // Add index hint and limit to improve query performance
+    const products = await Product.find({})
+      .lean()
+      .hint({ _id: 1 }) // Use _id index
+      .limit(100) // Limit results to prevent overwhelming response
+      .exec();
+
+    if (!products || products.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'No products found' 
+      });
+    }
+
+    return res.json({ 
+      success: true, 
+      products,
+      count: products.length 
+    });
   } catch (error) {
     console.error('List products error:', error.message, error.stack);
-    return res.status(500).json({ success: false, message: error.message });
+    
+    // Handle specific MongoDB errors
+    if (error.name === 'MongooseError') {
+      return res.status(503).json({ 
+        success: false, 
+        message: 'Database service temporarily unavailable. Please try again later.' 
+      });
+    }
+
+    if (error.name === 'MongoError') {
+      if (error.code === 11000) {
+        return res.status(409).json({ 
+          success: false, 
+          message: 'Duplicate entry found' 
+        });
+      }
+      return res.status(503).json({ 
+        success: false, 
+        message: 'Database error occurred' 
+      });
+    }
+
+    return res.status(500).json({ 
+      success: false, 
+      message: 'An error occurred while fetching products' 
+    });
   }
 };
 

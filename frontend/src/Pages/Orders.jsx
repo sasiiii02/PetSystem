@@ -9,6 +9,7 @@ const Orders = () => {
   const { backendUrl, currency } = useContext(ShopContext);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -55,6 +56,21 @@ const Orders = () => {
 
     fetchOrders();
   }, [backendUrl, navigate]);
+
+  const handleTrackOrder = (order) => {
+    setSelectedOrder(order);
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Delivered':
+        return 'bg-green-500';
+      case 'Processing':
+        return 'bg-yellow-500';
+      default:
+        return 'bg-red-500';
+    }
+  };
 
   if (loading) {
     return (
@@ -119,21 +135,49 @@ const Orders = () => {
             {/* Order Status and Details */}
             <div className="md:w-1/2 flex flex-col gap-4">
               <div className="flex items-center gap-2">
-                <p className="w-2 h-2 rounded-full bg-green-500"></p>
-                <p className="text-sm md:text-base">{order.status || 'Processing'}</p>
+                <p className={`w-2 h-2 rounded-full ${getStatusColor(order.status)}`}></p>
+                <p className="text-sm md:text-base">{order.status || 'Pending'}</p>
               </div>
               <div className="text-sm text-gray-600">
                 <p>Order Date: {new Date(order.date).toLocaleDateString()}</p>
                 <p>Total: {currency}{order.totalPrice}</p>
                 <p>Payment Method: {order.paymentMethod}</p>
               </div>
-              <button className="border px-4 py-2 text-sm font-medium rounded-sm self-end">
+              <button 
+                onClick={() => handleTrackOrder(order)}
+                className="border px-4 py-2 text-sm font-medium rounded-sm self-end hover:bg-gray-100"
+              >
                 Track Order
               </button>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Order Tracking Modal */}
+      {selectedOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4">Order Tracking</h3>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <p className={`w-2 h-2 rounded-full ${getStatusColor(selectedOrder.status)}`}></p>
+                <p className="text-lg">Current Status: {selectedOrder.status || 'Pending'}</p>
+              </div>
+              <p className="text-gray-600">Order ID: {selectedOrder._id}</p>
+              <p className="text-gray-600">Order Date: {new Date(selectedOrder.date).toLocaleDateString()}</p>
+              <div className="mt-4">
+                <button
+                  onClick={() => setSelectedOrder(null)}
+                  className="w-full bg-gray-800 text-white py-2 rounded hover:bg-gray-700"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

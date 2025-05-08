@@ -41,7 +41,7 @@ const StoreAdminSidebar = ({ activeTab, setActiveTab, onLogout }) => {
             <p className='hidden md:block'>Logout</p>
           </button>
         </div>
-      </div>
+        </div>
     </div>
   )
 }

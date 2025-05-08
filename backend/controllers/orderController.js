@@ -157,15 +157,45 @@ const verifyStripe = async (req, res) => {
 // Get all orders
 const getAllOrders = async (req, res) => {
     try {
-        const orders = await orderModel.find({})
-        res.json({success:true,orders})
-            .populate('userId', 'name email')
+        const orders = await orderModel.find()
+            .populate({
+                path: 'userId',
+                select: 'name email'
+            })
             .sort({ createdAt: -1 });
-        
-        res.json({ success: true, orders });
+
+        if (!orders) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'No orders found' 
+            });
+        }
+
+        const transformedOrders = orders.map(order => {
+            const orderObj = order.toObject();
+            return {
+                _id: orderObj._id,
+                userId: orderObj.userId,
+                products: orderObj.products || [],
+                totalPrice: orderObj.totalPrice,
+                status: orderObj.status || 'Pending',
+                date: orderObj.date || orderObj.createdAt,
+                shippingAddress: orderObj.shippingAddress,
+                paymentMethod: orderObj.paymentMethod
+            };
+        });
+
+        res.status(200).json({
+            success: true,
+            orders: transformedOrders
+        });
     } catch (error) {
-        console.log("Get orders error:", error);
-        res.status(500).json({ success: false, message: error.message });
+        console.error("Get orders error:", error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error fetching orders',
+            error: error.message 
+        });
     }
 };
 
