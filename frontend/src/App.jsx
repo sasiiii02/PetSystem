@@ -50,6 +50,7 @@ import Cart from "./Pages/Cart";
 import PlaceOrder from "./Pages/PlaceOrder";
 import Orders from "./Pages/Orders";
 import StoreAdminDashboard from "./Pages/StoreAdminDashboard";
+import StoreStripeVerify from "./Pages/storeStripeVerify";
 
 // Layout for pet owner routes with UserHeader and UserFooter
 const MainLayout = ({ children }) => {
@@ -280,7 +281,8 @@ const App = () => {
         </Route>
 
         
-        <Route path="/storeStripeVerify" element={<storeStripeVerify />} />
+        <Route path="/verify" element={<StoreStripeVerify />} />
+        <Route path="/storeStripeVerify" element={<StoreStripeVerify />} />
 
           
 

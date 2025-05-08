@@ -8,7 +8,7 @@ const CartTotal = () => {
   const cartTotal = getCartAmount(); // Store the result once to avoid multiple function calls
 
   return (
-    <div className="w-full ml-10 mr-10">
+    <div className="w-full ml-4 mr-10">
       <div className="text-2xl">
         <MarketplaceTitle text1={'CART'} text2={'TOTALS'} />
       </div>
