@@ -34,6 +34,9 @@ const homeVisitSchema = new mongoose.Schema({
   },
   notes: {
     type: String
+  },
+  userNotes: {
+    type: String
   }
 }, { timestamps: true });
 

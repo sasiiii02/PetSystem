@@ -181,9 +181,9 @@ export default function UserHeader() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md shadow-md">
-      <nav aria-label="Global" className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8">
+      <nav aria-label="Global" className="mx-auto flex max-w-7xl items-center justify-between py-6 pr-6 lg:pr-8 pl-0 lg:pl-0">
         <div className="flex lg:flex-1">
-          <Link to="/" className="-m-1.5 p-1.5">
+          <Link to="/">
             <span className="sr-only">Pet Care</span>
             <img src="/logo.jpg" alt="Pet Care Logo" className="h-10 w-auto rounded-md shadow-sm hover:shadow-md transition" />
           </Link>

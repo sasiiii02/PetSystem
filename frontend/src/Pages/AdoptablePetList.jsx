@@ -102,13 +102,29 @@ const AdoptablePetList = () => {
 
   // Handle Adopt Me button click
   const handleAdoptClick = (pet) => {
-    navigate('/adopt', { 
-      state: { 
-        petName: pet.name, 
-        petImage: pet.image,
-        petType: pet.type
-      } 
-    });
+    const token = localStorage.getItem('petOwnerToken');
+    if (token) {
+      navigate('/adopt', { 
+        state: { 
+          petName: pet.name, 
+          petImage: pet.image,
+          petType: pet.type
+        } 
+      });
+    } else {
+      navigate('/login', { 
+        state: { 
+          from: { 
+            pathname: '/adopt',
+            state: {
+              petName: pet.name,
+              petImage: pet.image,
+              petType: pet.type
+            }
+          } 
+        } 
+      });
+    }
   };
 
   if (loading) {
@@ -354,7 +370,7 @@ const AdoptablePetList = () => {
                     <PetTypeIcon type={pet.type} isSelected={false} />
                   </div>
                   <div className="text-sm text-gray-600 mb-2">
-                    <p>{pet.breed} • {pet.age} years old • {pet.gender}</p>
+                    <p>{pet.breed} • {pet.age}  old • {pet.gender}</p>
                   </div>
                   <p className="text-gray-700 mb-4">{pet.description}</p>
                   <div className="flex flex-wrap gap-2 mb-4">

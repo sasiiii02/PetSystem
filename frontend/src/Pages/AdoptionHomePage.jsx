@@ -28,11 +28,11 @@ const AdoptionHomePage = () => {
   }, []);
 
   const handleAddPetClick = () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('petOwnerToken');
     if (token) {
       navigate('/pet-owner-dashboard');
     } else {
-      navigate('/login');
+      navigate('/login', { state: { from: { pathname: '/pet-owner-dashboard' } } });
     }
   };
 
@@ -148,17 +148,35 @@ const AdoptionHomePage = () => {
                       <div className="p-6">
                         <h3 className="text-xl font-semibold text-[#B3704D] mb-2">{pet.petName}</h3>
                         <p className="text-gray-600 text-sm mb-2">
-                          {pet.petBreed} • {pet.petAge} years old • {pet.petGender}
+                          {pet.petBreed} • {pet.petAge}  old • {pet.petGender}
                         </p>
                         <p className="text-gray-700 text-sm line-clamp-2 mb-4">{pet.petDescription}</p>
                         <button
-                          onClick={() => navigate('/adopt', { 
-                            state: { 
-                              petName: pet.petName, 
-                              petImage: pet.petImage ? `http://localhost:5000${pet.petImage}` : 'https://via.placeholder.com/300',
-                              petType: pet.petSpecies
-                            } 
-                          })}
+                          onClick={() => {
+                            const token = localStorage.getItem('petOwnerToken');
+                            if (token) {
+                              navigate('/adopt', { 
+                                state: { 
+                                  petName: pet.petName, 
+                                  petImage: pet.petImage ? `http://localhost:5000${pet.petImage}` : 'https://via.placeholder.com/300',
+                                  petType: pet.petSpecies
+                                } 
+                              });
+                            } else {
+                              navigate('/login', { 
+                                state: { 
+                                  from: { 
+                                    pathname: '/adopt',
+                                    state: {
+                                      petName: pet.petName,
+                                      petImage: pet.petImage ? `http://localhost:5000${pet.petImage}` : 'https://via.placeholder.com/300',
+                                      petType: pet.petSpecies
+                                    }
+                                  } 
+                                } 
+                              });
+                            }
+                          }}
                           className="w-full bg-gradient-to-r from-[#D08860] to-[#B3704D] text-white py-2 rounded-xl hover:shadow-lg transition-all duration-300"
                         >
                           Adopt Me
@@ -187,13 +205,31 @@ const AdoptionHomePage = () => {
                         </p>
                         <p className="text-gray-700 text-sm line-clamp-2 mb-4">{pet.petDescription}</p>
                         <button
-                          onClick={() => navigate('/adopt', { 
-                            state: { 
-                              petName: pet.petName, 
-                              petImage: pet.petImage ? `http://localhost:5000${pet.petImage}` : 'https://via.placeholder.com/300',
-                              petType: pet.petSpecies
-                            } 
-                          })}
+                          onClick={() => {
+                            const token = localStorage.getItem('petOwnerToken');
+                            if (token) {
+                              navigate('/adopt', { 
+                                state: { 
+                                  petName: pet.petName, 
+                                  petImage: pet.petImage ? `http://localhost:5000${pet.petImage}` : 'https://via.placeholder.com/300',
+                                  petType: pet.petSpecies
+                                } 
+                              });
+                            } else {
+                              navigate('/login', { 
+                                state: { 
+                                  from: { 
+                                    pathname: '/adopt',
+                                    state: {
+                                      petName: pet.petName,
+                                      petImage: pet.petImage ? `http://localhost:5000${pet.petImage}` : 'https://via.placeholder.com/300',
+                                      petType: pet.petSpecies
+                                    }
+                                  } 
+                                } 
+                              });
+                            }
+                          }}
                           className="w-full bg-gradient-to-r from-[#D08860] to-[#B3704D] text-white py-2 rounded-xl hover:shadow-lg transition-all duration-300"
                         >
                           Adopt Me

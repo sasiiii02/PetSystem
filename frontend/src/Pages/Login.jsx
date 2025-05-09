@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
 export default function Login() {
@@ -8,6 +8,11 @@ export default function Login() {
   const [loginError, setLoginError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get the intended destination and its state from location state
+  const from = location.state?.from?.pathname || "/";
+  const fromState = location.state?.from?.state;
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -32,7 +37,8 @@ export default function Login() {
           phoneNumber: data.phoneNumber,
           city: data.city,
         }));
-        navigate("/");
+        // Navigate to the intended destination with its state
+        navigate(from, { state: fromState, replace: true });
       } else {
         setLoginError(data.message || "Invalid email or password");
       }

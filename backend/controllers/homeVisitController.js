@@ -57,6 +57,10 @@ const updateHomeVisit = asyncHandler(async (req, res) => {
   // If user is responding to the visit
   if (req.body.userResponse) {
     homeVisit.userResponse = req.body.userResponse;
+    // If user is providing notes with their response
+    if (req.body.userNotes) {
+      homeVisit.userNotes = req.body.userNotes;
+    }
   }
 
   // If admin is updating the visit

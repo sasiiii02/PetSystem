@@ -24,6 +24,7 @@ import {
 
 const PetOwnerDashboard = () => {
   const [pets, setPets] = useState([]);
+  const [adoptablePets, setAdoptablePets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState({ show: false, petId: null });
@@ -35,6 +36,16 @@ const PetOwnerDashboard = () => {
   const userId = userData._id;
   console.log('User data from localStorage:', userData);
   console.log('UserId from localStorage:', userId);
+
+  // Fetch adoptable pets to check status
+  const fetchAdoptablePets = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/adoptablepets');
+      setAdoptablePets(response.data);
+    } catch (err) {
+      console.error("Error fetching adoptable pets:", err);
+    }
+  };
 
   // Fetch pet owner's adoption forms
   const fetchPets = async () => {
@@ -68,6 +79,7 @@ const PetOwnerDashboard = () => {
       return;
     }
     fetchPets();
+    fetchAdoptablePets();
   }, [token, userId, navigate]);
 
   // Handle delete confirmation
@@ -118,6 +130,11 @@ const PetOwnerDashboard = () => {
       default:
         return <Heart className="w-5 h-5" />;
     }
+  };
+
+  // Function to check if a pet is in the adoptable list
+  const isPetAdoptable = (petId) => {
+    return adoptablePets.some(pet => pet.originalPetId === petId || pet._id === petId);
   };
 
   if (loading) {
@@ -217,7 +234,12 @@ const PetOwnerDashboard = () => {
                       <div className="flex items-center gap-3">
                         <Shield className="w-5 h-5 text-[#B3704D]" />
                         <div>
-                          <span className="font-medium">Status:</span> {pet.status || 'Available'}
+                          <span className="font-medium">Status:</span>{' '}
+                          {isPetAdoptable(pet._id) ? (
+                            <span className="text-green-600 font-semibold">Available</span>
+                          ) : (
+                            <span className="text-yellow-600 font-semibold">Pending Review</span>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-3">

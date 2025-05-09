@@ -32,10 +32,18 @@ const PetLostandfound = () => {
 
   const handleAddPetClick = () => {
     const token = localStorage.getItem('petOwnerToken');
+    const destination = activeTab === 'lost' ? '/add-lost-pet' : '/add-found-pet';
+    
     if (token) {
-      navigate(activeTab === 'lost' ? '/add-lost-pet' : '/add-found-pet');
+      navigate(destination);
     } else {
-      navigate('/login');
+      navigate('/login', { 
+        state: { 
+          from: { 
+            pathname: destination
+          } 
+        } 
+      });
     }
   };
 
