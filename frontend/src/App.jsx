@@ -51,6 +51,7 @@ import PlaceOrder from "./Pages/PlaceOrder";
 import Orders from "./Pages/Orders";
 import StoreAdminDashboard from "./Pages/StoreAdminDashboard";
 import StoreStripeVerify from "./Pages/storeStripeVerify";
+import PetStoreReview from "./Pages/PetStoreReview";
 
 // Layout for pet owner routes with UserHeader and UserFooter
 const MainLayout = ({ children }) => {
@@ -438,6 +439,16 @@ const App = () => {
             <MainLayout>
               <Orders/>
             </MainLayout>
+          }
+        />
+        <Route
+          path="/petStoreReview/:productId"
+          element={
+            <PrivateRoute>
+              <MainLayout>
+                <PetStoreReview />
+              </MainLayout>
+            </PrivateRoute>
           }
         />
           

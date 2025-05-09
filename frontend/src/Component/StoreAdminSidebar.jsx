@@ -1,7 +1,7 @@
 import React from 'react'
 import { assets } from '../assets/assets'
 
-const StoreAdminSidebar = ({ activeTab, setActiveTab, onLogout }) => {
+const StoreAdminSidebar = ({ activeTab, setActiveTab }) => {
   const menuItems = [
     { id: 'add', label: 'Add Items', icon: assets.add_icon },
     { id: 'list', label: 'List Items', icon: assets.order_icon },
@@ -11,11 +11,9 @@ const StoreAdminSidebar = ({ activeTab, setActiveTab, onLogout }) => {
   return (
     <div className='w-[18%] min-h-screen border-r-2 bg-white shadow-sm'>
       <div className='flex flex-col h-full'>
-        <div className='p-6 border-b'>
-          <h2 className='text-xl font-semibold text-amber-950'>Store Admin</h2>
-        </div>
         
-        <div className='flex-1 flex flex-col gap-2 p-4'>
+        
+        <div className='flex-1 flex flex-col gap-2 p-4 mt-20'>
           {menuItems.map((item) => (
             <button
               key={item.id}
@@ -32,17 +30,11 @@ const StoreAdminSidebar = ({ activeTab, setActiveTab, onLogout }) => {
           ))}
         </div>
 
-        <div className='p-4 border-t'>
-          <button
-            onClick={onLogout}
-            className='w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors'
-          >
-            <img className='w-5 h-5' src={assets.logout_icon || assets.order_icon} alt="Logout" />
-            <p className='hidden md:block'>Logout</p>
-          </button>
+      
+          
         </div>
         </div>
-    </div>
+    
   )
 }
 

@@ -195,7 +195,7 @@ const StoreAdminAdd = ({ token }) => {
 
       <div className="w-full max-w-[500px] flex flex-row gap-3">
         <div className="flex-1">
-          <p className="mb-2">Product Category</p>
+          <p className="mb-2">Category</p>
           <select
             className="w-full px-3 py-2 border border-gray-300 rounded-md"
             value={category}
@@ -305,7 +305,7 @@ const StoreAdminAdd = ({ token }) => {
 
       <button
         type="submit"
-        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+        className="bg-gray-600 text-white px-5 py-2 sm:px-7 sm:py-2 rounded-full text-xs sm:text-sm"
       >
         Add Product
       </button>

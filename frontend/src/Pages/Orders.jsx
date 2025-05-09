@@ -10,6 +10,7 @@ const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [userReviews, setUserReviews] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -37,6 +38,7 @@ const Orders = () => {
         );
 
         if (response.data.success) {
+          console.log('Fetched orders:', response.data.orders);
           setOrders(response.data.orders);
         } else {
           toast.error(response.data.message || 'Failed to fetch orders');
@@ -54,11 +56,39 @@ const Orders = () => {
       }
     };
 
+    const fetchUserReviews = async () => {
+      try {
+        const token = localStorage.getItem('petOwnerToken');
+        if (!token) return;
+
+        const response = await axios.get(`${backendUrl}/api/petStoreReviews/user`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        if (response.data.success) {
+          setUserReviews(response.data.reviews);
+        }
+      } catch (error) {
+        console.error('Error fetching user reviews:', error);
+      }
+    };
+
     fetchOrders();
+    fetchUserReviews();
   }, [backendUrl, navigate]);
 
   const handleTrackOrder = (order) => {
     setSelectedOrder(order);
+  };
+
+  const handleReviewClick = (productId) => {
+    navigate(`/petStoreReview/${productId}`);
+  };
+
+  const hasReviewedProduct = (productId) => {
+    return userReviews.some(review => review.productId === productId);
   };
 
   const getStatusColor = (status) => {
@@ -173,12 +203,33 @@ const Orders = () => {
                   {order.payment ? 'Paid' : 'Pending'}
                 </span></p>
               </div>
-              <button 
-                onClick={() => handleTrackOrder(order)}
-                className="border border-amber-200 px-4 py-2 text-sm font-medium rounded-full self-end hover:bg-amber-100 transition-all duration-200 mr-10"
-              >
-                Track Order
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => handleTrackOrder(order)}
+                  className="border border-amber-200 px-4 py-2 text-sm font-medium rounded-full self-end hover:bg-amber-100 transition-all duration-200 mr-10"
+                >
+                  Track Order
+                </button>
+                {order.status === 'Delivered' && (
+                  <div className="flex items-center">
+                    {hasReviewedProduct(order.products[0].productId) ? (
+                      <span className="text-green-600 flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        Reviewed
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => handleReviewClick(order.products[0].productId)}
+                        className="px-4 py-2 bg-[#D08860] text-white rounded-full hover:bg-[#B3714E] transition-colors duration-200"
+                      >
+                        Write Review
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ))}

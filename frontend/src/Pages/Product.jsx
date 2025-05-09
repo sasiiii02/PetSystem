@@ -3,14 +3,17 @@ import { useParams } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
 import { assets } from '../assets/assets';
 import RelatedProducts from '../Component/RelatedProducts';
+import axios from 'axios';
 
 const Product = () => {
     const { ProductId } = useParams();
-    const { products, currency, addToCart } = useContext(ShopContext);
+    const { products, currency, addToCart, backendUrl } = useContext(ShopContext);
     const [ProductData, setProductData] = useState(null);
     const [image, setImage] = useState('');
     const [size, setSize] = useState('');
     const [activeTab, setActiveTab] = useState('description'); // Track which tab is active
+    const [reviews, setReviews] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchProductData = () => {
@@ -24,9 +27,31 @@ const Product = () => {
         fetchProductData();
     }, [ProductId, products]);
 
+    useEffect(() => {
+        const fetchReviews = async () => {
+            try {
+                const response = await axios.get(`${backendUrl}/api/petStoreReviews/product/${ProductId}`);
+                if (response.data.success) {
+                    setReviews(response.data.reviews);
+                }
+            } catch (error) {
+                console.error('Error fetching reviews:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchReviews();
+    }, [ProductId, backendUrl]);
+
     if (!ProductData) return <div className='opacity-0'></div>;
 
     const isOutOfStock = ProductData.quantity === 0;
+
+    // Calculate average rating
+    const averageRating = reviews.length > 0
+        ? (reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length).toFixed(1)
+        : 0;
 
     return (
         <div className='bg-amber-50 min-h-screen pt-32 px-4 md:px-16 transition-opacity ease-in duration-500 opacity-100'>
@@ -128,23 +153,66 @@ const Product = () => {
                         className={`border border-amber-200 px-5 py-3 text-base rounded-t-lg font-semibold transition-all duration-200 ${activeTab === 'reviews' ? 'bg-amber-100 text-amber-900' : 'bg-white text-amber-700 hover:bg-amber-50'}`}
                         onClick={() => setActiveTab('reviews')}
                     >
-                        Reviews (122)
+                        Reviews ({reviews.length})
                     </button>
                 </div>  
 
                 {/* Show Content Based on Active Tab */}
                 {activeTab === 'description' && (
                     <div className='flex flex-col gap-4 border border-amber-200 bg-white px-6 py-6 text-base text-amber-700 rounded-b-lg'>
-                        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Dolores exercitationem voluptate, quo alias, ea inventore molestias corporis officia doloribus modi fuga laborum consectetur molestiae architecto dolorem! Placeat deserunt voluptatem sit.</p>
-                        <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Tempore suscipit blanditiis pariatur molestias. Porro quas repellendus, in sequi obcaecati laboriosam tempora veritatis voluptatem nesciunt reiciendis repudiandae ipsum est provident eos?</p>
+                        <p>{ProductData.description}</p>
                     </div>  
                 )}
 
                 {activeTab === 'reviews' && (
                     <div className='flex flex-col gap-4 border border-amber-200 bg-white px-6 py-6 text-base text-amber-700 rounded-b-lg'>
-                        <p>⭐️⭐️⭐️⭐️☆ - "Great product, high quality!" - <b>John D.</b></p>
-                        <p>⭐️⭐️⭐️⭐️⭐️ - "Exactly what I was looking for!" - <b>Sarah L.</b></p>
-                        <p>⭐️⭐️⭐️☆☆ - "It's okay, could be better." - <b>Mark T.</b></p>
+                        {loading ? (
+                            <p>Loading reviews...</p>
+                        ) : reviews.length === 0 ? (
+                            <p>No reviews yet. Be the first to review this product!</p>
+                        ) : (
+                            <>
+                                <div className="flex items-center gap-2 mb-4">
+                                    <div className="text-2xl font-bold text-amber-900">{averageRating}</div>
+                                    <div className="flex">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <span
+                                                key={star}
+                                                className={`text-xl ${
+                                                    star <= averageRating ? 'text-yellow-400' : 'text-gray-300'
+                                                }`}
+                                            >
+                                                ★
+                                            </span>
+                                        ))}
+                                    </div>
+                                    <span className="text-amber-700">({reviews.length} reviews)</span>
+                                </div>
+                                {reviews.map((review) => (
+                                    <div key={review._id} className="border-b border-amber-100 pb-4 last:border-0">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="flex">
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                    <span
+                                                        key={star}
+                                                        className={`text-sm ${
+                                                            star <= review.rating ? 'text-yellow-400' : 'text-gray-300'
+                                                        }`}
+                                                    >
+                                                        ★
+                                                    </span>
+                                                ))}
+                                            </div>
+                                            <span className="font-semibold text-amber-900">{review.userName}</span>
+                                            <span className="text-sm text-amber-600">
+                                                {new Date(review.createdAt).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                        <p className="text-amber-700">{review.comment}</p>
+                                    </div>
+                                ))}
+                            </>
+                        )}
                     </div>  
                 )}
             </div>

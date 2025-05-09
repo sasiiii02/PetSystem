@@ -260,6 +260,7 @@ const getUserOrders = async (req, res) => {
             ...order.toObject(),
             products: order.products.map(product => ({
                 ...product,
+                productId: product.productId?._id || product.productId,
                 image: product.productId?.image?.[0] || null,
                 name: product.productId?.name || product.name,
                 price: product.productId?.price || product.price,
