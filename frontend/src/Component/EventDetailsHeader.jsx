@@ -1,4 +1,4 @@
-import { FaClock, FaMapMarkerAlt, FaTicketAlt } from "react-icons/fa";
+import { FaClock, FaMapMarkerAlt, FaTicketAlt, FaUsers, FaCheckCircle } from "react-icons/fa";
 
 const EventDetailsHeader = ({ event }) => {
   const formattedDate = new Date(event.date).toLocaleDateString("en-US", {
@@ -6,6 +6,11 @@ const EventDetailsHeader = ({ event }) => {
     day: "numeric",
     year: "numeric",
   });
+
+  // Calculate tickets remaining
+  const maxAttendees = event.maxAttendees || 0;
+  const registeredTickets = event.registeredTickets || 0;
+  const ticketsRemaining = Math.max(0, maxAttendees - registeredTickets);
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
@@ -34,6 +39,14 @@ const EventDetailsHeader = ({ event }) => {
         <div className="flex items-center">
           <FaTicketAlt className="text-amber-600 mr-2" size={16} />
           <span>${event.price?.toFixed(2) || "Free"} per ticket</span>
+        </div>
+        <div className="flex items-center">
+          <FaUsers className="text-amber-600 mr-2" size={16} />
+          <span>Max Participants: {maxAttendees}</span>
+        </div>
+        <div className="flex items-center">
+          <FaCheckCircle className="text-amber-600 mr-2" size={16} />
+          <span>Tickets Remaining: {ticketsRemaining}</span>
         </div>
       </div>
 

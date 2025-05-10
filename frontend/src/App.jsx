@@ -65,6 +65,14 @@ import StoreAdminDashboard from "./Pages/StoreAdminDashboard";
 import StoreStripeVerify from "./Pages/storeStripeVerify";
 import PetStoreReview from "./Pages/PetStoreReview";
 import ShopContextProvider from './context/ShopContext.jsx'
+//event admin 
+import MyEvents from './Pages/EventMyEvents';
+import EventDetails from './Pages/EventEventDetails';
+import EditEvent from './Pages/EventEditEvent';
+import Notification from './Pages/EventNotification';
+import Dashboard from './Pages/EventDashboard';
+import CreateEvent from './Pages/EventCreateEvent';
+import EventManagerLayout from "./Component/EventManagerLayout";
 
 // Layout for pet owner routes with UserHeader and UserFooter
 const MainLayout = ({ children }) => {
@@ -305,6 +313,33 @@ const App = () => {
           <Route path="availability/trainer" element={<Availability_for_trainer />} />
           <Route path="refund-request" element={<CancelationReq />} />
         </Route>
+
+
+        
+        {/* Event Manager Routes with EventManagerLayout */}
+        <Route
+          path="/admin/redirect/event_manager"
+          element={
+            <PrivateRoute>
+              <EventManagerLayout />
+            </PrivateRoute>
+          }
+        >
+          <Route index element={<Dashboard />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="create" element={<CreateEvent />} />
+          <Route path="events" element={<MyEvents />} />
+          <Route path="events/:id" element={<EventDetails />} />
+          <Route path="edit/:id" element={<EditEvent />} />
+          <Route path="analytics" element={<Notification />} />
+          <Route path="profile" element={<Dashboard />} />
+        </Route>
+
+
+
+
+
+
 
           <Route path="/verify" element={<StoreStripeVerify />} />
           <Route path="/storeStripeVerify" element={<StoreStripeVerify />} />

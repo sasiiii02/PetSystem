@@ -27,6 +27,7 @@ import productRouter from "./routes/productRoute.js";
 import cartRouter from "./routes/cartRoute.js";
 import orderRouter from "./routes/orderRoute.js";
 import petStoreReviewRouter from "./routes/petStoreReviewRoute.js";
+import reportRoutes from "./routes/reportRoutes.js"; // Add this line
 
 
 dotenv.config();
@@ -61,6 +62,7 @@ app.use('/api/professionals', profRoutes); // Professional auth routes
 app.use("/api/events", eventRoutes);
 app.use("/api/registrations", registrationRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/reports",reportRoutes);
 
 // Adoption routes
 app.use('/api/adoptablepets', adoptablePetRoutes);

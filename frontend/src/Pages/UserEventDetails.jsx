@@ -25,33 +25,37 @@ const UserEventDetailsPage = () => {
     },
   });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const eventResponse = await api.get(`/events/${id}`);
-        setEvent(eventResponse.data);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const eventResponse = await api.get(`/events/${id}`);
+      setEvent(eventResponse.data);
 
-        if (token) {
-          const [userResponse, regResponse] = await Promise.all([
-            api.get("/users/profile"),
-            api.get(`/registrations/event/${id}`),
-          ]);
-          setUser(userResponse.data);
+      if (token) {
+        const [userResponse, regResponse] = await Promise.all([
+          api.get("/users/profile"),
+          api.get(`/registrations/event/${id}`),
+        ]);
+        setUser(userResponse.data);
 
-          const userRegistrations = regResponse.data.registrations || [];
-          const isUserRegistered = userRegistrations.some(
-            (reg) => reg.userId._id === userResponse.data._id && reg.paymentStatus === "paid"
-          );
-          setIsRegistered(isUserRegistered);
-        }
-      } catch (err) {
-        setError(err.response?.data?.message || err.message);
-        console.error("Error fetching data:", err);
-      } finally {
-        setLoading(false);
+        const userRegistrations = regResponse.data.registrations || [];
+        const isUserRegistered = userRegistrations.some(
+          (reg) =>
+            reg.userId._id === userResponse.data._id &&
+            reg.paymentStatus === "paid" &&
+            reg.status === "active" // Ensure only active registrations count
+        );
+        setIsRegistered(isUserRegistered);
       }
-    };
+    } catch (err) {
+      setError(err.response?.data?.message || err.message);
+      console.error("Error fetching data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchData();
   }, [id, token]);
 
@@ -73,7 +77,6 @@ const UserEventDetailsPage = () => {
       });
 
       if (response.data.success) {
-        // Ensure token is still in localStorage before redirect
         if (!localStorage.getItem("token")) {
           throw new Error("Authentication token missing. Please log in again.");
         }
@@ -140,6 +143,7 @@ const UserEventDetailsPage = () => {
           onClose={() => {
             setIsModalOpen(false);
             setRegistrationError(null);
+            fetchData(); // Refresh data after closing modal
           }}
           error={registrationError}
         />

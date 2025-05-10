@@ -177,15 +177,27 @@ export const confirmRegistrationPayment = async (req, res) => {
     }
 
     registration.paymentStatus = "paid";
+    registration.status = "active";
     registration.paymentDate = new Date();
     registration.paymentIntentId = checkoutSession.payment_intent.id;
     await registration.save({ session });
 
-    await Event.findByIdAndUpdate(
-      registration.eventId,
-      { $inc: { registeredTickets: registration.tickets } },
-      { session }
-    );
+    // Recalculate registeredTickets
+    const result = await Registration.aggregate([
+      { $match: { eventId: event._id, status: "active", paymentStatus: "paid" } },
+      { $group: { _id: null, totalTickets: { $sum: "$tickets" } } },
+    ]).session(session);
+    event.registeredTickets = result.length > 0 ? result[0].totalTickets : 0;
+    await event.save({ session });
+
+    const notification = new EventNotification({
+      eventId: event._id,
+      userId,
+      content: `Registration confirmed for ${event.title} with ${registration.tickets} ticket(s).`,
+      type: "user",
+      read: false,
+    });
+    await notification.save({ session });
 
     await session.commitTransaction();
 
@@ -201,11 +213,7 @@ export const confirmRegistrationPayment = async (req, res) => {
   } catch (error) {
     await session.abortTransaction();
     console.error("Payment Confirmation Error:", error);
-    res.status(400).json({
-      success: false,
-      message: error.message || "Payment confirmation failed",
-      details: process.env.NODE_ENV === "development" ? error.stack : undefined,
-    });
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
   } finally {
     session.endSession();
   }
@@ -218,14 +226,31 @@ export const cancelRegistration = async (req, res) => {
 
   try {
     const { id } = req.params;
-    const userId = req.user.userId;
+    const { cancellationReason } = req.body;
+    const userId = req.user?.userId;
 
-    // Validate registration
-    const registration = await Registration.findById(id).session(session);
-    if (!registration || registration.userId.toString() !== userId) {
+    console.log("Starting cancellation:", { id, userId, cancellationReason });
+
+    // Validate cancellation reason
+    if (!cancellationReason || typeof cancellationReason !== "string" || cancellationReason.trim() === "") {
+      console.log("Missing cancellation reason");
       await session.abortTransaction();
-      return res.status(404).json({ success: false, message: "Registration not found or unauthorized" });
+      return res.status(400).json({ success: false, message: "Cancellation reason is required" });
     }
+
+    const registration = await Registration.findById(id).session(session);
+    if (!registration) {
+      console.log("Registration not found:", id);
+      await session.abortTransaction();
+      return res.status(404).json({ success: false, message: "Registration not found" });
+    }
+
+    if (userId && registration.userId.toString() !== userId) {
+      console.log("Unauthorized cancellation:", { userId, registrationUserId: registration.userId.toString() });
+      await session.abortTransaction();
+      return res.status(403).json({ success: false, message: "Unauthorized to cancel this registration" });
+    }
+
     if (registration.status !== "active" || registration.paymentStatus !== "paid") {
       console.log("Invalid registration state:", {
         registrationId: id,
@@ -236,57 +261,32 @@ export const cancelRegistration = async (req, res) => {
       return res.status(400).json({ success: false, message: "Registration cannot be cancelled" });
     }
 
-    // Validate event
     const event = await Event.findById(registration.eventId).session(session);
     if (!event || event.status !== "active") {
+      console.log("Event not found or not active:", registration.eventId);
       await session.abortTransaction();
       return res.status(400).json({ success: false, message: "Event not found or not active" });
     }
 
-    // Get refund policy with fallbacks
-    const minDays = event.refundPolicy?.minDays ?? parseInt(process.env.REFUND_DAYS_MIN) ?? 2;
-    const maxDays = event.refundPolicy?.maxDays ?? parseInt(process.env.REFUND_DAYS_MAX) ?? 7;
-    const percentage = event.refundPolicy?.percentage ?? parseInt(process.env.REFUND_PERCENTAGE) ?? 50;
-
-    // Validate refund policy
-    if (minDays > maxDays) {
-      console.error("Invalid refund policy:", { minDays, maxDays });
-      await session.abortTransaction();
-      return res.status(500).json({ success: false, message: "Invalid refund policy configuration" });
-    }
-    if (percentage < 0 || percentage > 100) {
-      console.error("Invalid refund percentage:", { percentage });
-      await session.abortTransaction();
-      return res.status(500).json({ success: false, message: "Invalid refund percentage" });
-    }
-
-    // Calculate days before event
-    const daysBefore = (event.date - new Date()) / (24 * 60 * 60 * 1000);
+    // Process refund if applicable
+    const eventDate = new Date(event.date);
+    const currentDate = new Date();
     let refundAmount = 0;
     let refundStatus = "none";
 
-    console.log("Refund check:", {
-      daysBefore,
-      minDays,
-      maxDays,
-      percentage,
-      eventPrice: event.price,
-      tickets: registration.tickets,
-    });
-
-    // Process refund if within refund window
     if (event.price === 0) {
       refundAmount = 0;
       refundStatus = "none";
-    } else if (daysBefore >= minDays && daysBefore <= maxDays) {
+    } else if (currentDate < eventDate) {
+      const percentage = 50; // Fixed 50% refund
       refundAmount = event.price * registration.tickets * (percentage / 100);
       if (refundAmount > 0) {
         try {
-          const refund = await stripe.refunds.create({
+          console.log("Processing refund:", { amount: refundAmount });
+          await stripe.refunds.create({
             payment_intent: registration.paymentIntentId,
             amount: Math.round(refundAmount * 100),
           });
-          console.log("Refund processed:", refund.id);
           refundStatus = "completed";
         } catch (stripeError) {
           console.error("Stripe refund error:", stripeError);
@@ -298,8 +298,6 @@ export const cancelRegistration = async (req, res) => {
           });
         }
       }
-    } else {
-      console.log("Outside refund window:", { daysBefore, minDays, maxDays });
     }
 
     // Update registration
@@ -308,26 +306,29 @@ export const cancelRegistration = async (req, res) => {
     registration.refundStatus = refundStatus;
     registration.refundAmount = refundAmount;
     registration.refundedAt = refundStatus === "completed" ? new Date() : null;
+    registration.cancellationReason = cancellationReason.trim();
+    await registration.save({ session }); // Save before aggregation
 
-    // Update event ticket count
-    event.registeredTickets -= registration.tickets;
+    // Recalculate registeredTickets *after* saving the cancellation
+    const result = await Registration.aggregate([
+      { $match: { eventId: event._id, status: "active", paymentStatus: "paid" } },
+      { $group: { _id: null, totalTickets: { $sum: "$tickets" } } },
+    ]).session(session);
+    event.registeredTickets = result.length > 0 ? result[0].totalTickets : 0;
+    console.log("Updated event registeredTickets:", event.registeredTickets);
+    await event.save({ session });
 
-    // Create notification
     const notification = new EventNotification({
       eventId: event._id,
-      userId,
-      content: `Registration cancelled. ${
-        refundAmount > 0 ? `Refund of $${refundAmount.toFixed(2)} processed.` : "No refund."
-      }`,
+      userId: registration.userId,
+      content: `Registration cancelled. ${refundAmount > 0 ? `Refund of $${refundAmount.toFixed(2)} processed.` : "No refund."}`,
+      type: "user",
       read: false,
     });
-
-    // Save changes
-    await registration.save({ session });
-    await event.save({ session });
     await notification.save({ session });
 
     await session.commitTransaction();
+
     res.status(200).json({
       success: true,
       message: "Registration cancelled successfully",
@@ -342,7 +343,7 @@ export const cancelRegistration = async (req, res) => {
     session.endSession();
   }
 };
-// PATCH /api/registrations/:id/update-tickets
+
 // PATCH /api/registrations/:id/update-tickets
 export const updateRegistrationTickets = async (req, res) => {
   const session = await mongoose.startSession();
@@ -391,9 +392,11 @@ export const updateRegistrationTickets = async (req, res) => {
     let notificationContent = "";
 
     if (delta < 0) {
-      const daysBefore = (event.date - new Date()) / (24 * 60 * 60 * 1000);
-      if (daysBefore >= parseInt(process.env.REFUND_DAYS_MIN) && daysBefore <= parseInt(process.env.REFUND_DAYS_MAX)) {
-        refundAmount = event.price * Math.abs(delta) * (parseInt(process.env.REFUND_PERCENTAGE) / 100);
+      const eventDate = new Date(event.date);
+      const currentDate = new Date();
+      if (currentDate < eventDate) {
+        const percentage = 50; // Fixed 50% refund for ticket reductions
+        refundAmount = event.price * Math.abs(delta) * (percentage / 100);
         try {
           await stripe.refunds.create({
             payment_intent: registration.paymentIntentId,
@@ -410,12 +413,19 @@ export const updateRegistrationTickets = async (req, res) => {
       registration.refundStatus = refundStatus;
       registration.refundAmount = refundAmount;
       registration.refundedAt = refundStatus === "completed" ? new Date() : null;
-      event.registeredTickets += delta;
+
+      const result = await Registration.aggregate([
+        { $match: { eventId: event._id, status: "active", paymentStatus: "paid" } },
+        { $group: { _id: null, totalTickets: { $sum: "$tickets" } } },
+      ]).session(session);
+      event.registeredTickets = result.length > 0 ? result[0].totalTickets : 0;
+      await event.save({ session });
+
       notificationContent = `Updated to ${newTickets} tickets. ${refundAmount > 0 ? `Refund of $${refundAmount.toFixed(2)} processed.` : "No refund."}`;
     } else {
       const amount = event.price * delta;
       const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-      const successUrl = `${frontendUrl}/success?session_id={CHECKOUT_SESSION_ID}&registration_id=${registration._id}&event_id=${event._id}&update=true`; // Updated
+      const successUrl = `${frontendUrl}/success?session_id={CHECKOUT_SESSION_ID}&registration_id=${registration._id}&event_id=${event._id}&update=true`;
       const cancelUrl = `${frontendUrl}/my-events`;
 
       const checkoutSession = await stripe.checkout.sessions.create({
@@ -450,11 +460,11 @@ export const updateRegistrationTickets = async (req, res) => {
       eventId: event._id,
       userId,
       content: notificationContent,
+      type: "user",
       read: false,
     });
 
     await registration.save({ session });
-    await event.save({ session });
     await notification.save({ session });
 
     await session.commitTransaction();
@@ -542,17 +552,22 @@ export const confirmUpdatePayment = async (req, res) => {
     registration.paymentIntentId = checkoutSession.payment_intent.id;
     registration.pendingPaymentIntentId = null;
     registration.updatedAt = new Date();
-    event.registeredTickets += delta;
+    await registration.save({ session });
+
+    const result = await Registration.aggregate([
+      { $match: { eventId: event._id, status: "active", paymentStatus: "paid" } },
+      { $group: { _id: null, totalTickets: { $sum: "$tickets" } } },
+    ]).session(session);
+    event.registeredTickets = result.length > 0 ? result[0].totalTickets : 0;
+    await event.save({ session });
 
     const notification = new EventNotification({
       eventId: event._id,
       userId,
       content: `Updated to ${newTickets} tickets. Paid $${(event.price * delta).toFixed(2)}.`,
+      type: "user",
       read: false,
     });
-
-    await registration.save({ session });
-    await event.save({ session });
     await notification.save({ session });
 
     await session.commitTransaction();

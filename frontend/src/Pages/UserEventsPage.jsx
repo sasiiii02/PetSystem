@@ -48,7 +48,6 @@ const UserEventsPage = () => {
         if (!Array.isArray(fetchedEvents)) {
           throw new Error("Invalid response format from server");
         }
-        // Filter for active events
         const activeEvents = fetchedEvents.filter(event => event.status.toLowerCase() === "active");
         setEvents(activeEvents);
         setFilteredEvents(activeEvents);
@@ -70,7 +69,7 @@ const UserEventsPage = () => {
           const response = await api.get("/notifications/user");
           if (response.data.success) {
             const notifications = response.data.notifications;
-            const unread = notifications.filter(notif => !notif.isRead).length;
+            const unread = notifications.filter(notif => !notif.read).length;
             setUnreadCount(unread);
             setHasNotifications(notifications.length > 0);
           }

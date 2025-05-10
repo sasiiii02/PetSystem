@@ -1,4 +1,3 @@
-// src/pages/Notifications.js
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
@@ -26,7 +25,8 @@ const Notifications = () => {
       setError(null);
       const response = await api.get("/notifications/user");
       if (response.data.success) {
-        setNotifications(response.data.notifications);
+        setNotifications(response.data.notifications || []);
+        console.log("Fetched notifications:", response.data.notifications); // Debug log
       } else {
         setError("Failed to load notifications");
       }
@@ -110,12 +110,15 @@ const Notifications = () => {
     );
   }
 
+  const adminNotifications = notifications.filter(notif => notif.type === "admin");
+  const userNotifications = notifications.filter(notif => notif.type === "user");
+
   return (
     <div className="max-w-6xl mx-auto mt-28 p-6">
       <div className="flex justify-between items-center mb-8 border-b border-amber-200 pb-4">
         <h1 className="text-3xl font-bold text-amber-900">My Notifications</h1>
         <div className="flex items-center gap-4">
-          {notifications.some((notif) => !notif.read) && (
+          {(adminNotifications.some(notif => !notif.read) || userNotifications.some(notif => !notif.read)) && (
             <button
               onClick={handleMarkAllAsRead}
               className="px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-all"
@@ -147,55 +150,115 @@ const Notifications = () => {
         </div>
       ) : (
         <div className="grid gap-6">
-          {notifications.map((notification) => (
-            <div
-              key={notification._id}
-              className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow duration-300"
-            >
-              <div className="md:flex">
-                <div className="md:flex-shrink-0 bg-amber-700 flex items-center justify-center w-full md:w-24 h-24 md:h-auto">
-                  <div className="text-center text-white">
-                    <div className="text-2xl font-bold">
-                      {new Date(notification.createdAt).getDate()}
+          {adminNotifications.length > 0 && (
+            <div>
+              <h2 className="text-2xl font-semibold text-amber-900 mb-4">Admin Notifications</h2>
+              {adminNotifications.map((notification) => (
+                <div
+                  key={notification._id}
+                  className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow duration-300"
+                >
+                  <div className="md:flex">
+                    <div className="md:flex-shrink-0 bg-amber-700 flex items-center justify-center w-full md:w-24 h-24 md:h-auto">
+                      <div className="text-center text-white">
+                        <div className="text-2xl font-bold">
+                          {new Date(notification.createdAt).getDate()}
+                        </div>
+                        <div className="text-sm">
+                          {new Date(notification.createdAt).toLocaleString('default', { month: 'short' })}
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-sm">
-                      {new Date(notification.createdAt).toLocaleString('default', { month: 'short' })}
+                    <div className="p-6 md:flex-1 flex justify-between items-center">
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-800 mb-2">
+                          {notification.eventId?.title || "Event"}
+                        </h2>
+                        <p className={`text-gray-600 ${notification.read ? "text-gray-500" : "font-semibold"}`}>
+                          {notification.content}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {!notification.read && (
+                          <button
+                            onClick={() => handleMarkAsRead(notification._id)}
+                            className="text-amber-700 hover:text-amber-800 text-sm font-semibold"
+                          >
+                            Mark as Read
+                          </button>
+                        )}
+                        <Link
+                          to={`/event/${notification.eventId?._id || '#'}`}
+                          className="flex items-center bg-amber-700 text-white px-3 py-1 rounded hover:bg-amber-800 transition-colors"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542-7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          View Event
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div className="p-6 md:flex-1 flex justify-between items-center">
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-800 mb-2">
-                      {notification.eventId?.title || "Event"}
-                    </h2>
-                    <p className={`text-gray-600 ${notification.read ? "text-gray-500" : "font-semibold"}`}>
-                      {notification.content}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {!notification.read && (
-                      <button
-                        onClick={() => handleMarkAsRead(notification._id)}
-                        className="text-amber-700 hover:text-amber-800 text-sm font-semibold"
-                      >
-                        Mark as Read
-                      </button>
-                    )}
-                    <Link
-                      to={`/event/${notification.eventId?._id || '#'}`}
-                      className="flex items-center bg-amber-700 text-white px-3 py-1 rounded hover:bg-amber-800 transition-colors"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542-7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
-                      View Event
-                    </Link>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
-          ))}
+          )}
+
+          {userNotifications.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-2xl font-semibold text-amber-900 mb-4">My Actions (e.g., Refunds, Registrations)</h2>
+              {userNotifications.map((notification) => (
+                <div
+                  key={notification._id}
+                  className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow duration-300"
+                >
+                  <div className="md:flex">
+                    <div className="md:flex-shrink-0 bg-amber-700 flex items-center justify-center w-full md:w-24 h-24 md:h-auto">
+                      <div className="text-center text-white">
+                        <div className="text-2xl font-bold">
+                          {new Date(notification.createdAt).getDate()}
+                        </div>
+                        <div className="text-sm">
+                          {new Date(notification.createdAt).toLocaleString('default', { month: 'short' })}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-6 md:flex-1 flex justify-between items-center">
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-800 mb-2">
+                          {notification.eventId?.title || "Event"}
+                        </h2>
+                        <p className={`text-gray-600 ${notification.read ? "text-gray-500" : "font-semibold"}`}>
+                          {notification.content}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {!notification.read && (
+                          <button
+                            onClick={() => handleMarkAsRead(notification._id)}
+                            className="text-amber-700 hover:text-amber-800 text-sm font-semibold"
+                          >
+                            Mark as Read
+                          </button>
+                        )}
+                        <Link
+                          to={`/event/${notification.eventId?._id || '#'}`}
+                          className="flex items-center bg-amber-700 text-white px-3 py-1 rounded hover:bg-amber-800 transition-colors"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542-7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          View Event
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

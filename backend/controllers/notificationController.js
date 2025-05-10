@@ -35,10 +35,20 @@ export const sendEventNotification = async (req, res) => {
       eventId: id,
       userId,
       content: content.trim(),
+      type: "admin",
       read: false,
     }));
 
-    await EventNotification.insertMany(notifications, { session });
+    // Insert notifications, ignoring duplicates due to unique index
+    try {
+      await EventNotification.insertMany(notifications, { session, ordered: false });
+    } catch (err) {
+      if (err.code === 11000) {
+        console.log("Duplicate notifications ignored due to unique index");
+      } else {
+        throw err;
+      }
+    }
 
     await session.commitTransaction();
     res.status(200).json({ success: true, message: "Notifications sent successfully" });
@@ -55,9 +65,18 @@ export const sendEventNotification = async (req, res) => {
 export const getEventNotifications = async (req, res) => {
   try {
     const { id } = req.params;
-    const notifications = await EventNotification.find({ eventId: id })
+    const { type } = req.query; // Optional: filter by type ("admin" or "user")
+
+    const query = { eventId: id };
+    if (type) {
+      query.type = type;
+    }
+
+    const notifications = await EventNotification.find(query)
       .populate("eventId", "title")
+      .populate("userId", "name email")
       .sort({ createdAt: -1 });
+
     res.status(200).json({ success: true, notifications });
   } catch (err) {
     console.error("Error fetching event notifications:", err);
@@ -76,6 +95,7 @@ export const getUserNotifications = async (req, res) => {
     const notifications = await EventNotification.find({ userId })
       .populate("eventId", "title")
       .sort({ createdAt: -1 });
+
     res.status(200).json({ success: true, notifications });
   } catch (err) {
     console.error("Error fetching user notifications:", err);

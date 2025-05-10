@@ -3,22 +3,20 @@ import Registration from "../models/Registration.js";
 import Event from "../models/Event.js";
 import dotenv from "dotenv";
 
-dotenv.config({ path: "./.env" }); // Explicitly specify .env path
+dotenv.config({ path: "./.env" });
 
 async function migrate() {
   let session;
   try {
-    // Verify environment variables
     console.log("MONGODB_URI:", process.env.MONGODB_URI || "undefined");
     console.log("REFUND_DAYS_MIN:", process.env.REFUND_DAYS_MIN);
     console.log("REFUND_DAYS_MAX:", process.env.REFUND_DAYS_MAX);
     console.log("REFUND_PERCENTAGE:", process.env.REFUND_PERCENTAGE);
-    
+
     if (!process.env.MONGODB_URI) {
       throw new Error("MONGODB_URI is not defined in .env file");
     }
 
-    // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI, {
       serverSelectionTimeoutMS: 30000,
       connectTimeoutMS: 30000,
@@ -30,7 +28,6 @@ async function migrate() {
     console.log("Connected to MongoDB");
     console.log("Database name:", mongoose.connection.name);
 
-    // Start session
     session = await mongoose.startSession();
     session.startTransaction();
 
@@ -49,27 +46,27 @@ async function migrate() {
     let duplicateRegistrationCount = 0;
     for (const group of registrationGroups) {
       const registrations = group.registrations;
-      // Keep the most recent paid and active registration
       const validRegistration = registrations
         .filter(reg => reg.paymentStatus === "paid" && reg.status === "active")
         .sort((a, b) => new Date(b.registeredAt) - new Date(a.registeredAt))[0];
 
       if (validRegistration) {
+        console.log(`Keeping registration: ${validRegistration._id}, paymentStatus: ${validRegistration.paymentStatus}, status: ${validRegistration.status}, tickets: ${validRegistration.tickets}`);
         const idsToDelete = registrations
           .filter(reg => reg._id.toString() !== validRegistration._id.toString())
-          .map(reg => reg._id);
-        await Registration.deleteMany({ _id: { $in: idsToDelete } }, { session });
+          .map(reg => ({ id: reg._id, paymentStatus: reg.paymentStatus, status: reg.status, tickets: reg.tickets }));
+        console.log(`Deleting registrations: ${JSON.stringify(idsToDelete)}`);
+        await Registration.deleteMany({ _id: { $in: idsToDelete.map(item => item.id) } }, { session });
         duplicateRegistrationCount += idsToDelete.length;
-        console.log(`Deleted ${idsToDelete.length} duplicate registrations for user ${group._id.userId} and event ${group._id.eventId}`);
       } else {
-        // Keep the most recent registration if none are paid/active
         const mostRecent = registrations.sort((a, b) => new Date(b.registeredAt) - new Date(a.registeredAt))[0];
+        console.log(`Keeping most recent registration: ${mostRecent._id}, paymentStatus: ${mostRecent.paymentStatus}, status: ${mostRecent.status}, tickets: ${mostRecent.tickets}`);
         const idsToDelete = registrations
           .filter(reg => reg._id.toString() !== mostRecent._id.toString())
-          .map(reg => reg._id);
-        await Registration.deleteMany({ _id: { $in: idsToDelete } }, { session });
+          .map(reg => ({ id: reg._id, paymentStatus: reg.paymentStatus, status: reg.status, tickets: reg.tickets }));
+        console.log(`Deleting registrations: ${JSON.stringify(idsToDelete)}`);
+        await Registration.deleteMany({ _id: { $in: idsToDelete.map(item => item.id) } }, { session });
         duplicateRegistrationCount += idsToDelete.length;
-        console.log(`Deleted ${idsToDelete.length} invalid duplicate registrations for user ${group._id.userId} and event ${group._id.eventId}`);
       }
     }
     console.log(`Deleted ${duplicateRegistrationCount} duplicate registrations`);
@@ -85,7 +82,6 @@ async function migrate() {
 
       let updated = false;
 
-      // Set status if not present
       if (!reg.status) {
         if (reg.paymentStatus === "paid") {
           reg.status = "active";
@@ -97,7 +93,6 @@ async function migrate() {
         updated = true;
       }
 
-      // Initialize refund fields
       if (!reg.refundStatus) {
         reg.refundStatus = "none";
         updated = true;
@@ -107,13 +102,11 @@ async function migrate() {
         updated = true;
       }
 
-      // Set cancelledAt for cancelled registrations
       if (reg.status === "cancelled" && !reg.cancelledAt && reg.paymentStatus === "failed") {
         reg.cancelledAt = new Date();
         updated = true;
       }
 
-      // Set originalTickets and updatedAt
       if (!reg.originalTickets) {
         reg.originalTickets = reg.tickets;
         updated = true;
@@ -142,7 +135,6 @@ async function migrate() {
 
       let updated = false;
 
-      // Set refundPolicy
       if (!event.refundPolicy || !event.refundPolicy.minDays) {
         const minDays = parseInt(process.env.REFUND_DAYS_MIN) || 2;
         const maxDays = parseInt(process.env.REFUND_DAYS_MAX) || 7;
@@ -161,17 +153,27 @@ async function migrate() {
         updated = true;
       }
 
-      // Recalculate registeredTickets
       const result = await Registration.aggregate([
         { $match: { eventId: event._id, status: "active", paymentStatus: "paid" } },
         { $group: { _id: null, totalTickets: { $sum: "$tickets" } } },
       ]).session(session);
-
       const totalTickets = result.length > 0 ? result[0].totalTickets : 0;
       if (event.registeredTickets !== totalTickets) {
-        console.warn(`Mismatch for event ${event._id}: registeredTickets=${event.registeredTickets}, actual=${totalTickets}`);
+        console.warn(`Mismatch for event ${event._id}: registeredTickets=${event.registeredTickets}, recalculated=${totalTickets}`);
         event.registeredTickets = totalTickets;
         updated = true;
+      }
+
+      // Validate inconsistent registration states
+      const invalidRegistrations = await Registration.find({
+        eventId: event._id,
+        $or: [
+          { status: "active", paymentStatus: { $ne: "paid" } },
+          { status: { $ne: "active" }, paymentStatus: "paid" },
+        ],
+      }).session(session);
+      if (invalidRegistrations.length > 0) {
+        console.warn(`Found ${invalidRegistrations.length} inconsistent registrations for event ${event._id}: ${JSON.stringify(invalidRegistrations.map(r => ({ id: r._id, status: r.status, paymentStatus: r.paymentStatus })))}`);
       }
 
       event.migrated = true;
@@ -182,11 +184,9 @@ async function migrate() {
     }
     console.log(`Migrated ${eventCount} events`);
 
-    // Commit transaction
     await session.commitTransaction();
     console.log("Migration completed successfully");
   } catch (error) {
-    // Abort transaction on error
     if (session) {
       await session.abortTransaction();
     }
