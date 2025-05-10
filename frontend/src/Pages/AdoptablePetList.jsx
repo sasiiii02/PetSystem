@@ -23,10 +23,15 @@ const AllPetsIcon = ({ isSelected }) => (
 
 const AdoptablePetList = () => {
   const [pets, setPets] = useState([]);
-  const [filter, setFilter] = useState('All');
+  const [speciesFilter, setSpeciesFilter] = useState('All');
+  const [genderFilter, setGenderFilter] = useState('All');
+  const [ageFilter, setAgeFilter] = useState('All');
+  const [vaccinationFilter, setVaccinationFilter] = useState('All');
+  const [neuteredFilter, setNeuteredFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
   const navigate = useNavigate();
   
   // Fetch pets from API
@@ -64,14 +69,28 @@ const AdoptablePetList = () => {
     fetchPets();
   }, []);
 
-  // Filter pets based on selection and search query
+  // Filter pets based on all criteria
   const filteredPets = pets.filter(pet => {
-    const matchesFilter = filter === 'All' || pet.type === filter;
+    const matchesSpecies = speciesFilter === 'All' || pet.type === speciesFilter;
+    const matchesGender = genderFilter === 'All' || pet.gender === genderFilter;
+    const matchesAge = ageFilter === 'All' || 
+      (ageFilter === 'Puppy/Kitten' && pet.age <= 1) ||
+      (ageFilter === 'Young' && pet.age > 1 && pet.age <= 3) ||
+      (ageFilter === 'Adult' && pet.age > 3 && pet.age <= 7) ||
+      (ageFilter === 'Senior' && pet.age > 7);
+    const matchesVaccination = vaccinationFilter === 'All' || 
+      (vaccinationFilter === 'Yes' && pet.vaccinated) ||
+      (vaccinationFilter === 'No' && !pet.vaccinated);
+    const matchesNeutered = neuteredFilter === 'All' || 
+      (neuteredFilter === 'Yes' && pet.neutered) ||
+      (neuteredFilter === 'No' && !pet.neutered);
     const matchesSearch = searchQuery === '' || 
       pet.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       pet.breed.toLowerCase().includes(searchQuery.toLowerCase()) ||
       pet.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesFilter && matchesSearch;
+    
+    return matchesSpecies && matchesGender && matchesAge && 
+           matchesVaccination && matchesNeutered && matchesSearch;
   });
 
   // Render pet type icon
@@ -83,13 +102,29 @@ const AdoptablePetList = () => {
 
   // Handle Adopt Me button click
   const handleAdoptClick = (pet) => {
-    navigate('/adopt', { 
-      state: { 
-        petName: pet.name, 
-        petImage: pet.image,
-        petType: pet.type
-      } 
-    });
+    const token = localStorage.getItem('petOwnerToken');
+    if (token) {
+      navigate('/adopt', { 
+        state: { 
+          petName: pet.name, 
+          petImage: pet.image,
+          petType: pet.type
+        } 
+      });
+    } else {
+      navigate('/login', { 
+        state: { 
+          from: { 
+            pathname: '/adopt',
+            state: {
+              petName: pet.name,
+              petImage: pet.image,
+              petType: pet.type
+            }
+          } 
+        } 
+      });
+    }
   };
 
   if (loading) {
@@ -129,15 +164,30 @@ const AdoptablePetList = () => {
           </h2>
         </div>
 
+        {/* Search and Filter Bar */}
+        <div className="max-w-4xl mx-auto mb-8 relative">
+          <div className="bg-white rounded-2xl shadow-lg p-6 relative">
+            {/* Pet Count - Absolute Top Right */}
+            <div className="absolute -top-10 right-0">
+              <div className="flex items-center gap-2 text-[#B3704D]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2c-5.53 0-10 4.47-10 10s4.47 10 10 10 10-4.47 10-10-4.47-10-10-10zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                  <path d="M13 7h-2v5h-5v2h7z"/>
+                </svg>
+                <span className="font-medium">Available Pets</span>
+                <span className="text-xl font-bold">{filteredPets.length}</span>
+                <span className="text-gray-400 text-sm"> / {pets.length}</span>
+              </div>
+        </div>
+
         {/* Search Bar */}
-        <div className="max-w-2xl mx-auto mb-8">
-          <div className="relative">
+            <div className="relative mb-6">
             <input
               type="text"
               placeholder="Search pets by name, breed, or description..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-6 py-4 rounded-full bg-white/80 border-2 border-[#D08860] focus:border-[#B3704D] focus:ring-2 focus:ring-[#D08860]/20 outline-none transition-all duration-300 shadow-sm"
+                className="w-full px-6 py-4 rounded-full border border-[#B3704D] focus:outline-none focus:ring-2 focus:ring-[#B3704D]/20"
             />
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -153,46 +203,146 @@ const AdoptablePetList = () => {
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               />
             </svg>
-          </div>
         </div>
 
-        {/* Filters and Pet Count Row */}
-        <div className="container relative mx-auto mb-8">
-          {/* Filter buttons - Absolute Center */}
-          <div className="absolute left-1/2 transform -translate-x-1/2">
-            <div className="flex space-x-6">
-              {['All', 'Dog', 'Cat'].map((type) => (
+            {/* Species Filter Buttons */}
+            <div className="flex justify-center space-x-6 mb-6">
+              <button
+                onClick={() => setSpeciesFilter('All')}
+                className={`
+                  px-12 py-3 rounded-full flex items-center space-x-2
+                  ${speciesFilter === 'All' 
+                    ? 'bg-[#B3704D] text-white' 
+                    : 'bg-white text-[#B3704D] border border-[#B3704D]'}
+                  hover:shadow-lg transition-all duration-300
+                `}
+              >
+                <AllPetsIcon isSelected={speciesFilter === 'All'} />
+                <span>All</span>
+              </button>
+              <button
+                onClick={() => setSpeciesFilter('Dog')}
+                className={`
+                  px-12 py-3 rounded-full flex items-center space-x-2
+                  ${speciesFilter === 'Dog' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-white text-blue-500 border border-blue-500'}
+                  hover:shadow-lg transition-all duration-300
+                `}
+              >
+                <DogIcon isSelected={speciesFilter === 'Dog'} />
+                <span>Dog</span>
+              </button>
                 <button
-                  key={type}
-                  onClick={() => setFilter(type)}
+                onClick={() => setSpeciesFilter('Cat')}
                   className={`
-                    px-12 py-3 rounded-2xl flex items-center space-x-2
-                    ${filter === type 
-                      ? 'bg-gradient-to-r from-[#D08860] to-[#B3704D] text-white' 
-                      : 'bg-white/50 text-[#B3704D] border-2 border-[#D08860]'}
-                    hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1
+                  px-12 py-3 rounded-full flex items-center space-x-2
+                  ${speciesFilter === 'Cat' 
+                    ? 'bg-purple-500 text-white' 
+                    : 'bg-white text-purple-500 border border-purple-500'}
+                  hover:shadow-lg transition-all duration-300
                   `}
                 >
-                  {type === 'Dog' ? <DogIcon isSelected={filter === type} /> : 
-                   type === 'Cat' ? <CatIcon isSelected={filter === type} /> : 
-                   <AllPetsIcon isSelected={filter === type} />}
-                  <span>{type}</span>
+                <CatIcon isSelected={speciesFilter === 'Cat'} />
+                <span>Cat</span>
                 </button>
-              ))}
             </div>
+
+            {/* Additional Filters */}
+            <div className="flex flex-col items-center">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center space-x-2 text-[#B3704D] hover:text-[#D08860] transition-colors"
+              >
+                <span className="font-medium">Additional Filters</span>
+                <svg
+                  className={`w-5 h-5 transform transition-transform ${showFilters ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {/* Filter Options */}
+              {showFilters && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Gender Filter */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Gender</label>
+                    <select
+                      value={genderFilter}
+                      onChange={(e) => setGenderFilter(e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg border-2 border-[#D08860] focus:border-[#B3704D] focus:ring-2 focus:ring-[#D08860]/20 outline-none"
+                    >
+                      <option value="All">All Genders</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
+                  </div>
+
+                  {/* Age Filter */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Age</label>
+                    <select
+                      value={ageFilter}
+                      onChange={(e) => setAgeFilter(e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg border-2 border-[#D08860] focus:border-[#B3704D] focus:ring-2 focus:ring-[#D08860]/20 outline-none"
+                    >
+                      <option value="All">All Ages</option>
+                      <option value="Puppy/Kitten">Puppy/Kitten (≤1 year)</option>
+                      <option value="Young">Young (1-3 years)</option>
+                      <option value="Adult">Adult (3-7 years)</option>
+                      <option value="Senior">Senior (7+ years)</option>
+                    </select>
+                  </div>
+
+                  {/* Vaccination Filter */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Vaccinated</label>
+                    <select
+                      value={vaccinationFilter}
+                      onChange={(e) => setVaccinationFilter(e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg border-2 border-[#D08860] focus:border-[#B3704D] focus:ring-2 focus:ring-[#D08860]/20 outline-none"
+                    >
+                      <option value="All">All</option>
+                      <option value="Yes">Yes</option>
+                      <option value="No">No</option>
+                    </select>
+                  </div>
+
+                  {/* Neutered Filter */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Neutered</label>
+                    <select
+                      value={neuteredFilter}
+                      onChange={(e) => setNeuteredFilter(e.target.value)}
+                      className="w-full px-4 py-2 rounded-lg border-2 border-[#D08860] focus:border-[#B3704D] focus:ring-2 focus:ring-[#D08860]/20 outline-none"
+                    >
+                      <option value="All">All</option>
+                      <option value="Yes">Yes</option>
+                      <option value="No">No</option>
+                    </select>
           </div>
 
-          {/* Pet Count - Right Aligned */}
-          <div className="flex justify-end">
-            <div className="bg-white/90 backdrop-blur-sm px-8 py-2 rounded-2xl shadow-md border-2 border-[#D08860]/20 inline-flex items-center gap-3">
-              <AllPetsIcon isSelected={false} />
-              <div className="text-center">
-                <p className="text-sm text-gray-500">Available Pets</p>
-                <p className="text-2xl font-bold text-[#B3704D]">
-                  {filteredPets.length}
-                  <span className="text-gray-400 text-sm font-normal"> / {pets.length}</span>
-                </p>
+                  {/* Reset Filters Button */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-transparent">Reset</label>
+                    <button
+                      onClick={() => {
+                        setGenderFilter('All');
+                        setAgeFilter('All');
+                        setVaccinationFilter('All');
+                        setNeuteredFilter('All');
+                      }}
+                      className="w-full px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                    >
+                      Reset Additional Filters
+                    </button>
+                  </div>
               </div>
+              )}
             </div>
           </div>
         </div>
@@ -220,7 +370,7 @@ const AdoptablePetList = () => {
                     <PetTypeIcon type={pet.type} isSelected={false} />
                   </div>
                   <div className="text-sm text-gray-600 mb-2">
-                    <p>{pet.breed} • {pet.age} years old • {pet.gender}</p>
+                    <p>{pet.breed} • {pet.age}  old • {pet.gender}</p>
                   </div>
                   <p className="text-gray-700 mb-4">{pet.description}</p>
                   <div className="flex flex-wrap gap-2 mb-4">

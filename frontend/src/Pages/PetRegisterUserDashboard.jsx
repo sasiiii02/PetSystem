@@ -3,14 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
   FileText, 
-  MessageSquare, 
   Clock, 
   CheckCircle, 
   XCircle, 
   Edit, 
   Trash2,
   AlertCircle,
-  Search
+  Search,
+  Dog,
+  CalendarCheck
 } from 'lucide-react';
 
 const PetRegisterUserDashboard = () => {
@@ -19,12 +20,16 @@ const PetRegisterUserDashboard = () => {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState({ show: false, formId: null });
-  const [messages, setMessages] = useState([]);
+  const [homeVisits, setHomeVisits] = useState([]);
+  const [showVisitModal, setShowVisitModal] = useState(false);
+  const [selectedVisit, setSelectedVisit] = useState(null);
+  const [visitResponse, setVisitResponse] = useState('');
+  const [visitNotes, setVisitNotes] = useState('');
   const navigate = useNavigate();
 
   // Get token and user data from localStorage
-  const token = localStorage.getItem('token');
-  const userData = JSON.parse(localStorage.getItem('user') || '{}');
+  const token = localStorage.getItem('petOwnerToken');
+  const userData = JSON.parse(localStorage.getItem('petOwnerUser') || '{}');
   const userEmail = userData.email;
 
   // Fetch adoption forms for the user
@@ -49,17 +54,75 @@ const PetRegisterUserDashboard = () => {
     }
   };
 
-  // Fetch messages for the user
-  const fetchMessages = async () => {
+  // Fetch home visits for the user
+  const fetchHomeVisits = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/messages/user/${userEmail}`, {
+      const response = await axios.get('http://localhost:5000/api/homevisits/my-visits', {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
-      setMessages(response.data);
+      setHomeVisits(response.data);
     } catch (err) {
-      console.error("Error fetching messages:", err);
+      console.error("Error fetching home visits:", err);
+    }
+  };
+
+  // Handle home visit response
+  const handleVisitResponse = async (visitId, response) => {
+    try {
+      const visit = homeVisits.find(v => v._id === visitId);
+      setSelectedVisit(visit);
+      setVisitResponse(response);
+      setVisitNotes('');
+    } catch (err) {
+      console.error("Error preparing visit response:", err);
+    }
+  };
+
+  // Add the submitVisitResponse function
+  const submitVisitResponse = async () => {
+    try {
+      if (!selectedVisit) {
+        console.error("No visit selected");
+        return;
+      }
+
+      await axios.put(
+        `http://localhost:5000/api/homevisits/${selectedVisit._id}`,
+        { 
+          userResponse: visitResponse,
+          userNotes: visitNotes,
+          status: visitResponse === 'accepted' ? 'approved' : 'rejected'
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      // Refresh the visits list
+      await fetchHomeVisits();
+      
+      // Reset states
+      setSelectedVisit(null);
+      setVisitNotes('');
+      setVisitResponse('');
+
+      // Show success notification
+      setNotification({
+        show: true,
+        message: `Home visit ${visitResponse === 'accepted' ? 'accepted' : 'rejected'} successfully`,
+        type: 'success'
+      });
+    } catch (err) {
+      console.error("Error responding to home visit:", err);
+      setNotification({
+        show: true,
+        message: "Failed to respond to home visit",
+        type: 'error'
+      });
     }
   };
 
@@ -69,7 +132,7 @@ const PetRegisterUserDashboard = () => {
       return;
     }
     fetchAdoptionForms();
-    fetchMessages();
+    fetchHomeVisits();
   }, [token, userEmail, navigate]);
 
   // Handle form deletion
@@ -139,133 +202,264 @@ const PetRegisterUserDashboard = () => {
           ) : filteredForms.length === 0 ? (
             <div className="text-center py-4 text-gray-500">No adoption forms found</div>
           ) : (
-            <div className="grid gap-4">
-              {filteredForms.map((form) => (
-                <div key={form._id} className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-4 flex-1">
-                      <div className="flex items-center space-x-3">
-                        <h3 className="text-2xl font-bold text-[#80533b]">{form.petName}</h3>
-                        <span className={`px-4 py-1.5 rounded-full text-sm font-medium ${
-                          form.status === 'Approved' ? 'bg-green-100 text-green-800' :
-                          form.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {form.status || 'Pending'}
-                        </span>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-3">
-                          <div className="flex items-center space-x-2">
-                            <span className="w-2 h-2 bg-[#D08860] rounded-full"></span>
-                            <p className="text-gray-700">
-                              <span className="font-semibold">Pet Type:</span> {form.petType}
-                            </p>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="w-2 h-2 bg-[#D08860] rounded-full"></span>
-                            <p className="text-gray-700">
-                              <span className="font-semibold">Home Type:</span> {form.homeType}
-                            </p>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="w-2 h-2 bg-[#D08860] rounded-full"></span>
-                            <p className="text-gray-700">
-                              <span className="font-semibold">Employment:</span> {form.employmentStatus}
-                            </p>
-                          </div>
+            <div className="grid gap-6">
+              {filteredForms.map((form) => {
+                // Find related home visits for this form
+                const relatedVisits = homeVisits.filter(visit => visit.adoptionFormId === form._id);
+                
+                return (
+                  <div key={form._id} className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300">
+                    <div className="flex flex-col md:flex-row gap-6">
+                      {/* Left Section - Pet Image and Basic Info */}
+                      <div className="flex-shrink-0">
+                        <div className="relative w-40 h-40 rounded-xl overflow-hidden shadow-md">
+                          {form.petImage ? (
+                            <img 
+                              src={form.petImage.startsWith('http') ? form.petImage : `http://localhost:5000${form.petImage}`} 
+                              alt={form.petName} 
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = 'https://via.placeholder.com/150?text=No+Image';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                              <Dog className="text-gray-400" size={32} />
+                            </div>
+                          )}
                         </div>
-                        
-                        <div className="space-y-3">
-                          <div className="flex items-center space-x-2">
-                            <span className="w-2 h-2 bg-[#D08860] rounded-full"></span>
-                            <p className="text-gray-700">
-                              <span className="font-semibold">Has Yard:</span> 
-                              <span className={`ml-2 ${form.hasYard ? 'text-green-600' : 'text-red-600'}`}>
-                                {form.hasYard ? 'Yes' : 'No'}
-                              </span>
-                            </p>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="w-2 h-2 bg-[#D08860] rounded-full"></span>
-                            <p className="text-gray-700">
-                              <span className="font-semibold">Other Pets:</span>
-                              <span className={`ml-2 ${form.hasOtherPets ? 'text-green-600' : 'text-red-600'}`}>
-                                {form.hasOtherPets ? 'Yes' : 'No'}
-                              </span>
-                            </p>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="w-2 h-2 bg-[#D08860] rounded-full"></span>
-                            <p className="text-gray-700">
-                              <span className="font-semibold">Submitted:</span> {new Date(form.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
+                        <div className="mt-4 text-center">
+                          <h3 className="text-xl font-bold text-[#80533b]">{form.petName}</h3>
+                          <span className={`px-3 py-1 rounded-full text-sm font-medium mt-2 inline-block ${
+                            form.status === 'approved' ? 'bg-emerald-100 text-emerald-800' :
+                            form.status === 'pending' ? 'bg-amber-100 text-amber-800' :
+                            form.status === 'rejected' ? 'bg-rose-100 text-rose-800' :
+                            'bg-slate-100 text-slate-800'
+                          }`}>
+                            {form.status ? form.status.charAt(0).toUpperCase() + form.status.slice(1) : 'Pending'}
+                          </span>
                         </div>
                       </div>
 
-                      {form.additionalInfo && (
-                        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                          <p className="text-gray-700">
-                            <span className="font-semibold">Additional Info:</span>
-                            <span className="ml-2">{form.additionalInfo}</span>
-                          </p>
+                      {/* Right Section - Form Details */}
+                      <div className="flex-grow">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-3">
+                            <div className="flex items-center">
+                              <span className="w-2 h-2 bg-[#D08860] rounded-full mr-2"></span>
+                              <p className="text-gray-700">
+                                <span className="font-semibold">Pet Type:</span> {form.petType}
+                              </p>
+                            </div>
+                            <div className="flex items-center">
+                              <span className="w-2 h-2 bg-[#D08860] rounded-full mr-2"></span>
+                              <p className="text-gray-700">
+                                <span className="font-semibold">Home Type:</span> {form.homeType}
+                              </p>
+                            </div>
+                            <div className="flex items-center">
+                              <span className="w-2 h-2 bg-[#D08860] rounded-full mr-2"></span>
+                              <p className="text-gray-700">
+                                <span className="font-semibold">Employment:</span> {form.employmentStatus}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-3">
+                            <div className="flex items-center">
+                              <span className="w-2 h-2 bg-[#D08860] rounded-full mr-2"></span>
+                              <p className="text-gray-700">
+                                <span className="font-semibold">Has Yard:</span> 
+                                <span className={`ml-2 ${form.hasYard ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                  {form.hasYard ? 'Yes' : 'No'}
+                                </span>
+                              </p>
+                            </div>
+                            <div className="flex items-center">
+                              <span className="w-2 h-2 bg-[#D08860] rounded-full mr-2"></span>
+                              <p className="text-gray-700">
+                                <span className="font-semibold">Other Pets:</span>
+                                <span className={`ml-2 ${form.hasOtherPets ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                  {form.hasOtherPets ? 'Yes' : 'No'}
+                                </span>
+                              </p>
+                            </div>
+                            <div className="flex items-center">
+                              <span className="w-2 h-2 bg-[#D08860] rounded-full mr-2"></span>
+                              <p className="text-gray-700">
+                                <span className="font-semibold">Submitted:</span> {new Date(form.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                      )}
-                    </div>
 
-                    <div className="flex flex-col items-end space-y-3 ml-6">
-                      <button
-                        onClick={() => navigate(`/edit-adoption-form/${form._id}`)}
-                        className="p-2.5 text-white bg-[#D08860] hover:bg-[#80533b] rounded-lg transition-colors duration-200 flex items-center space-x-2"
-                      >
-                        <Edit size={18} />
-                        <span>Edit</span>
-                      </button>
-                      <button
-                        onClick={() => setShowDeleteConfirm({ show: true, formId: form._id })}
-                        className="p-2.5 text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors duration-200 flex items-center space-x-2"
-                      >
-                        <Trash2 size={18} />
-                        <span>Delete</span>
-                      </button>
+                        {form.additionalInfo && (
+                          <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                            <p className="text-gray-700">
+                              <span className="font-semibold">Additional Info:</span>
+                              <span className="ml-2">{form.additionalInfo}</span>
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Home Visit Requests Section */}
+                        {relatedVisits.length > 0 && (
+                          <div className="mt-6 border-t border-gray-100 pt-4">
+                            <h4 className="text-lg font-semibold text-[#80533b] mb-3 flex items-center">
+                              <CalendarCheck className="mr-2" size={20} />
+                              Home Visit Requests
+                            </h4>
+                            <div className="space-y-3">
+                              {relatedVisits.map((visit) => (
+                                <div key={visit._id} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+                                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                    <div>
+                                      <p className="text-gray-700">
+                                        <span className="font-semibold">Date:</span> {new Date(visit.date).toLocaleDateString()}
+                                      </p>
+                                      <p className="text-gray-700">
+                                        <span className="font-semibold">Time:</span> {new Date(visit.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                      </p>
+                                      {visit.notes && (
+                                        <p className="text-gray-600 mt-1">
+                                          <span className="font-semibold">Notes:</span> {visit.notes}
+                                        </p>
+                                      )}
+                                    </div>
+                                    
+                                    <div className="flex flex-col items-end space-y-2">
+                                      {visit.userResponse === 'pending' ? (
+                                        <div className="flex space-x-2">
+                                          <button
+                                            onClick={() => handleVisitResponse(visit._id, 'accepted')}
+                                            className="px-3 py-1 bg-emerald-500 text-white rounded hover:bg-emerald-600 transition flex items-center space-x-1"
+                                          >
+                                            <CheckCircle size={16} />
+                                            <span>Accept</span>
+                                          </button>
+                                          <button
+                                            onClick={() => handleVisitResponse(visit._id, 'rejected')}
+                                            className="px-3 py-1 bg-rose-500 text-white rounded hover:bg-rose-600 transition flex items-center space-x-1"
+                                          >
+                                            <XCircle size={16} />
+                                            <span>Reject</span>
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                          visit.userResponse === 'accepted' 
+                                            ? 'bg-emerald-100 text-emerald-800' 
+                                            : 'bg-rose-100 text-rose-800'
+                                        }`}>
+                                          {visit.userResponse === 'accepted' ? 'Visit Accepted' : 'Visit Rejected'}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {/* Show user's response and notes if responded */}
+                                  {visit.userResponse !== 'pending' && (
+                                    <div className="mt-2 text-sm text-gray-700">
+                                      <span className="font-semibold">Your Response:</span>
+                                      {visit.userNotes && (
+                                        <span className="ml-2 italic">{visit.userNotes}</span>
+                                      )}
+                                    </div>
+                                  )}
+                                  {selectedVisit?._id === visit._id && (
+                                    <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                      <textarea
+                                        value={visitNotes}
+                                        onChange={(e) => setVisitNotes(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg mb-2"
+                                        rows="2"
+                                        placeholder="Add any notes or comments about the visit..."
+                                      />
+                                      <div className="flex justify-end space-x-2">
+                                        <button
+                                          onClick={() => {
+                                            setSelectedVisit(null);
+                                            setVisitNotes('');
+                                            setVisitResponse('');
+                                          }}
+                                          className="px-3 py-1 text-gray-600 bg-gray-200 rounded hover:bg-gray-300"
+                                        >
+                                          Cancel
+                                        </button>
+                                        <button
+                                          onClick={submitVisitResponse}
+                                          className={`px-3 py-1 text-white rounded ${
+                                            visitResponse === 'accepted' 
+                                              ? 'bg-emerald-500 hover:bg-emerald-600' 
+                                              : 'bg-rose-500 hover:bg-rose-600'
+                                          }`}
+                                        >
+                                          Submit Response
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Only show edit and delete buttons if the form is not approved */}
+                        {form.status !== 'approved' && (
+                          <div className="mt-4 flex justify-end space-x-3">
+                            <button
+                              onClick={() => navigate(`/edit-adoption-form/${form._id}`)}
+                              className="px-4 py-2 bg-[#D08860] text-white rounded-lg hover:bg-[#80533b] transition-colors flex items-center space-x-2"
+                            >
+                              <Edit size={18} />
+                              <span>Edit</span>
+                            </button>
+                            <button
+                              onClick={() => setShowDeleteConfirm({ show: true, formId: form._id })}
+                              className="px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors flex items-center space-x-2"
+                            >
+                              <Trash2 size={18} />
+                              <span>Delete</span>
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Show approval message for approved forms */}
+                        {form.status === 'approved' && (
+                          <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <CheckCircle className="text-emerald-500" size={24} />
+                              <div>
+                                <h4 className="text-emerald-800 font-semibold">Congratulations! Your request has been approved</h4>
+                                <p className="text-emerald-700 mt-1">
+                                  Please visit our shelter to complete the adoption process and take your new pet home.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Show rejection message for rejected forms */}
+                        {form.status === 'rejected' && (
+                          <div className="mt-4 p-4 bg-rose-50 border border-rose-200 rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <XCircle className="text-rose-500" size={24} />
+                              <div>
+                                <h4 className="text-rose-800 font-semibold">Application Status: Rejected</h4>
+                                <p className="text-rose-700 mt-1">
+                                  We regret to inform you that your adoption request has not been approved at this time. 
+                                  You may submit a new application for a different pet in the future.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Messages Section */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-2xl font-semibold text-[#80533b] mb-4 flex items-center">
-            <MessageSquare className="mr-2" size={24} />
-            Messages from Pet Owners
-          </h2>
-          
-          {messages.length === 0 ? (
-            <div className="text-center py-4 text-gray-500">No messages yet</div>
-          ) : (
-            <div className="space-y-4">
-              {messages.map((message) => (
-                <div key={message._id} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-semibold text-[#80533b]">{message.senderName}</h3>
-                    <span className="text-sm text-gray-500">
-                      {new Date(message.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <p className="text-gray-600">{message.content}</p>
-                  <button
-                    onClick={() => navigate(`/reply-message/${message._id}`)}
-                    className="mt-2 text-[#D08860] hover:text-[#80533b] transition-colors"
-                  >
-                    Reply
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

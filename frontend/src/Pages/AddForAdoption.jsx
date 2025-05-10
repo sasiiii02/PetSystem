@@ -44,13 +44,13 @@ const PetOwnerForm = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('petOwnerToken');
         if (!token) {
           navigate('/login');
           return;
         }
 
-        const userData = JSON.parse(localStorage.getItem('user') || '{}');
+        const userData = JSON.parse(localStorage.getItem('petOwnerUser') || '{}');
         if (!userData._id) {
           navigate('/login');
           return;

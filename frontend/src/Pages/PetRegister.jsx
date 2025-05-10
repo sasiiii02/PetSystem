@@ -11,28 +11,57 @@ const PetRegister = () => {
     petBYear: '',
     vaccinations: '',
     specialNotes: '',
-    petimage: ''
+    petimage: null
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value, files } = e.target;
+    if (name === 'petimage') {
+      setFormData({ ...formData, [name]: files[0] });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
+
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:5000/api/pets/registerPet', formData, {
+      const token = localStorage.getItem('petOwnerToken');
+      if (!token) {
+        throw new Error('Please log in to register a pet');
+      }
+
+      const formDataToSend = new FormData();
+      formDataToSend.append('name', formData.name);
+      formDataToSend.append('gender', formData.gender);
+      formDataToSend.append('breed', formData.breed);
+      formDataToSend.append('petBYear', formData.petBYear);
+      formDataToSend.append('vaccinations', formData.vaccinations);
+      formDataToSend.append('specialNotes', formData.specialNotes);
+      if (formData.petimage) {
+        formDataToSend.append('petimage', formData.petimage);
+      }
+
+      const response = await axios.post('http://localhost:5000/api/pets/registerPet', formDataToSend, {
         headers: {
-          Authorization: `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
         }
       });
-      console.log('Pet registered:', response.data);
-      navigate('/pets'); // Redirect to a pets list page or dashboard
+
+      console.log('Pet registered successfully:', response.data);
+      navigate('/profile'); // Redirect to profile page after successful registration
     } catch (err) {
-      setError(err.response?.data?.message || 'Error registering pet');
+      console.error('Registration error:', err);
+      setError(err.response?.data?.message || err.message || 'Error registering pet. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -82,17 +111,17 @@ const PetRegister = () => {
                 Gender
               </label>
               <select
-                type="text"
                 id="gender"
                 name="gender"
                 value={formData.gender}
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-1.5 rounded-xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#9a7656]"
-                placeholder="Gender">
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                </select>
+              >
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
             </div>
 
             {/* Breed */}
@@ -107,7 +136,9 @@ const PetRegister = () => {
                 value={formData.breed}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-1.5 rounded-xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#9a7656]" placeholder="Breed"/>
+                className="w-full px-4 py-1.5 rounded-xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#9a7656]"
+                placeholder="Breed"
+              />
             </div>
 
             {/* Birth Year */}
@@ -122,6 +153,8 @@ const PetRegister = () => {
                 value={formData.petBYear}
                 onChange={handleChange}
                 required
+                min="1900"
+                max={new Date().getFullYear()}
                 className="w-full px-4 py-1.5 rounded-xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#9a7656]"
                 placeholder="Birth Year"
               />
@@ -160,23 +193,22 @@ const PetRegister = () => {
               />
             </div>
 
-            {/* Pet Image URL */}
+            {/* Pet Image */}
             <div>
               <label htmlFor="petimage" className="block text-sm sm:text-md font-medium text-gray-700 mb-2">
-                Pet Image URL
+                Pet Image
               </label>
               <input
-                type="text"
+                type="file"
                 id="petimage"
                 name="petimage"
-                value={formData.petimage}
                 onChange={handleChange}
+                accept="image/*"
                 className="w-full px-4 py-1.5 rounded-xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#9a7656]"
-                placeholder="Pet Image URL"
               />
             </div>
 
-            {/* Submission Error */}
+            {/* Error Message */}
             {error && (
               <p className="text-center text-sm text-red-500 flex items-center justify-center">
                 <AlertCircle className="mr-2" size={18} /> {error}
@@ -187,9 +219,12 @@ const PetRegister = () => {
             <div className="flex justify-center pt-4">
               <button
                 type="submit"
-                className="w-full bg-[#B3704D] text-white px-8 py-3 sm:py-4 rounded-xl text-md sm:text-lg font-semibold hover:bg-[#4E2D21] transition-colors"
+                disabled={loading}
+                className={`w-full bg-[#B3704D] text-white px-8 py-3 sm:py-4 rounded-xl text-md sm:text-lg font-semibold hover:bg-[#4E2D21] transition-colors ${
+                  loading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
-                Register Pet
+                {loading ? 'Registering...' : 'Register Pet'}
               </button>
             </div>
           </form>

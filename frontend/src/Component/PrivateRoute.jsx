@@ -19,7 +19,7 @@ const PrivateRoute = ({ children }) => {
 
   // Check if user is authenticated
   if (!token || !user) {
-    return <Navigate to="/stafflogin" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Role-based access checks for admin routes
@@ -40,6 +40,15 @@ const PrivateRoute = ({ children }) => {
   if (
     location.pathname.startsWith("/admin/redirect/user_admin") &&
     user.role !== "user_admin"
+  ) {
+    return <Navigate to="/stafflogin" replace />;
+  }
+
+   // Store manager role check
+  if (
+    (location.pathname.startsWith("/store-admin") || 
+     location.pathname.startsWith("/admin/redirect/store_manager")) &&
+    user.role !== "store_manager"
   ) {
     return <Navigate to="/stafflogin" replace />;
   }

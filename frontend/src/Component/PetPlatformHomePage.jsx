@@ -12,18 +12,20 @@ import {
   ChevronRight,
   ChevronLeft
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 // Import images
 import heroBg from "../assets/Home01.jpeg";
-import adoptionImage from "../assets/Adoption2.jpeg";
+import adoptionImage from "../assets/Homepage p1.jpeg";
 import appointmentImage from "../assets/Adoption3.jpeg";
-import storeImage from "../assets/Adoption4.jpeg";
+import storeImage from "../assets/Homepage p2.jpeg";
 import AboutUs from './AboutUs';
 import eventsImage from '../assets/Adoption.jpeg';
 
 const PetPlatformHomePage = () => {
   const [showGuide, setShowGuide] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const navigate = useNavigate();
 
   const guideSteps = [
     {
@@ -83,6 +85,41 @@ const PetPlatformHomePage = () => {
       setCurrentStep(currentStep - 1);
     }
   };
+
+  const services = [
+    { 
+      icon: <Dog className="w-16 h-16 text-[#D08860]" />, 
+      title: 'Pet Adoption', 
+      description: 'Find your perfect companion',
+      bgColor: 'bg-[#FFF3E0]',
+      textColor: 'text-[#D08860]',
+      path: '/adoption'
+    },
+    { 
+      icon: <Stethoscope className="w-16 h-16 text-[#5A9367]" />, 
+      title: 'Pet Care', 
+      description: 'Professional veterinary services',
+      bgColor: 'bg-[#E6F3E5]',
+      textColor: 'text-[#5A9367]',
+      path: '/appointment'
+    },
+    { 
+      icon: <ShoppingCart className="w-16 h-16 text-[#6A8CAF]" />, 
+      title: 'Pet Store', 
+      description: 'Quality products for pets',
+      bgColor: 'bg-[#E6F1F9]',
+      textColor: 'text-[#6A8CAF]',
+      path: '/collection'
+    },
+    { 
+      icon: <Calendar className="w-16 h-16 text-[#9C7BBC]" />, 
+      title: 'Events', 
+      description: 'Community and workshops',
+      bgColor: 'bg-[#F2EAF9]',
+      textColor: 'text-[#9C7BBC]',
+      path: '/events'
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-[#FFF5E7] text-gray-800 font-sans">
@@ -178,45 +215,20 @@ const PetPlatformHomePage = () => {
       {/* Services Section with Enhanced Cards */}
       <div className="py-24 px-6 bg-white">
         <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-8">
-          {[
-            { 
-              icon: <Dog className="w-16 h-16 text-[#D08860]" />, 
-              title: 'Pet Adoption', 
-              description: 'Find your perfect companion',
-              bgColor: 'bg-[#FFF3E0]',
-              textColor: 'text-[#D08860]'
-            },
-            { 
-              icon: <Stethoscope className="w-16 h-16 text-[#5A9367]" />, 
-              title: 'Pet Care', 
-              description: 'Professional veterinary services',
-              bgColor: 'bg-[#E6F3E5]',
-              textColor: 'text-[#5A9367]'
-            },
-            { 
-              icon: <ShoppingCart className="w-16 h-16 text-[#6A8CAF]" />, 
-              title: 'Pet Store', 
-              description: 'Quality products for pets',
-              bgColor: 'bg-[#E6F1F9]',
-              textColor: 'text-[#6A8CAF]'
-            },
-            { 
-              icon: <Calendar className="w-16 h-16 text-[#9C7BBC]" />, 
-              title: 'Events', 
-              description: 'Community and workshops',
-              bgColor: 'bg-[#F2EAF9]',
-              textColor: 'text-[#9C7BBC]'
-            }
-          ].map((service, index) => (
+          {services.map((service, index) => (
             <div 
               key={index} 
-              className={`${service.bgColor} p-8 rounded-3xl shadow-xl hover:scale-105 transition-all duration-300 ease-in-out text-center group`}
+              onClick={() => navigate(service.path)}
+              className={`${service.bgColor} p-8 rounded-3xl shadow-xl hover:scale-105 transition-all duration-300 ease-in-out text-center group cursor-pointer`}
             >
               <div className="mb-6 flex justify-center">
                 {service.icon}
               </div>
               <h3 className={`text-2xl font-bold mb-3 ${service.textColor}`}>{service.title}</h3>
               <p className="text-gray-600 text-base">{service.description}</p>
+              <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <span className={`${service.textColor} font-medium`}>Click to explore →</span>
+              </div>
             </div>
           ))}
         </div>
@@ -245,7 +257,10 @@ const PetPlatformHomePage = () => {
               Compatibility Matching
             </li>
           </ul>
-          <button className="bg-[#D08860] text-white text-lg px-10 py-4 rounded-full hover:bg-[#B3714E] transition-colors duration-300 shadow-lg hover:shadow-xl">
+          <button 
+            onClick={() => navigate('/adoption')}
+            className="bg-[#D08860] text-white text-lg px-10 py-4 rounded-full hover:bg-[#B3714E] transition-colors duration-300 shadow-lg hover:shadow-xl"
+          >
             Explore Adoptions
           </button>
         </div>
@@ -288,7 +303,10 @@ const PetPlatformHomePage = () => {
               Medical Record Tracking
             </li>
           </ul>
-          <button className="bg-[#5A9367] text-white text-lg px-10 py-4 rounded-full hover:bg-[#47795A] transition-colors duration-300 shadow-lg hover:shadow-xl">
+          <button 
+            onClick={() => navigate('/appointment')}
+            className="bg-[#5A9367] text-white text-lg px-10 py-4 rounded-full hover:bg-[#47795A] transition-colors duration-300 shadow-lg hover:shadow-xl"
+          >
             Schedule Consultation
           </button>
         </div>
@@ -317,7 +335,10 @@ const PetPlatformHomePage = () => {
               Quality Guaranteed Products
             </li>
           </ul>
-          <button className="bg-[#6A8CAF] text-white text-lg px-10 py-4 rounded-full hover:bg-[#5A7A9F] transition-colors duration-300 shadow-lg hover:shadow-xl">
+          <button 
+            onClick={() => navigate('/collection')}
+            className="bg-[#6A8CAF] text-white text-lg px-10 py-4 rounded-full hover:bg-[#5A7A9F] transition-colors duration-300 shadow-lg hover:shadow-xl"
+          >
             Visit Store
           </button>
         </div>
@@ -360,7 +381,10 @@ const PetPlatformHomePage = () => {
               Educational Opportunities
             </li>
           </ul>
-          <button className="bg-[#9C7BBC] text-white text-lg px-10 py-4 rounded-full hover:bg-[#8A6BA2] transition-colors duration-300 shadow-lg hover:shadow-xl">
+          <button 
+            onClick={() => navigate('/events')}
+            className="bg-[#9C7BBC] text-white text-lg px-10 py-4 rounded-full hover:bg-[#8A6BA2] transition-colors duration-300 shadow-lg hover:shadow-xl"
+          >
             Explore Events
           </button>
         </div>

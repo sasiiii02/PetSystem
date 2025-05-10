@@ -53,6 +53,10 @@ const professionalSchema = new mongoose.Schema({
   description: {
     type: String,
   },
+  profilePicture: {
+    type: String,
+    default: '',
+  },
   isVerified: {
     type: Boolean,
     default: false,

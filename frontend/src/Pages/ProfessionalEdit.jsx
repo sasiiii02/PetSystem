@@ -7,38 +7,63 @@ const ProfessionalEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: '',
-    professionalEmail: '',
-    phoneNumber: '',
-    city: '',
-    role: 'event_manager',
+    pName: '',
+    pemail: '',
+    pphoneNumber: '',
+    qualification: '',
+    experience: '',
+    description: '',
+    role: 'groomer',
+    profilePicture: null
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [previewImage, setPreviewImage] = useState('');
 
   // Fetch professional data on mount
   useEffect(() => {
     const fetchProfessional = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('adminToken');
         if (!token) {
-          throw new Error('No authentication token found');
+          throw new Error('No authentication token found. Please log in again.');
         }
         const response = await axios.get(`http://localhost:5000/api/professionals/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        
+        if (!response.data) {
+          throw new Error('No data received from server');
+        }
+
         setFormData({
-          name: response.data.name,
-          professionalEmail: response.data.professionalEmail,
-          phoneNumber: response.data.phoneNumber,
-          city: response.data.city,
-          role: response.data.role,
+          pName: response.data.pName || '',
+          pemail: response.data.pemail || '',
+          pphoneNumber: response.data.pphoneNumber || '',
+          qualification: response.data.qualification || '',
+          experience: response.data.experience || '',
+          description: response.data.description || '',
+          role: response.data.role || 'groomer',
+          profilePicture: null
         });
+        setPreviewImage(response.data.profilePicture || 'https://via.placeholder.com/150?text=Profile+Image');
         setLoading(false);
       } catch (err) {
         console.error('Error fetching professional:', err);
-        setError(err.response?.data?.message || 'Error fetching professional');
+        if (err.response) {
+          if (err.response.status === 401) {
+            setError('Authentication failed. Please log in again.');
+          } else if (err.response.status === 404) {
+            setError('Professional not found.');
+          } else {
+            setError(err.response.data?.message || 'Error fetching professional');
+          }
+        } else if (err.request) {
+          setError('No response from server. Please try again later.');
+        } else {
+          setError(err.message || 'Error fetching professional');
+        }
         setLoading(false);
       }
     };
@@ -50,33 +75,76 @@ const ProfessionalEdit = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Handle image change
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData({ ...formData, profilePicture: file });
+      setPreviewImage(URL.createObjectURL(file));
+    }
+  };
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        setError('Authentication token not found. Please log in again.');
+        return;
+      }
+
+      const formDataToSend = new FormData();
+      
+      // Append all form fields to FormData
+      Object.keys(formData).forEach(key => {
+        if (formData[key] !== null) {
+          formDataToSend.append(key, formData[key]);
+        }
+      });
+
       const response = await axios.put(
         `http://localhost:5000/api/professionals/update/${id}`,
-        formData,
+        formDataToSend,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          },
         }
       );
+
       if (response.data && response.data.professional) {
-        navigate('/admin/professionals');
+        // Update the preview image if a new one was uploaded
+        if (response.data.professional.profilePicture) {
+          setPreviewImage(response.data.professional.profilePicture);
+        }
+        navigate('/ProfessionalsList');
       } else {
         setError('Invalid response from server');
       }
     } catch (err) {
       console.error('Update error:', err);
-      setError(err.response?.data?.message || 'Error updating professional');
+      if (err.response) {
+        if (err.response.status === 401) {
+          setError('Authentication failed. Please log in again.');
+        } else if (err.response.status === 404) {
+          setError('Professional not found.');
+        } else {
+          setError(err.response.data?.message || 'Error updating professional');
+        }
+      } else if (err.request) {
+        setError('No response from server. Please try again later.');
+      } else {
+        setError('Error updating professional. Please try again.');
+      }
     }
   };
 
   // Handle delete professional
   const handleDeleteProfessional = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken');
       const response = await axios.post(
         `http://localhost:5000/api/professionals/delete/${id}`,
         {},
@@ -85,7 +153,7 @@ const ProfessionalEdit = () => {
         }
       );
       if (response.data.message === 'Profile deleted successfully') {
-        navigate('/admin/professionals');
+        navigate('/ProfessionalsList');
       } else {
         setError('Failed to delete professional');
       }
@@ -107,12 +175,13 @@ const ProfessionalEdit = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F4E4D8] to-[#E6D5C1] flex items-center justify-center p-6 sm:p-12">
+    <div className="min-h-screen bg-gradient-to-br from-[#F4E4D8] to-[#E6D5C1] flex items-center justify-center p-6 sm:p-12 mt-12">
       <div className="w-full max-w-[800px] bg-white shadow-2xl rounded-2xl overflow-hidden flex flex-col md:flex-row">
         {/* Left Image Section */}
         <div className="w-full md:w-1/2 relative h-64 md:h-auto">
           <div className="absolute inset-0 bg-[url('./assets/staffRegister.jpg')] bg-cover bg-center flex items-center justify-center">
             <div className="text-white text-center p-8">
+              
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">Edit Professional Profile</h2>
               <p className="text-lg sm:text-xl">Update professional details</p>
             </div>
@@ -125,17 +194,40 @@ const ProfessionalEdit = () => {
             <Heart className="text-amber-950 mr-3" size={32} />
             <h2 className="text-2xl sm:text-3xl font-bold text-amber-950">Edit Professional</h2>
           </div>
+          <div className="relative mb-6">
+                <img
+                  src={previewImage}
+                  alt="Profile"
+                  className="w-32 h-32 rounded-full border-4 border-white object-cover shadow-lg mx-auto"
+                />
+                <label
+                  htmlFor="profilePicture"
+                  className="absolute bottom-0 right-1/2 transform translate-x-1/2 bg-amber-700 text-white p-2 rounded-full cursor-pointer hover:bg-amber-800 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                  </svg>
+                </label>
+                <input
+                  type="file"
+                  id="profilePicture"
+                  name="profilePicture"
+                  onChange={handleImageChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+              </div>
 
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             <div>
-              <label htmlFor="name" className="block text-sm sm:text-md font-medium text-amber-950 mb-2">
+              <label htmlFor="pName" className="block text-sm sm:text-md font-medium text-amber-950 mb-2">
                 Name
               </label>
               <input
                 type="text"
-                id="name"
-                name="name"
-                value={formData.name}
+                id="pName"
+                name="pName"
+                value={formData.pName}
                 onChange={handleChange}
                 required
                 className={`w-full px-4 py-3 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
@@ -146,14 +238,14 @@ const ProfessionalEdit = () => {
               />
             </div>
             <div>
-              <label htmlFor="professionalEmail" className="block text-sm sm:text-md font-medium text-amber-950 mb-2">
+              <label htmlFor="pemail" className="block text-sm sm:text-md font-medium text-amber-950 mb-2">
                 Email
               </label>
               <input
                 type="email"
-                id="professionalEmail"
-                name="professionalEmail"
-                value={formData.professionalEmail}
+                id="pemail"
+                name="pemail"
+                value={formData.pemail}
                 onChange={handleChange}
                 required
                 className={`w-full px-4 py-3 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
@@ -164,14 +256,14 @@ const ProfessionalEdit = () => {
               />
             </div>
             <div>
-              <label htmlFor="phoneNumber" className="block text-sm sm:text-md font-medium text-amber-950 mb-2">
+              <label htmlFor="pphoneNumber" className="block text-sm sm:text-md font-medium text-amber-950 mb-2">
                 Phone Number
               </label>
               <input
                 type="text"
-                id="phoneNumber"
-                name="phoneNumber"
-                value={formData.phoneNumber}
+                id="pphoneNumber"
+                name="pphoneNumber"
+                value={formData.pphoneNumber}
                 onChange={handleChange}
                 required
                 pattern="\d{10}"
@@ -184,21 +276,56 @@ const ProfessionalEdit = () => {
               />
             </div>
             <div>
-              <label htmlFor="city" className="block text-sm sm:text-md font-medium text-amber-950 mb-2">
-                City
+              <label htmlFor="qualification" className="block text-sm sm:text-md font-medium text-amber-950 mb-2">
+                Qualification
               </label>
               <input
                 type="text"
-                id="city"
-                name="city"
-                value={formData.city}
+                id="qualification"
+                name="qualification"
+                value={formData.qualification}
                 onChange={handleChange}
                 required
                 className={`w-full px-4 py-3 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
-                  error.includes('city') ? 'border-red-500' : 'border-amber-200'
+                  error.includes('qualification') ? 'border-red-500' : 'border-amber-200'
                 }`}
-                placeholder="City"
-                aria-label="City"
+                placeholder="Professional Qualification"
+                aria-label="Professional Qualification"
+              />
+            </div>
+            <div>
+              <label htmlFor="experience" className="block text-sm sm:text-md font-medium text-amber-950 mb-2">
+                Experience
+              </label>
+              <input
+                type="text"
+                id="experience"
+                name="experience"
+                value={formData.experience}
+                onChange={handleChange}
+                required
+                className={`w-full px-4 py-3 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
+                  error.includes('experience') ? 'border-red-500' : 'border-amber-200'
+                }`}
+                placeholder="Years of Experience"
+                aria-label="Professional Experience"
+              />
+            </div>
+            <div>
+              <label htmlFor="description" className="block text-sm sm:text-md font-medium text-amber-950 mb-2">
+                Description
+              </label>
+              <textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
+                  error.includes('description') ? 'border-red-500' : 'border-amber-200'
+                }`}
+                placeholder="Professional Description"
+                aria-label="Professional Description"
+                rows="4"
               />
             </div>
             <div>
@@ -216,13 +343,13 @@ const ProfessionalEdit = () => {
                 }`}
                 aria-label="Professional Role"
               >
-                <option value="event_manager">Event Manager</option>
-                <option value="store_manager">Store Manager</option>
-                <option value="user_admin">User Admin</option>
+                <option value="groomer">Groomer</option>
+                <option value="veterinarian">Veterinarian</option>
+                <option value="pet-trainer">Pet Trainer</option>
               </select>
             </div>
 
-            {error && !error.includes('name') && !error.includes('email') && !error.includes('phoneNumber') && !error.includes('city') && !error.includes('role') && (
+            {error && !error.includes('name') && !error.includes('email') && !error.includes('phoneNumber') && !error.includes('qualification') && !error.includes('experience') && !error.includes('role') && (
               <p className="text-center text-sm text-red-500 flex items-center justify-center">
                 <AlertCircle className="mr-2" size={18} /> {error}
               </p>
@@ -276,7 +403,7 @@ const ProfessionalEdit = () => {
               </h3>
             </div>
             <p className="text-gray-900 mb-6 text-center">
-              Are you sure you want to delete this professional’s profile? This action cannot be undone.
+              Are you sure you want to delete this professional's profile? This action cannot be undone.
             </p>
             <div className="flex justify-center space-x-4">
               <button

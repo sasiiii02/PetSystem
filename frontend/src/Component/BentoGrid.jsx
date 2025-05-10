@@ -1,7 +1,7 @@
-import image1 from '../assets/Adoption2.jpeg'
-import image2 from '../assets/Adoption3.jpeg'
-import image3 from '../assets/Adoption4.jpeg'
-import image4 from '../assets/Adoption5.jpeg'
+import image1 from '../assets/BentoGridp2.jpeg'
+import image2 from '../assets/BentoGridp3.jpeg'
+import image3 from '../assets/BentoGridp4.jpeg'
+import image4 from '../assets/BentoGridp1.jpeg'
 import { PawPrint, Shield, Heart } from 'lucide-react'
 
 export default function Grid() {

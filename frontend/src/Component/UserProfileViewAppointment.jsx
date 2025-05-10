@@ -52,6 +52,7 @@ const ProfilePage = () => {
 
   const navigate = useNavigate(); // Added for logout navigation
 
+  const defaultProfilePic = "/assets/add.jpg";
   // Fetch user profile, pets, adoptions, products, and events on component mount
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -67,7 +68,7 @@ const ProfilePage = () => {
           membership: "Premium",
           memberSince: "2021-03-15",
           paymentMethod: "Visa •••• 4242",
-          profilePic: response.data.profilePic || "https://randomuser.me/api/portraits/women/42.jpg"
+          profilePic: response.data.profilePicture || "https://randomuser.me/api/portraits/women/42.jpg"
         });
       } catch (error) {
         if (error.response?.status === 401) {
@@ -88,7 +89,7 @@ const ProfilePage = () => {
       setPetsError('');
 
       try {
-        const response = await api.get('/pets');
+        const response = await api.get('/pets/getUserPets');
         setPets(response.data || []);
       } catch (error) {
         if (error.response?.status === 404) {
@@ -325,6 +326,10 @@ const ProfilePage = () => {
                       src={user.profilePic}
                       alt="Profile"
                       className="w-20 h-20 rounded-full border-4 border-white mr-4 object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = defaultProfilePic;
+                      }}
                     />
                   </div>
                   <div>
@@ -383,7 +388,7 @@ const ProfilePage = () => {
                     <div>
                       <h3 className="text-xl font-bold font-medium text-amber-800">My Pets</h3>
                       <div>
-                        <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-4 mt-2">
                           {isLoadingPets ? (
                             <p className="text-gray-600">Loading pets...</p>
                           ) : petsError || pets.length === 0 ? (
@@ -399,15 +404,18 @@ const ProfilePage = () => {
                             <>
                               {pets.map((pet) => (
                                 <div key={pet._id} className="flex flex-col items-center">
-                                  <Link to={`/ViewPetProfile/${pet._id}`}>
+                                  <Link to={`/PetEdit/${pet._id}`}>
                                     <img
-                                      src={pet.petImage ? `http://localhost:5000/${pet.petImage}` : defaultPetImage}
-                                      alt="Pet Profile"
+                                      src={pet.petimage || defaultPetImage}
+                                      alt={pet.name}
                                       className="w-16 h-16 rounded-full border-2 border-[#9a7656] object-cover"
-                                      onError={(e) => (e.target.src = defaultPetImage)}
+                                      onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = defaultPetImage;
+                                      }}
                                     />
                                   </Link>
-                                  <p className="text-gray-800 text-md mt-2">{pet.name || 'N/A'}</p>
+                                  <p className="text-gray-800 text-sm mt-2">{pet.name}</p>
                                 </div>
                               ))}
                               <div className="flex flex-col items-center">
@@ -418,7 +426,7 @@ const ProfilePage = () => {
                                     className="w-16 h-16 rounded-full border-2 border-[#9a7656] object-cover"
                                   />
                                 </Link>
-                                <p className="text-gray-800 text-md mt-2">Add a Pet</p>
+                                <p className="text-gray-800 text-sm mt-2">Add a Pet</p>
                               </div>
                             </>
                           )}

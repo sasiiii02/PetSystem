@@ -1,9 +1,10 @@
 //edited
 // src/Component/UserHeader.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect,useContext } from "react";
 import { Dialog, DialogPanel } from "@headlessui/react";
-import { Bars3Icon, XMarkIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import { Bars3Icon, XMarkIcon, EyeIcon, EyeSlashIcon, ShoppingCartIcon } from "@heroicons/react/24/outline";
 import { Link, useNavigate } from "react-router-dom";
+import { ShopContext } from "../context/ShopContext";
 
 export default function UserHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -18,13 +19,14 @@ export default function UserHeader() {
   const [regCity, setRegCity] = useState("");
   const [regPassword, setRegPassword] = useState("");
   const [conPassword, setConPassword] = useState("");
-  const [profilePic, setProfilePic] = useState("");
+  const [profilePic, setProfilePic] = useState(null);
   const [regError, setRegError] = useState("");
   const [intendedPath, setIntendedPath] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [showConPassword, setShowConPassword] = useState(false);
   const navigate = useNavigate();
+  const { getCartCount } = useContext(ShopContext);
 
   // Use pet owner-specific token
   const [petOwnerToken, setPetOwnerToken] = useState(localStorage.getItem("petOwnerToken"));
@@ -95,16 +97,18 @@ export default function UserHeader() {
       return;
     }
     try {
+      const formData = new FormData();
+      formData.append("name", regName);
+      formData.append("email", regEmail);
+      formData.append("phoneNumber", regPhoneNumber);
+      formData.append("city", regCity);
+      formData.append("password", regPassword);
+      if (profilePic) {
+        formData.append("profilePicture", profilePic);
+      }
       const response = await fetch("http://localhost:5000/api/users/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: regName,
-          email: regEmail,
-          phoneNumber: regPhoneNumber,
-          city: regCity,
-          password: regPassword,
-        }),
+        body: formData,
       });
       const data = await response.json();
       if (response.ok) {
@@ -116,6 +120,7 @@ export default function UserHeader() {
           email: data.user.email,
           phoneNumber: data.user.phoneNumber,
           city: data.user.city,
+          profilePicture: data.user.profilePicture,
           role: "pet_owner"
         }));
         setPetOwnerToken(data.user.token);
@@ -126,6 +131,7 @@ export default function UserHeader() {
         setRegCity("");
         setRegPassword("");
         setConPassword("");
+        setProfilePic(null);
         navigate(intendedPath || "/");
       } else {
         setRegError(data.message || "Registration failed");
@@ -181,9 +187,9 @@ export default function UserHeader() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md shadow-md">
-      <nav aria-label="Global" className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8">
+      <nav aria-label="Global" className="mx-auto flex max-w-7xl items-center justify-between py-6 pr-6 lg:pr-8 pl-0 lg:pl-0">
         <div className="flex lg:flex-1">
-          <Link to="/" className="-m-1.5 p-1.5">
+          <Link to="/">
             <span className="sr-only">Pet Care</span>
             <img src="/logo.jpg" alt="Pet Care Logo" className="h-10 w-auto rounded-md shadow-sm hover:shadow-md transition" />
           </Link>
@@ -256,6 +262,12 @@ export default function UserHeader() {
             className="text-sm/6 font-semibold text-gray-900 hover:text-amber-700 transition-colors duration-200"
           >
             Profile
+          </Link>
+          <Link to="/cart" className="relative inline-block p-2">
+            <ShoppingCartIcon className="w-6 h-6 text-gray-700" />
+            <p className="absolute right-[-3px] bottom-[-3px] w-4 h-4 flex items-center justify-center bg-black text-white rounded-full text-[8px] z-10 font-bold">
+              {getCartCount()}
+            </p>
           </Link>
         </div>
 
@@ -361,6 +373,12 @@ export default function UserHeader() {
                   className="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-amber-50 hover:text-amber-700"
                 >
                   Profile
+                </Link>
+                <Link to="/cart" className="relative inline-block p-2">
+                  <ShoppingCartIcon className="w-6 h-6 text-gray-700" />
+                  <p className="absolute right-[-3px] bottom-[-3px] w-4 h-4 flex items-center justify-center bg-black text-white rounded-full text-[8px] z-10 font-bold">
+                    {getCartCount()}
+                  </p>
                 </Link>
               </div>
               <div className="py-6 space-y-2">
@@ -619,10 +637,9 @@ export default function UserHeader() {
                   <label className="block text-amber-950 font-medium mb-1">Profile Picture</label>
                   <input
                     type="file"
+                    accept="image/*"
                     className="w-full px-4 py-2 border border-amber-200 rounded-lg focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 bg-white text-gray-900"
-                    value={profilePic}
-                    onChange={(e) => setProfilePic(e.target.value)}
-                    placeholder="Upload your Photo"
+                    onChange={(e) => setProfilePic(e.target.files[0])}
                   />
                 </div>
                 <button

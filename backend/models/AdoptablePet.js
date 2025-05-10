@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 
 const AdoptablePetSchema = new mongoose.Schema({
+  userId: { type: String, required: true },
   ownerFirstName: { type: String, required: true },
-  ownerLastName: { type: String, required: true },
+  ownerLastName: { type: String },
   email: { type: String, required: true },
   phone: { type: String, required: true },
   petName: { type: String, required: true },
