@@ -22,6 +22,8 @@ const userSchema = new mongoose.Schema(
     },
     city: { type: String, required: true },
     password: { type: String, required: true },
+    cartData: { type: Object, default: {} },
+    profilePicture: { type: String, default: "" },
   },
   { timestamps: true } // Add timestamps
 );

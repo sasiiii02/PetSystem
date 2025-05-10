@@ -16,13 +16,14 @@ const UsersList = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('adminToken');
         if (!token) {
           throw new Error('No authentication token found');
         }
         const response = await axios.get('http://localhost:5000/api/users/all', {
           headers: { Authorization: `Bearer ${token}` },
         });
+        console.log('Fetched users:', response.data); // Log to inspect data
         setUsers(response.data);
         setFilteredUsers(response.data);
         setLoading(false);
@@ -37,18 +38,25 @@ const UsersList = () => {
 
   // Handle search filtering
   useEffect(() => {
-    const filtered = users.filter(
-      (user) =>
-        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filtered = users.filter((user) => {
+      // Safely handle undefined or non-string name/email
+      const name = typeof user.name === 'string' ? user.name.toLowerCase() : '';
+      const email = typeof user.email === 'string' ? user.email.toLowerCase() : '';
+      const query = searchQuery.toLowerCase();
+      return name.includes(query) || email.includes(query);
+    });
     setFilteredUsers(filtered);
   }, [searchQuery, users]);
 
   // Handle delete profile
   const handleDeleteProfile = async (userId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        setError('Authentication token not found. Please log in again.');
+        return;
+      }
+
       const response = await axios.post(
         `http://localhost:5000/api/users/deleteProfile/${userId}`,
         {},
@@ -56,26 +64,48 @@ const UsersList = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
       if (response.data.message === 'Profile deleted successfully') {
-        setUsers(users.filter((user) => user._id !== userId));
-        setFilteredUsers(filteredUsers.filter((user) => user._id !== userId));
+        // Update both users and filteredUsers state
+        setUsers(prevUsers => prevUsers.filter(user => user._id !== userId));
+        setFilteredUsers(prevFiltered => prevFiltered.filter(user => user._id !== userId));
         setDeleteConfirm(null);
+        setError(''); // Clear any existing errors
       } else {
-        setError('Failed to delete profile');
+        setError('Failed to delete profile: Unexpected response from server');
       }
     } catch (err) {
       console.error('Delete error:', err);
-      setError(err.response?.data?.message || 'Error deleting profile');
+      if (err.response) {
+        if (err.response.status === 401) {
+          setError('Authentication failed. Please log in again.');
+        } else if (err.response.status === 404) {
+          setError('User not found.');
+        } else {
+          setError(err.response.data?.message || 'Error deleting profile');
+        }
+      } else if (err.request) {
+        setError('No response from server. Please try again later.');
+      } else {
+        setError('Error deleting profile. Please try again.');
+      }
     }
   };
 
   if (loading) {
-    return <div className="text-center mt-10">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#F4E4D8] to-[#E6D5C1] flex items-center justify-center">
+        <div className="flex items-center space-x-2 text-amber-950">
+          <div className="w-6 h-6 border-4 border-amber-700 border-t-transparent rounded-full animate-spin"></div>
+          <span>Loading users...</span>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F4E4D8] to-[#E6D5C1] flex items-center justify-center p-6 sm:p-12">
-      <div className="w-full max-w-[1000px] bg-white shadow-2xl rounded-2xl p-6 sm:p-12">
+    <div className="min-h-screen bg-gradient-to-br from-[#F4E4D8] to-[#E6D5C1] flex flex-col items-center justify-center p-6 sm:p-12 mt-12">
+      <div className="w-full max-w-[1300px] bg-white shadow-2xl rounded-2xl p-6 sm:p-12">
         <div className="flex items-center justify-center mb-6 sm:mb-8">
           <Heart className="text-amber-950 mr-3" size={32} />
           <h2 className="text-2xl sm:text-3xl font-bold text-amber-950">Users List</h2>
@@ -87,8 +117,9 @@ const UsersList = () => {
           </p>
         )}
 
-        <div className="mb-6 mx-20">
-          <div className="relative">
+        {/* Search Bar */}
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:space-x-4">
+          <div className="relative flex-1 mb-4 sm:mb-0">
             <input
               type="text"
               value={searchQuery}
@@ -112,7 +143,7 @@ const UsersList = () => {
                 <th className="p-3 text-sm font-semibold">Email</th>
                 <th className="p-3 text-sm font-semibold">Phone Number</th>
                 <th className="p-3 text-sm font-semibold">City</th>
-                <th className="p-3 text-sm font-semibold">Actions</th>
+                <th className="p-3 text-sm font-semibold w-[120px]">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -123,17 +154,22 @@ const UsersList = () => {
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map((user) => (
-                  <tr key={user._id} className="border-b border-amber-200">
-                    <td className="p-3 text-gray-900">{user.name}</td>
-                    <td className="p-3 text-gray-900">{user.email}</td>
-                    <td className="p-3 text-gray-900">{user.phoneNumber}</td>
-                    <td className="p-3 text-gray-900">{user.city}</td>
+                filteredUsers.map((user, index) => (
+                  <tr
+                    key={user._id}
+                    className={`border-b border-amber-200 ${
+                      index % 2 === 1 ? 'bg-amber-50' : 'bg-white'
+                    } hover:bg-gray-100`}
+                  >
+                    <td className="p-3 text-gray-900">{user.name || 'N/A'}</td>
+                    <td className="p-3 text-gray-900">{user.email || 'N/A'}</td>
+                    <td className="p-3 text-gray-900">{user.phoneNumber || 'N/A'}</td>
+                    <td className="p-3 text-gray-900">{user.city || 'N/A'}</td>
                     <td className="p-3">
                       <button
                         onClick={() => setDeleteConfirm(user._id)}
                         className="bg-red-600 text-white px-3 py-1 rounded-lg flex items-center text-sm hover:bg-red-700 transition-colors"
-                        aria-label={`Delete user ${user.name}`}
+                        aria-label={`Delete user ${user.name || 'Unknown'}`}
                       >
                         <Trash2 size={16} className="mr-1" /> Delete
                       </button>
@@ -163,10 +199,12 @@ const UsersList = () => {
             </button>
             <div className="flex items-center justify-center mb-6">
               <Heart className="text-amber-950 mr-2" size={30} />
-              <h3 className="text-xl sm:text-2xl font-bold text-amber-950">Confirm Deletion</h3>
+              <h3 id="delete-confirm-title" className="text-xl sm:text-2xl font-bold text-amber-950">
+                Confirm Deletion
+              </h3>
             </div>
             <p className="text-gray-900 mb-6 text-center">
-              Are you sure you want to delete this user’s profile? This action cannot be undone.
+              Are you sure you want to delete this user's profile? This action cannot be undone.
             </p>
             <div className="flex justify-center space-x-4">
               <button

@@ -357,7 +357,15 @@ const PetRegisterUserDashboard = () => {
                                       )}
                                     </div>
                                   </div>
-
+                                  {/* Show user's response and notes if responded */}
+                                  {visit.userResponse !== 'pending' && (
+                                    <div className="mt-2 text-sm text-gray-700">
+                                      <span className="font-semibold">Your Response:</span>
+                                      {visit.userNotes && (
+                                        <span className="ml-2 italic">{visit.userNotes}</span>
+                                      )}
+                                    </div>
+                                  )}
                                   {selectedVisit?._id === visit._id && (
                                     <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                                       <textarea

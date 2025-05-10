@@ -113,13 +113,6 @@ const PetLostandfound = () => {
             {activeTab === 'lost' ? 'Report Lost Pet' : 'Report Found Pet'}
           </button>
           <button
-            onClick={() => navigate('/search-lost-found-pets')}
-            className="bg-[#D08860] text-white px-6 py-3 rounded-xl hover:bg-[#80533b] transition-colors flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-          >
-            <Search size={20} />
-            Search {activeTab === 'lost' ? 'Lost' : 'Found'} Pets
-          </button>
-          <button
             onClick={() => navigate('/my-pet-reports')}
             className="bg-[#D08860] text-white px-6 py-3 rounded-xl hover:bg-[#80533b] transition-colors flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
           >

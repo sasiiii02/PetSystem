@@ -109,7 +109,7 @@ const PetPlatformHomePage = () => {
       description: 'Quality products for pets',
       bgColor: 'bg-[#E6F1F9]',
       textColor: 'text-[#6A8CAF]',
-      path: '/pet-store'
+      path: '/collection'
     },
     { 
       icon: <Calendar className="w-16 h-16 text-[#9C7BBC]" />, 
@@ -336,7 +336,7 @@ const PetPlatformHomePage = () => {
             </li>
           </ul>
           <button 
-            onClick={() => navigate('/pet-store')}
+            onClick={() => navigate('/collection')}
             className="bg-[#6A8CAF] text-white text-lg px-10 py-4 rounded-full hover:bg-[#5A7A9F] transition-colors duration-300 shadow-lg hover:shadow-xl"
           >
             Visit Store

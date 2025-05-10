@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, MapPin, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, MapPin, Edit, Trash2, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
@@ -14,15 +14,33 @@ const MyPetReports = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Check if user is logged in
+    const token = localStorage.getItem('petOwnerToken');
+    if (!token) {
+      navigate('/login', { 
+        state: { 
+          from: { 
+            pathname: '/my-pet-reports'
+          } 
+        } 
+      });
+      return;
+    }
     fetchMyPets();
-  }, [activeTab]);
+  }, [activeTab, navigate]);
 
   const fetchMyPets = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('petOwnerToken');
       if (!token) {
-        setError('Please log in to view your reports');
+        navigate('/login', { 
+          state: { 
+            from: { 
+              pathname: '/my-pet-reports'
+            } 
+          } 
+        });
         return;
       }
 
@@ -34,11 +52,27 @@ const MyPetReports = () => {
       setPets(response.data);
     } catch (error) {
       console.error(`Error fetching ${activeTab} pets:`, error);
-      setError('Failed to fetch your pet reports');
+      if (error.response?.status === 401) {
+        // If unauthorized, redirect to login
+        navigate('/login', { 
+          state: { 
+            from: { 
+              pathname: '/my-pet-reports'
+            } 
+          } 
+        });
+      } else {
+        setError('Failed to fetch your pet reports');
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  // If no token is present, don't render the component
+  if (!localStorage.getItem('petOwnerToken')) {
+    return null;
+  }
 
   const handleEdit = (id) => {
     navigate(`/edit-${activeTab}-pet/${id}`);
@@ -65,6 +99,16 @@ const MyPetReports = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#FFF5E6] to-[#FFF5E6] py-8 mt-20">
       <div className="max-w-7xl mx-auto px-4">
+        <div className="mb-6">
+          <button
+            onClick={() => navigate('/pet-lost-and-found')}
+            className="flex items-center gap-2 text-[#80533b] hover:text-[#D08860] transition-colors"
+          >
+            <ArrowLeft size={20} />
+            <span>Back to Lost & Found</span>
+          </button>
+        </div>
+
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-[#80533b] mb-4">My Pet Reports</h1>
           <p className="text-lg text-gray-600">Manage your lost and found pet reports</p>

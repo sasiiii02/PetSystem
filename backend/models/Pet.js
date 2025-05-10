@@ -26,7 +26,8 @@ const petSchema = new mongoose.Schema({
   userId: { 
     type: mongoose.Schema.Types.ObjectId, 
     required: true, 
-    ref: 'User' 
+    ref: 'User',
+    index: true // Add index for better query performance, but not unique
   },
   name: { 
     type: String, 

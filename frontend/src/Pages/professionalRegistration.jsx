@@ -15,6 +15,7 @@ const ProfessionalRegistration = () => {
     description: "",
     pIDNumber: "",
   });
+  const [profilePicture, setProfilePicture] = useState(null);
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
@@ -32,7 +33,6 @@ const ProfessionalRegistration = () => {
     }
   };
 
-  // Update pID whenever role or pIDNumber changes
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
@@ -75,22 +75,35 @@ const ProfessionalRegistration = () => {
 
     if (validateForm()) {
       try {
+        const formDataToSend = new FormData();
+        
+        // Append all form fields
+        Object.entries(formData).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            formDataToSend.append(key, value);
+          }
+        });
+
+        // Append profile picture if exists
+        if (profilePicture) {
+          formDataToSend.append("profilePicture", profilePicture);
+        }
+
+        console.log("Submitting form data:", {
+          pName: formData.pName,
+          role: formData.role,
+          pID: formData.pID,
+          pemail: formData.pemail,
+          pphoneNumber: formData.pphoneNumber,
+          qualification: formData.qualification,
+          experience: formData.experience,
+          description: formData.description,
+          hasProfilePicture: !!profilePicture
+        });
+
         const response = await fetch("http://localhost:5000/api/professionals/register", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            pName: formData.pName,
-            role: formData.role,
-            pID: formData.pID,
-            pemail: formData.pemail,
-            ppassword: formData.ppassword,
-            pphoneNumber: formData.pphoneNumber,
-            qualification: formData.qualification,
-            experience: formData.experience,
-            description: formData.description,
-          }),
+          body: formDataToSend,
         });
 
         const data = await response.json();
@@ -109,11 +122,14 @@ const ProfessionalRegistration = () => {
             description: "",
             pIDNumber: "",
           });
-          navigate("/staff-login");
+          setProfilePicture(null);
+          navigate("/StaffLogin");
         } else {
+          console.error("Registration failed:", data);
           setErrors({ submit: data.message || "Registration failed" });
         }
       } catch (error) {
+        console.error("Registration error:", error);
         setErrors({ submit: "Server error. Please try again." });
       }
     }
@@ -122,7 +138,6 @@ const ProfessionalRegistration = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F4E4D8] to-[#E6D5C1] flex items-center justify-center p-6 sm:p-12 mt-12">
       <div className="w-full max-w-6xl bg-white shadow-2xl rounded-3xl overflow-hidden flex flex-col md:flex-row">
-        {/* Left Section: Image */}
         <div className="w-full md:w-1/2 relative h-64 md:h-auto">
           <div
             className="absolute inset-0 bg-[url('./assets/staffRegister.jpg')] bg-cover bg-center flex items-center justify-center"
@@ -134,7 +149,6 @@ const ProfessionalRegistration = () => {
           </div>
         </div>
 
-        {/* Right Section: Registration Form */}
         <div className="w-full md:w-1/2 p-6 sm:p-12 overflow-y-auto max-h-screen">
           <div className="flex items-center justify-center mb-6 sm:mb-8">
             <Heart className="text-[#B3704D] mr-3" size={32} />
@@ -142,7 +156,6 @@ const ProfessionalRegistration = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-            {/* Name */}
             <div>
               <label htmlFor="pName" className="block text-sm sm:text-md font-medium text-gray-700 mb-2">
                 Full Name
@@ -165,7 +178,6 @@ const ProfessionalRegistration = () => {
               )}
             </div>
 
-            {/* Role */}
             <div>
               <label htmlFor="role" className="block text-sm sm:text-md font-medium text-gray-700 mb-2">
                 Role
@@ -183,7 +195,6 @@ const ProfessionalRegistration = () => {
               </select>
             </div>
 
-            {/* Professional ID */}
             <div>
               <label htmlFor="pIDNumber" className="block text-sm sm:text-md font-medium text-gray-700 mb-2">
                 Professional ID Number (3 digits)
@@ -213,7 +224,6 @@ const ProfessionalRegistration = () => {
               )}
             </div>
 
-            {/* Email */}
             <div>
               <label htmlFor="pemail" className="block text-sm sm:text-md font-medium text-gray-700 mb-2">
                 Email Address
@@ -236,7 +246,6 @@ const ProfessionalRegistration = () => {
               )}
             </div>
 
-            {/* Password */}
             <div className="relative">
               <label htmlFor="ppassword" className="block text-sm sm:text-md font-medium text-gray-700 mb-2">
                 Password
@@ -267,7 +276,6 @@ const ProfessionalRegistration = () => {
               )}
             </div>
 
-            {/* Phone Number */}
             <div>
               <label htmlFor="pphoneNumber" className="block text-sm sm:text-md font-medium text-gray-700 mb-2">
                 Phone Number
@@ -291,7 +299,6 @@ const ProfessionalRegistration = () => {
               )}
             </div>
 
-            {/* Qualification */}
             <div>
               <label htmlFor="qualification" className="block text-sm sm:text-md font-medium text-gray-700 mb-2">
                 Qualification
@@ -301,7 +308,7 @@ const ProfessionalRegistration = () => {
                 id="qualification"
                 name="qualification"
                 value={formData.qualification}
-                onChange ={ handleChange}
+                onChange={handleChange}
                 className={`w-full px-4 py-1.5 rounded-xl border-2 ${
                   errors.qualification ? "border-red-500" : "border-gray-300"
                 } focus:outline-none focus:ring-2 focus:ring-[#9a7656]`}
@@ -314,7 +321,6 @@ const ProfessionalRegistration = () => {
               )}
             </div>
 
-            {/* Experience */}
             <div>
               <label htmlFor="experience" className="block text-sm sm:text-md font-medium text-gray-700 mb-2">
                 Experience
@@ -325,7 +331,7 @@ const ProfessionalRegistration = () => {
                 name="experience"
                 value={formData.experience}
                 onChange={handleChange}
-                className={`w-full px-4 py-3 rounded-xl border-2 ${
+                className={`w-full px-4 py-1.5 rounded-xl border-2 ${
                   errors.experience ? "border-red-500" : "border-gray-300"
                 } focus:outline-none focus:ring-2 focus:ring-[#9a7656]`}
                 placeholder="Years of Experience"
@@ -337,7 +343,20 @@ const ProfessionalRegistration = () => {
               )}
             </div>
 
-            {/* Description */}
+            <div>
+              <label htmlFor="profilePicture" className="block text-sm sm:text-md font-medium text-gray-700 mb-2">
+                Profile Picture (Optional)
+              </label>
+              <input
+                type="file"
+                id="profilePicture"
+                name="profilePicture"
+                onChange={(e) => setProfilePicture(e.target.files[0])}
+                className="w-full px-4 py-1.5 rounded-xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#9a7656]"
+                accept="image/jpeg,image/png"
+              />
+            </div>
+
             <div>
               <label htmlFor="description" className="block text-sm sm:text-md font-medium text-gray-700 mb-2">
                 Description (Optional)
@@ -353,14 +372,12 @@ const ProfessionalRegistration = () => {
               />
             </div>
 
-            {/* Submission Error */}
             {errors.submit && (
               <p className="text-center text-sm text-red-500 flex items-center justify-center">
                 <AlertCircle className="mr-2" size={18} /> {errors.submit}
               </p>
             )}
 
-            {/* Submit Button */}
             <div className="flex justify-center pt-4">
               <button
                 type="submit"

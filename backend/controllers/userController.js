@@ -1,6 +1,8 @@
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import Pet from '../models/Pet.js'; // Import Pet model for cascading deletion
+import cloudinary from '../config/cloudinary.js';
+import fs from 'fs';
 
 // Generate JWT token
 const generateToken = (user) => {
@@ -20,7 +22,54 @@ export const registerUser = async (req, res) => {
     const userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ message: 'User already exists' });
 
-    const newUser = new User({ name, email, phoneNumber, city, password });
+    // Handle profile picture upload to Cloudinary
+    let profilePicture = "";
+    if (req.file) {
+      try {
+        console.log("Uploading file to Cloudinary:", req.file);
+        const result = await cloudinary.uploader.upload(req.file.path, {
+          folder: "users",
+          use_filename: true,
+          resource_type: "auto"
+        });
+        
+        if (!result || !result.secure_url) {
+          throw new Error("Failed to get secure URL from Cloudinary");
+        }
+        
+        profilePicture = result.secure_url;
+        console.log("File uploaded successfully to Cloudinary:", profilePicture);
+
+        // Clean up the temporary file
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (unlinkError) {
+          console.error("Error deleting temporary file:", unlinkError);
+        }
+      } catch (uploadError) {
+        console.error("Cloudinary upload error:", uploadError);
+        // Clean up the temporary file even if upload fails
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (unlinkError) {
+          console.error("Error deleting temporary file after failed upload:", unlinkError);
+        }
+        return res.status(500).json({ 
+          message: "Error uploading profile picture",
+          error: process.env.NODE_ENV === 'development' ? uploadError.message : undefined
+        });
+      }
+    }
+
+    // Create new user
+    const newUser = new User({
+      name,
+      email,
+      phoneNumber,
+      city,
+      password,
+      profilePicture
+    });
     await newUser.save();
 
     res.status(201).json({
@@ -31,6 +80,7 @@ export const registerUser = async (req, res) => {
         email: newUser.email,
         phoneNumber: newUser.phoneNumber,
         city: newUser.city,
+        profilePicture: newUser.profilePicture,
         token: generateToken(newUser),
       },
     });
@@ -80,29 +130,44 @@ export const getUserProfile = async (req, res) => {
 // @route   PUT /api/users/profile
 // @desc    Update user profile
 export const updateProfile = async (req, res) => {
-  const { name, email, phoneNumber, city } = req.body;
-  const userId = req.user.userId; // Consistent with generateToken
-
   try {
+    const userId = req.user.userId;
+    const { name, email, phoneNumber, city } = req.body;
+    
+    // Find the user first
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    // Check for duplicate email (excluding current user)
-    if (email && email !== user.email) {
-      const emailExists = await User.findOne({ email });
-      if (emailExists) return res.status(400).json({ message: 'Email already in use' });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    // Update only provided fields
+    // Check if email is being changed and if it's already taken
+    if (email !== user.email) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({ message: 'Email already in use' });
+      }
+    }
+
+    // Update user fields
     user.name = name || user.name;
     user.email = email || user.email;
     user.phoneNumber = phoneNumber || user.phoneNumber;
     user.city = city || user.city;
 
+    // Handle profile picture upload
+    if (req.file) {
+      user.profilePicture = req.file.path;
+    }
+
+    // Save the updated user
     await user.save();
 
-    // Regenerate token if name or email changed
-    const token = generateToken(user);
+    // Generate new token with the same structure as the original token
+    const token = jwt.sign(
+      { userId: user._id, name: user.name, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
 
     res.status(200).json({
       message: 'Profile updated successfully',
@@ -112,17 +177,13 @@ export const updateProfile = async (req, res) => {
         email: user.email,
         phoneNumber: user.phoneNumber,
         city: user.city,
-        token,
+        profilePicture: user.profilePicture
       },
+      token
     });
   } catch (error) {
-    if (error.code === 11000) {
-      res.status(400).json({ message: 'Email already in use' });
-    } else if (error.name === 'ValidationError') {
-      res.status(400).json({ message: Object.values(error.errors)[0].message });
-    } else {
-      res.status(500).json({ message: 'Error updating profile', error: error.message });
-    }
+    console.error('Error updating profile:', error);
+    res.status(500).json({ message: 'Error updating profile' });
   }
 };
 
@@ -145,6 +206,7 @@ export const deleteProfile = async (req, res) => {
     res.status(500).json({ message: 'Error deleting profile', error: error.message });
   }
 };
+
 export const getAllUsers = async (req, res) => {
   try {
     const user = await User.findById(req.userId);
@@ -159,13 +221,20 @@ export const getAllUsers = async (req, res) => {
 
 export const deleteProfileById = async (req, res) => {
   try {
-
-    const user = await User.findById(userId);
+    const { id } = req.params;
+    
+    // Find the user first to check if they exist
+    const user = await User.findById(id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    await User.findByIdAndDelete(userId);
+    // Delete associated pets (cascading deletion)
+    await Pet.deleteMany({ userId: id });
+
+    // Delete the user
+    await User.findByIdAndDelete(id);
+    
     res.status(200).json({ message: 'Profile deleted successfully' });
   } catch (error) {
     console.error('Error deleting profile:', error);

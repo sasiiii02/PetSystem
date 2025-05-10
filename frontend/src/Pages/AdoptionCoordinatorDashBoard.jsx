@@ -17,14 +17,22 @@ import {
   Trash2,
   CheckCircle,
   Search,
-  MapPin
+  MapPin,
+  Mail,
+  Phone,
+  Calendar,
+  TrendingUp,
+  PieChart
 } from 'lucide-react';
 
 const PetAdoptionCoordinatorDashboard = () => {
   const [pendingPets, setPendingPets] = useState([]); // For pets in foradoption table
   const [adoptablePets, setAdoptablePets] = useState([]); // For pets in adoptablepets table
   const [homeVisits, setHomeVisits] = useState([]);
-  const [activeSection, setActiveSection] = useState('pets');
+  const [activeSection, setActiveSection] = useState(() => {
+    // Initialize activeSection from localStorage or default to 'pets'
+    return localStorage.getItem('activeSection') || 'pets';
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -60,6 +68,8 @@ const PetAdoptionCoordinatorDashboard = () => {
   const [applicationFilter, setApplicationFilter] = useState('all'); // Add this with other state variables
   const [visitFilter, setVisitFilter] = useState('all'); // 'all', 'pending', 'approved', 'rejected'
   const [highlightedFormId, setHighlightedFormId] = useState(null);
+  const [isRescheduling, setIsRescheduling] = useState(false);
+  const [adoptedPets, setAdoptedPets] = useState([]);
   const navigate = useNavigate();
 
   // Fetch pending pets from foradoption table
@@ -180,9 +190,25 @@ const PetAdoptionCoordinatorDashboard = () => {
     }
   };
 
+  // Fetch adopted pets
+  const fetchAdoptedPets = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('http://localhost:5000/api/adoptedpets');
+      setAdoptedPets(response.data);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching adopted pets:", err);
+      setError("Failed to load adopted pets data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchPendingPets();
     fetchAdoptablePets();
+    fetchAdoptedPets();
     fetchAdoptionForms();
     fetchHomeVisits();
     fetchLostPets();
@@ -479,7 +505,7 @@ const PetAdoptionCoordinatorDashboard = () => {
         </div>
         <div className="flex space-x-3">
           <button 
-            className="flex items-center bg-gradient-to-r from-gray-600 to-gray-800 text-white px-5 py-2 rounded-full shadow-lg hover:scale-105 transition-transform"
+            className="flex items-center bg-gradient-to-r from-[#80533b] to-[#D08860] text-white px-5 py-2 rounded-full shadow-lg hover:scale-105 transition-transform"
             onClick={handleViewAdoptableList}
           >
             <Dog className="mr-2" /> View Public List
@@ -501,7 +527,7 @@ const PetAdoptionCoordinatorDashboard = () => {
             <Clock className="w-5 h-5" />
             <span>Pending Adoption List</span>
             <span className="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-sm">
-              {pendingPets.filter(pet => !hiddenPetIds.has(pet._id)).length}
+              {pendingPets.filter(pet => !hiddenPetIds.has(pet._id) && !adoptedPetNames.has(pet.petName)).length}
             </span>
           </button>
           <button
@@ -518,6 +544,20 @@ const PetAdoptionCoordinatorDashboard = () => {
               {adoptablePets.length}
             </span>
           </button>
+          <button
+            onClick={() => setPetListView('adopted')}
+            className={`px-6 py-3 rounded-lg transition-all flex items-center space-x-2 ${
+              petListView === 'adopted'
+                ? 'bg-[#D08860] text-white'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <HeartHandshake className="w-5 h-5" />
+            <span>Adopted Pets List</span>
+            <span className="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-sm">
+              {adoptedPets.length}
+            </span>
+          </button>
         </div>
       </div>
 
@@ -530,13 +570,13 @@ const PetAdoptionCoordinatorDashboard = () => {
           {petListView === 'pending' ? (
             // Pending Adoption List
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {pendingPets.filter(pet => !hiddenPetIds.has(pet._id)).length === 0 ? (
+              {pendingPets.filter(pet => !hiddenPetIds.has(pet._id) && !adoptedPetNames.has(pet.petName)).length === 0 ? (
                 <div className="col-span-3 text-center py-10 bg-white rounded-xl shadow-md">
                   <p className="text-gray-500">No pets in pending list</p>
                 </div>
               ) : (
                 pendingPets
-                  .filter(pet => !hiddenPetIds.has(pet._id))
+                  .filter(pet => !hiddenPetIds.has(pet._id) && !adoptedPetNames.has(pet.petName))
                   .map((pet) => (
                     <div 
                       key={pet._id} 
@@ -603,24 +643,113 @@ const PetAdoptionCoordinatorDashboard = () => {
                   ))
               )}
             </div>
-          ) : (
+          ) : petListView === 'adoptable' ? (
             // Adoptable Pets List
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {adoptablePets.length === 0 ? (
+              {adoptablePets.filter(pet => !adoptedPetNames.has(pet.petName)).length === 0 ? (
                 <div className="col-span-3 text-center py-10 bg-white rounded-xl shadow-md">
                   <p className="text-gray-500">No pets in adoptable list</p>
                 </div>
               ) : (
-                adoptablePets.map((pet) => (
-                  <div 
-                    key={pet._id} 
+                adoptablePets
+                  .filter(pet => !adoptedPetNames.has(pet.petName))
+                  .map((pet) => (
+                    <div 
+                      key={pet._id} 
+                      className="bg-white rounded-xl shadow-md overflow-hidden transform transition-all hover:scale-105 hover:shadow-xl"
+                    >
+                      {/* Pet Image */}
+                      {pet.petImage ? (
+                        <img 
+                          src={`http://localhost:5000${pet.petImage}`} 
+                          alt={pet.petName} 
+                          className="w-full h-128 object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                          <span className="text-gray-400">No image available</span>
+                        </div>
+                      )}
+                      
+                      <div className="p-4">
+                        {/* Pet Name & Status */}
+                        <div className="flex justify-between items-center mb-2">
+                          <h3 className="text-xl font-bold text-gray-800">{pet.petName}</h3>
+                          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
+                            Available
+                          </span>
+                        </div>
+
+                        {/* Pet Information */}
+                        <div className="text-gray-600">
+                          <p>Species: {pet.petSpecies}</p>
+                          <p>Breed: {pet.petBreed}</p>
+                          <p>Age: {pet.petAge} </p>
+                          <p>Gender: {pet.petGender}</p>
+                        </div>
+
+                        {/* Additional Information */}
+                        <div className="mt-2 text-sm">
+                          <div className="flex items-center space-x-2">
+                            <span className={`w-3 h-3 rounded-full ${pet.vaccinated ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                            <span>Vaccinated: {pet.vaccinated ? 'Yes' : 'No'}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className={`w-3 h-3 rounded-full ${pet.neutered ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                            <span>Neutered: {pet.neutered ? 'Yes' : 'No'}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className={`w-3 h-3 rounded-full ${pet.specialNeeds ? 'bg-yellow-500' : 'bg-green-500'}`}></span>
+                            <span>Special Needs: {pet.specialNeeds ? 'Yes' : 'No'}</span>
+                          </div>
+                        </div>
+
+                        {/* Buttons */}
+                        <div className="mt-4 flex flex-col space-y-2">
+                          <button 
+                            className="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition flex items-center justify-center"
+                            onClick={() => setShowDeleteConfirm({ 
+                              show: true, 
+                              petId: pet._id, 
+                              petName: pet.petName 
+                            })}
+                            disabled={deleteLoading}
+                          >
+                            <Trash2 className="mr-2" size={18} />
+                            Remove from Adoptable List
+                          </button>
+                          <button
+                            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition flex items-center justify-center"
+                            onClick={() => handleAdoptedPet(pet._id)}
+                            disabled={deleteLoading}
+                          >
+                            <HeartHandshake className="mr-2" size={18} />
+                            Adopted Pet
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+              )}
+            </div>
+          ) : petListView === 'adopted' ? (
+            // Adopted Pets List
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {adoptedPets.length === 0 ? (
+                <div className="col-span-3 text-center py-10 bg-white rounded-xl shadow-md">
+                  <p className="text-gray-500">No pets in adopted list</p>
+                </div>
+              ) : (
+                adoptedPets.map((pet) => (
+                  <div
+                    key={pet._id}
                     className="bg-white rounded-xl shadow-md overflow-hidden transform transition-all hover:scale-105 hover:shadow-xl"
                   >
                     {/* Pet Image */}
                     {pet.petImage ? (
-                      <img 
-                        src={`http://localhost:5000${pet.petImage}`} 
-                        alt={pet.petName} 
+                      <img
+                        src={`http://localhost:5000${pet.petImage}`}
+                        alt={pet.petName}
                         className="w-full h-128 object-cover"
                       />
                     ) : (
@@ -628,25 +757,19 @@ const PetAdoptionCoordinatorDashboard = () => {
                         <span className="text-gray-400">No image available</span>
                       </div>
                     )}
-                    
                     <div className="p-4">
-                      {/* Pet Name & Status */}
                       <div className="flex justify-between items-center mb-2">
                         <h3 className="text-xl font-bold text-gray-800">{pet.petName}</h3>
-                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
-                          Available
+                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
+                          Adopted
                         </span>
                       </div>
-
-                      {/* Pet Information */}
                       <div className="text-gray-600">
                         <p>Species: {pet.petSpecies}</p>
                         <p>Breed: {pet.petBreed}</p>
-                        <p>Age: {pet.petAge} </p>
+                        <p>Age: {pet.petAge}</p>
                         <p>Gender: {pet.petGender}</p>
                       </div>
-
-                      {/* Additional Information */}
                       <div className="mt-2 text-sm">
                         <div className="flex items-center space-x-2">
                           <span className={`w-3 h-3 rounded-full ${pet.vaccinated ? 'bg-green-500' : 'bg-red-500'}`}></span>
@@ -661,39 +784,28 @@ const PetAdoptionCoordinatorDashboard = () => {
                           <span>Special Needs: {pet.specialNeeds ? 'Yes' : 'No'}</span>
                         </div>
                       </div>
-
-                      {/* Buttons */}
-                      <div className="mt-4 flex flex-col space-y-2">
-                        <button 
-                          className="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition flex items-center justify-center"
-                          onClick={() => setShowDeleteConfirm({ 
-                            show: true, 
-                            petId: pet._id, 
-                            petName: pet.petName 
-                          })}
-                          disabled={deleteLoading}
-                        >
-                          <Trash2 className="mr-2" size={18} />
-                          Remove from Adoptable List
-                        </button>
-                        <button
-                          className="w-full bg-gray-700 text-white py-2 rounded-lg hover:bg-gray-800 transition flex items-center justify-center"
-                          onClick={async () => {
-                            setDeleteLoading(true);
-                            await axios.delete(`http://localhost:5000/api/adoptablepets/${pet._id}`);
-                            await fetchAdoptablePets();
-                            setDeleteLoading(false);
-                          }}
-                          disabled={deleteLoading}
-                        >
-                          <Trash2 className="mr-2" size={18} />
-                          Remove Permanently
-                        </button>
+                      {/* Owner Contact Information */}
+                      <div className="mt-4 pt-4 border-t border-gray-100">
+                        <h4 className="font-semibold text-gray-800 mb-2">Owner Contact Details</h4>
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Mail className="w-4 h-4 text-gray-500" />
+                            <span className="text-gray-600">{pet.email || 'No email provided'}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Phone className="w-4 h-4 text-gray-500" />
+                            <span className="text-gray-600">{pet.phone || 'No phone provided'}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 ))
               )}
+            </div>
+          ) : (
+            <div className="text-center py-10 text-gray-500">
+              No pets available in this view
             </div>
           )}
         </div>
@@ -1065,6 +1177,20 @@ const PetAdoptionCoordinatorDashboard = () => {
               {homeVisits.filter(visit => visit.status === 'rejected').length}
             </span>
           </button>
+          <button
+            onClick={() => setVisitFilter('visited')}
+            className={`px-6 py-3 rounded-lg transition-all flex items-center space-x-2 ${
+              visitFilter === 'visited'
+                ? 'bg-[#D08860] text-white'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <CheckCircle className="w-5 h-5" />
+            <span>Visited</span>
+            <span className="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-sm">
+              {homeVisits.filter(visit => visit.status === 'visited').length}
+            </span>
+          </button>
         </div>
       </div>
 
@@ -1129,15 +1255,15 @@ const PetAdoptionCoordinatorDashboard = () => {
                             <span>Mark as Visited</span>
                           </button>
                         )}
-                          <span className={`px-3 py-1 rounded-full ${
-                            visit.userResponse === 'accepted' 
-                              ? 'bg-green-100 text-green-800' 
+                        <span className={`px-3 py-1 rounded-full ${
+                          visit.userResponse === 'accepted' 
+                            ? 'bg-green-100 text-green-800' 
                             : 'bg-yellow-100 text-yellow-800'
-                          }`}>
+                        }`}>
                           {visit.userResponse ? 
                             visit.userResponse.charAt(0).toUpperCase() + visit.userResponse.slice(1) 
                             : 'Pending'}
-                          </span>
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -1150,12 +1276,12 @@ const PetAdoptionCoordinatorDashboard = () => {
                 <CheckCircle2 className="mr-2 text-green-500" />
                 Approved Visits
                 <span className="ml-2 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
-                  {homeVisits.filter(visit => visit.status === 'approved' || visit.userResponse === 'accepted').length}
+                  {homeVisits.filter(visit => visit.status === 'approved').length}
                 </span>
               </h3>
               <div className="space-y-4">
                 {homeVisits
-                  .filter(visit => visit.status === 'approved' || visit.userResponse === 'accepted')
+                  .filter(visit => visit.status === 'approved')
                   .map(visit => (
                     <div 
                       key={visit._id} 
@@ -1181,23 +1307,61 @@ const PetAdoptionCoordinatorDashboard = () => {
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
-                        {visit.status !== 'visited' && (
-                          <button
-                            onClick={() => handleMarkAsVisited(visit._id)}
-                            className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition flex items-center space-x-2"
-                          >
-                            <CheckCircle className="inline-block" size={18} />
-                            <span>Mark as Visited</span>
-                          </button>
-                        )}
-                        <span className={`px-3 py-1 rounded-full ${
-                          visit.status === 'visited' 
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-green-100 text-green-800'
-                        }`}>
-                          {visit.status === 'visited' ? 'Visited' : 'Accepted'}
-                      </span>
+                        <button
+                          onClick={() => handleMarkAsVisited(visit._id)}
+                          className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition flex items-center space-x-2"
+                        >
+                          <CheckCircle className="inline-block" size={18} />
+                          <span>Mark as Visited</span>
+                        </button>
+                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full">
+                          Approved
+                        </span>
                       </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+
+            {/* Visited Section */}
+            <div className="mb-8">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                <CheckCircle className="mr-2 text-blue-500" />
+                Completed Visits
+                <span className="ml-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                  {homeVisits.filter(visit => visit.status === 'visited').length}
+                </span>
+              </h3>
+              <div className="space-y-4">
+                {homeVisits
+                  .filter(visit => visit.status === 'visited')
+                  .map(visit => (
+                    <div 
+                      key={visit._id} 
+                      className="bg-white rounded-xl shadow-md p-4 flex items-center justify-between hover:shadow-lg transition"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className="bg-blue-100 p-3 rounded-full">
+                          <Home className="text-blue-600" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold text-gray-800">{visit.petName} Adoption</h3>
+                          <p className="text-gray-600">
+                            Adopter: {visit.adopterName} | {visit.date ? new Date(visit.date).toLocaleDateString() : 'Date not set'}
+                          </p>
+                          <p className="text-gray-600">
+                            Email: {visit.adopterEmail}
+                          </p>
+                          {visit.notes && (
+                            <p className="text-gray-600 mt-1">
+                              <span className="font-semibold">Visit Notes:</span> {visit.notes}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full">
+                        Visit Completed
+                      </span>
                     </div>
                   ))}
               </div>
@@ -1209,12 +1373,12 @@ const PetAdoptionCoordinatorDashboard = () => {
                 <XCircle className="mr-2 text-red-500" />
                 Rejected Visits
                 <span className="ml-2 bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm">
-                  {homeVisits.filter(visit => visit.status === 'rejected' || visit.userResponse === 'rejected').length}
+                  {homeVisits.filter(visit => visit.status === 'rejected').length}
                 </span>
               </h3>
               <div className="space-y-4">
                 {homeVisits
-                  .filter(visit => visit.status === 'rejected' || visit.userResponse === 'rejected')
+                  .filter(visit => visit.status === 'rejected')
                   .map(visit => (
                     <div 
                       key={visit._id} 
@@ -1239,16 +1403,18 @@ const PetAdoptionCoordinatorDashboard = () => {
                           )}
                         </div>
                       </div>
-                      <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full">
-                        Rejected
-                      </span>
-                      <button
-                        onClick={() => handleRescheduleVisit(visit)}
-                        className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition flex items-center space-x-2"
-                      >
-                        <CalendarCheck className="inline-block" size={18} />
-                        <span>Reschedule Visit</span>
-                      </button>
+                      <div className="flex items-center space-x-3">
+                        <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full">
+                          Rejected
+                        </span>
+                        <button
+                          onClick={() => handleRescheduleVisit(visit)}
+                          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition flex items-center space-x-2"
+                        >
+                          <CalendarCheck className="inline-block" size={18} />
+                          <span>Reschedule Visit</span>
+                        </button>
+                      </div>
                     </div>
                   ))}
               </div>
@@ -1266,10 +1432,12 @@ const PetAdoptionCoordinatorDashboard = () => {
                   <div className="flex items-center space-x-4">
                     <div className={`p-3 rounded-full ${
                       visit.status === 'pending' ? 'bg-yellow-100' :
+                      visit.status === 'visited' ? 'bg-blue-100' :
                       visit.status === 'approved' ? 'bg-green-100' : 'bg-red-100'
                     }`}>
                       <Home className={
                         visit.status === 'pending' ? 'text-yellow-600' :
+                        visit.status === 'visited' ? 'text-blue-600' :
                         visit.status === 'approved' ? 'text-green-600' : 'text-red-600'
                       } />
                     </div>
@@ -1281,23 +1449,22 @@ const PetAdoptionCoordinatorDashboard = () => {
                       <p className="text-gray-600">
                         Email: {visit.adopterEmail}
                       </p>
+                      {visit.notes && (
+                        <p className="text-gray-600 mt-1">
+                          <span className="font-semibold">Visit Notes:</span> {visit.notes}
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <div className="flex flex-col items-end space-y-3">
-                    <span className={`px-3 py-1 rounded-full ${
-                      visit.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      visit.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {visit.status.charAt(0).toUpperCase() + visit.status.slice(1)}
-                    </span>
-                    {visit.status === 'approved' && visit.status !== 'visited' && (
-                        <button 
+                  <div className="flex items-center space-x-3">
+                    {visit.status === 'approved' && (
+                      <button
                         onClick={() => handleMarkAsVisited(visit._id)}
-                          className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition flex items-center space-x-2"
-                        >
-                          <CheckCircle className="inline-block" size={18} />
+                        className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition flex items-center space-x-2"
+                      >
+                        <CheckCircle className="inline-block" size={18} />
                         <span>Mark as Visited</span>
-                        </button>
+                      </button>
                     )}
                     {visit.status === 'rejected' && (
                       <button
@@ -1308,6 +1475,13 @@ const PetAdoptionCoordinatorDashboard = () => {
                         <span>Reschedule Visit</span>
                       </button>
                     )}
+                    <span className={`px-3 py-1 rounded-full ${
+                      visit.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      visit.status === 'visited' ? 'bg-blue-100 text-blue-800' :
+                      visit.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {visit.status.charAt(0).toUpperCase() + visit.status.slice(1)}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -1420,72 +1594,340 @@ const PetAdoptionCoordinatorDashboard = () => {
     </div>
   );
 
-  const renderReports = () => (
-    <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100">
-      <h2 className="text-3xl font-extrabold text-gray-800 mb-6 flex items-center">
-        <FileText className="mr-3 text-gray-600" /> Adoption Reports
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl shadow-lg p-6 space-y-4 transform transition-all hover:scale-105">
-          <div className="flex justify-between items-center">
-            <HeartHandshake className="text-gray-500" size={40} />
-            <span className="text-3xl font-bold text-gray-700">
-              {pendingPets.length + adoptablePets.length}
-            </span>
+  const renderReports = () => {
+    // Calculate statistics
+    const totalPets = pendingPets.length + adoptablePets.length;
+    const totalAdopted = adoptedPets.length;
+    const adoptionRate = totalPets > 0 ? ((totalAdopted / totalPets) * 100).toFixed(1) : 0;
+    
+    const totalVisits = homeVisits.length;
+    const completedVisits = homeVisits.filter(v => v.status === 'visited').length;
+    const visitCompletionRate = totalVisits > 0 ? ((completedVisits / totalVisits) * 100).toFixed(1) : 0;
+    
+    const totalApplications = adoptionForms.length;
+    const approvedApplications = adoptionForms.filter(f => f.status === 'approved').length;
+    const applicationApprovalRate = totalApplications > 0 ? ((approvedApplications / totalApplications) * 100).toFixed(1) : 0;
+
+    // Calculate monthly statistics
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    
+    const monthlyAdoptions = adoptedPets.filter(pet => {
+      const adoptionDate = new Date(pet.adoptionDate);
+      return adoptionDate.getMonth() === currentMonth && adoptionDate.getFullYear() === currentYear;
+    }).length;
+
+    const monthlyVisits = homeVisits.filter(visit => {
+      const visitDate = new Date(visit.date);
+      return visitDate.getMonth() === currentMonth && visitDate.getFullYear() === currentYear;
+    }).length;
+
+    // Calculate Lost and Found statistics
+    const totalLostPets = lostPets.length;
+    const totalFoundPets = foundPets.length;
+    const monthlyLostPets = lostPets.filter(pet => {
+      const lostDate = new Date(pet.lastSeenDate);
+      return lostDate.getMonth() === currentMonth && lostDate.getFullYear() === currentYear;
+    }).length;
+    const monthlyFoundPets = foundPets.filter(pet => {
+      const foundDate = new Date(pet.foundDate);
+      return foundDate.getMonth() === currentMonth && foundDate.getFullYear() === currentYear;
+    }).length;
+
+    // Calculate pet type distribution for lost and found
+    const lostPetTypes = lostPets.reduce((acc, pet) => {
+      acc[pet.petType] = (acc[pet.petType] || 0) + 1;
+      return acc;
+    }, {});
+
+    const foundPetTypes = foundPets.reduce((acc, pet) => {
+      acc[pet.petType] = (acc[pet.petType] || 0) + 1;
+      return acc;
+    }, {});
+
+    return (
+      <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100">
+        <h2 className="text-3xl font-extrabold text-gray-800 mb-6 flex items-center">
+          <FileText className="mr-3 text-gray-600" /> Adoption Coordinator Reports
+        </h2>
+
+        {/* Overview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-xl shadow-lg p-6 space-y-4 transform transition-all hover:scale-105">
+            <div className="flex justify-between items-center">
+              <HeartHandshake className="text-[#D08860]" size={40} />
+              <span className="text-3xl font-bold text-gray-700">{totalPets}</span>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800">Total Pets</h3>
+            <div className="h-2 w-full bg-gray-100 rounded-full">
+              <div 
+                className="h-2 bg-[#D08860] rounded-full" 
+                style={{ width: '100%' }}
+              ></div>
+            </div>
           </div>
-          <h3 className="text-xl font-semibold text-gray-800">Total Pets</h3>
-          <div className="h-2 w-full bg-gray-100 rounded-full">
-            <div 
-              className="h-2 bg-gray-500 rounded-full" 
-              style={{
-                width: `${((pendingPets.length + adoptablePets.length) / Math.max(10, pendingPets.length + adoptablePets.length)) * 100}%`
-              }}
-            ></div>
+
+          <div className="bg-white rounded-xl shadow-lg p-6 space-y-4 transform transition-all hover:scale-105">
+            <div className="flex justify-between items-center">
+              <CheckCircle2 className="text-green-500" size={40} />
+              <span className="text-3xl font-bold text-green-700">{totalAdopted}</span>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800">Adopted Pets</h3>
+            <div className="h-2 w-full bg-gray-100 rounded-full">
+              <div 
+                className="h-2 bg-green-500 rounded-full" 
+                style={{ width: `${adoptionRate}%` }}
+              ></div>
+            </div>
+            <p className="text-sm text-gray-600">Adoption Rate: {adoptionRate}%</p>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-lg p-6 space-y-4 transform transition-all hover:scale-105">
+            <div className="flex justify-between items-center">
+              <CalendarCheck className="text-blue-500" size={40} />
+              <span className="text-3xl font-bold text-blue-700">{totalVisits}</span>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800">Home Visits</h3>
+            <div className="h-2 w-full bg-gray-100 rounded-full">
+              <div 
+                className="h-2 bg-blue-500 rounded-full" 
+                style={{ width: `${visitCompletionRate}%` }}
+              ></div>
+            </div>
+            <p className="text-sm text-gray-600">Completion Rate: {visitCompletionRate}%</p>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-lg p-6 space-y-4 transform transition-all hover:scale-105">
+            <div className="flex justify-between items-center">
+              <FileText className="text-purple-500" size={40} />
+              <span className="text-3xl font-bold text-purple-700">{totalApplications}</span>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800">Applications</h3>
+            <div className="h-2 w-full bg-gray-100 rounded-full">
+              <div 
+                className="h-2 bg-purple-500 rounded-full" 
+                style={{ width: `${applicationApprovalRate}%` }}
+              ></div>
+            </div>
+            <p className="text-sm text-gray-600">Approval Rate: {applicationApprovalRate}%</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-6 space-y-4 transform transition-all hover:scale-105">
-          <div className="flex justify-between items-center">
-            <CheckCircle2 className="text-green-500" size={40} />
-            <span className="text-3xl font-bold text-green-700">
-              {adoptablePets.length}
-            </span>
+        {/* Monthly Statistics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <Calendar className="mr-2 text-[#D08860]" />
+              This Month's Statistics
+            </h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                <span className="text-gray-600">Monthly Adoptions</span>
+                <span className="text-2xl font-bold text-[#D08860]">{monthlyAdoptions}</span>
+              </div>
+              <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                <span className="text-gray-600">Monthly Home Visits</span>
+                <span className="text-2xl font-bold text-blue-500">{monthlyVisits}</span>
+              </div>
+            </div>
           </div>
-          <h3 className="text-xl font-semibold text-gray-800">Available Pets</h3>
-          <div className="h-2 w-full bg-green-100 rounded-full">
-            <div 
-              className="h-2 bg-green-500 rounded-full" 
-              style={{
-                width: adoptablePets.length > 0 
-                  ? `${(adoptablePets.length / (pendingPets.length + adoptablePets.length)) * 100}%`
-                  : '0%'
-              }}
-            ></div>
+
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <TrendingUp className="mr-2 text-[#D08860]" />
+              Performance Metrics
+            </h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                <span className="text-gray-600">Average Processing Time</span>
+                <span className="text-2xl font-bold text-[#D08860]">3.5 days</span>
+              </div>
+              <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                <span className="text-gray-600">Visit Success Rate</span>
+                <span className="text-2xl font-bold text-green-500">{visitCompletionRate}%</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-6 space-y-4 transform transition-all hover:scale-105">
-          <div className="flex justify-between items-center">
-            <Clock className="text-blue-500" size={40} />
-            <span className="text-3xl font-bold text-blue-700">
-              {homeVisits.filter(v => v.status === 'Scheduled').length}
-            </span>
+        {/* Status Distribution */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <PieChart className="mr-2 text-[#D08860]" />
+              Application Status
+            </h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Pending</span>
+                <span className="font-semibold">{adoptionForms.filter(f => f.status === 'pending').length}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Approved</span>
+                <span className="font-semibold text-green-600">{approvedApplications}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Rejected</span>
+                <span className="font-semibold text-red-600">{adoptionForms.filter(f => f.status === 'rejected').length}</span>
+              </div>
+            </div>
           </div>
-          <h3 className="text-xl font-semibold text-gray-800">Scheduled Visits</h3>
-          <div className="h-2 w-full bg-blue-100 rounded-full">
-            <div 
-              className="h-2 bg-blue-500 rounded-full" 
-              style={{
-                width: homeVisits.length > 0
-                  ? `${(homeVisits.filter(v => v.status === 'Scheduled').length / homeVisits.length) * 100}%`
-                  : '0%'
-              }}
-            ></div>
+
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <Home className="mr-2 text-[#D08860]" />
+              Visit Status
+            </h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Pending</span>
+                <span className="font-semibold">{homeVisits.filter(v => v.status === 'pending').length}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Completed</span>
+                <span className="font-semibold text-green-600">{completedVisits}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Rejected</span>
+                <span className="font-semibold text-red-600">{homeVisits.filter(v => v.status === 'rejected').length}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <Dog className="mr-2 text-[#D08860]" />
+              Pet Status
+            </h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Available</span>
+                <span className="font-semibold">{adoptablePets.length}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Pending Review</span>
+                <span className="font-semibold text-yellow-600">{pendingPets.length}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Adopted</span>
+                <span className="font-semibold text-green-600">{totalAdopted}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Lost and Found Reports */}
+        <div className="mb-8">
+          <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+            <MapPin className="mr-2 text-[#D08860]" />
+            Lost & Found Reports
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="text-lg font-semibold text-gray-800">Total Lost Pets</h4>
+                <span className="text-3xl font-bold text-red-500">{totalLostPets}</span>
+              </div>
+              <div className="h-2 w-full bg-gray-100 rounded-full">
+                <div 
+                  className="h-2 bg-red-500 rounded-full" 
+                  style={{ width: '100%' }}
+                ></div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="text-lg font-semibold text-gray-800">Total Found Pets</h4>
+                <span className="text-3xl font-bold text-green-500">{totalFoundPets}</span>
+              </div>
+              <div className="h-2 w-full bg-gray-100 rounded-full">
+                <div 
+                  className="h-2 bg-green-500 rounded-full" 
+                  style={{ width: '100%' }}
+                ></div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="text-lg font-semibold text-gray-800">Monthly Lost</h4>
+                <span className="text-3xl font-bold text-red-500">{monthlyLostPets}</span>
+              </div>
+              <div className="h-2 w-full bg-gray-100 rounded-full">
+                <div 
+                  className="h-2 bg-red-500 rounded-full" 
+                  style={{ width: `${(monthlyLostPets / Math.max(1, totalLostPets)) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="text-lg font-semibold text-gray-800">Monthly Found</h4>
+                <span className="text-3xl font-bold text-green-500">{monthlyFoundPets}</span>
+              </div>
+              <div className="h-2 w-full bg-gray-100 rounded-full">
+                <div 
+                  className="h-2 bg-green-500 rounded-full" 
+                  style={{ width: `${(monthlyFoundPets / Math.max(1, totalFoundPets)) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h4 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <Dog className="mr-2 text-[#D08860]" />
+                Lost Pets by Type
+              </h4>
+              <div className="space-y-3">
+                {Object.entries(lostPetTypes).map(([type, count]) => (
+                  <div key={type} className="flex justify-between items-center">
+                    <span className="text-gray-600">{type}</span>
+                    <div className="flex items-center">
+                      <span className="font-semibold text-red-500 mr-2">{count}</span>
+                      <div className="w-24 h-2 bg-gray-100 rounded-full">
+                        <div 
+                          className="h-2 bg-red-500 rounded-full" 
+                          style={{ width: `${(count / totalLostPets) * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h4 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <Dog className="mr-2 text-[#D08860]" />
+                Found Pets by Type
+              </h4>
+              <div className="space-y-3">
+                {Object.entries(foundPetTypes).map(([type, count]) => (
+                  <div key={type} className="flex justify-between items-center">
+                    <span className="text-gray-600">{type}</span>
+                    <div className="flex items-center">
+                      <span className="font-semibold text-green-500 mr-2">{count}</span>
+                      <div className="w-24 h-2 bg-gray-100 rounded-full">
+                        <div 
+                          className="h-2 bg-green-500 rounded-full" 
+                          style={{ width: `${(count / totalFoundPets) * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const Notification = ({ message, type }) => (
     <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
@@ -1613,26 +2055,23 @@ const PetAdoptionCoordinatorDashboard = () => {
 
   const handleScheduleVisit = async (form) => {
     setSelectedForm(form);
+    setIsRescheduling(false);
     setShowAddVisitModal(true);
   };
 
   const handleRescheduleVisit = async (visit) => {
     try {
-      // Set the selected form data for the modal
       setSelectedForm({
-        _id: visit.adoptionFormId, // Make sure to include the adoption form ID
+        _id: visit.adoptionFormId,
         firstName: visit.adopterName.split(' ')[0],
-        lastName: visit.adopterName.split(' ').slice(1).join(' '), // Handle multiple last names
+        lastName: visit.adopterName.split(' ').slice(1).join(' '),
         email: visit.adopterEmail,
         petName: visit.petName
       });
-
-      // Reset the visit form fields
       setVisitDate('');
       setVisitTime('');
       setVisitNotes('');
-
-      // Show the modal
+      setIsRescheduling(true);
       setShowAddVisitModal(true);
     } catch (error) {
       console.error('Error preparing reschedule:', error);
@@ -1720,7 +2159,7 @@ const PetAdoptionCoordinatorDashboard = () => {
       <div className="absolute inset-0 bg-gray-900 opacity-50" onClick={() => setShowAddVisitModal(false)}></div>
       <div className="bg-white rounded-xl shadow-2xl p-6 z-10 w-full max-w-md">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">
-          {selectedForm ? 'Reschedule Home Visit' : 'Schedule Home Visit'}
+          {isRescheduling ? 'Reschedule Home Visit' : 'Schedule Home Visit'}
         </h2>
         <form onSubmit={handleSubmitVisit}>
           <div className="space-y-4">
@@ -1786,7 +2225,7 @@ const PetAdoptionCoordinatorDashboard = () => {
               type="submit" 
               className="px-4 py-2 text-white bg-gradient-to-r from-gray-500 to-gray-700 rounded-md hover:opacity-90"
             >
-              {selectedForm ? 'Reschedule Visit' : 'Schedule Visit'}
+              {isRescheduling ? 'Reschedule Visit' : 'Schedule Visit'}
             </button>
           </div>
         </form>
@@ -1976,10 +2415,50 @@ const PetAdoptionCoordinatorDashboard = () => {
     }
   }, [highlightedFormId]);
 
+  // Add handler to move pet to adopted
+  const handleAdoptedPet = async (petId) => {
+    try {
+      setDeleteLoading(true);
+      await axios.post(`http://localhost:5000/api/adoptedpets/move/${petId}`);
+      await Promise.all([
+        fetchAdoptablePets(),
+        fetchAdoptedPets(),
+      ]);
+      setNotification({
+        show: true,
+        message: 'Pet marked as adopted! 🎉',
+        type: 'success'
+      });
+      setTimeout(() => {
+        setNotification({ show: false, message: '', type: '' });
+      }, 3000);
+    } catch (err) {
+      console.error('Error moving pet to adopted:', err);
+      setNotification({
+        show: true,
+        message: 'Failed to mark pet as adopted ❌',
+        type: 'error'
+      });
+      setTimeout(() => {
+        setNotification({ show: false, message: '', type: '' });
+      }, 3000);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const adoptedPetNames = new Set(adoptedPets.map(pet => pet.petName));
+
+  // Update the setActiveSection handler
+  const handleSectionChange = (section) => {
+    setActiveSection(section);
+    localStorage.setItem('activeSection', section);
+  };
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      <div className="w-72 bg-gradient-to-b from-gray-700 to-gray-900 shadow-2xl">
+      <div className="w-72 bg-gradient-to-b from-[#80533b] to-[#D08860] shadow-2xl">
         <div className="p-6 border-b border-white/20 flex items-center">
           <PawPrint className="mr-3 text-white" size={40} />
           <h1 className="text-2xl font-bold text-white">Pawsome Adoptions</h1>
@@ -1991,37 +2470,37 @@ const PetAdoptionCoordinatorDashboard = () => {
                 name: 'Pets', 
                 icon: Dog, 
                 section: 'pets',
-                color: 'hover:bg-gray-600' 
+                color: 'hover:bg-[#D08860]/20' 
               },
               { 
                 name: 'Adoption Forms', 
                 icon: FileText, 
                 section: 'forms',
-                color: 'hover:bg-gray-600' 
+                color: 'hover:bg-[#D08860]/20' 
               },
               { 
                 name: 'Home Visits', 
                 icon: CalendarCheck, 
                 section: 'visits',
-                color: 'hover:bg-gray-600' 
+                color: 'hover:bg-[#D08860]/20' 
               },
               { 
                 name: 'Application Status', 
                 icon: CheckCircle2, 
                 section: 'status',
-                color: 'hover:bg-gray-600' 
+                color: 'hover:bg-[#D08860]/20' 
               },
               { 
                 name: 'Lost & Found', 
                 icon: MapPin, 
                 section: 'lostfound',
-                color: 'hover:bg-gray-600' 
+                color: 'hover:bg-[#D08860]/20' 
               },
               { 
                 name: 'Reports', 
                 icon: FileText, 
                 section: 'reports',
-                color: 'hover:bg-gray-600' 
+                color: 'hover:bg-[#D08860]/20' 
               }
             ].map(item => (
               <li 
@@ -2030,10 +2509,10 @@ const PetAdoptionCoordinatorDashboard = () => {
                   flex items-center p-3 rounded-lg cursor-pointer 
                   ${activeSection === item.section 
                     ? 'bg-white/20 text-white' 
-                    : 'text-white/70 ' + item.color}
+                    : 'text-white/90 ' + item.color}
                   transition-all duration-300
                 `}
-                onClick={() => setActiveSection(item.section)}
+                onClick={() => handleSectionChange(item.section)}
               >
                 <item.icon className="mr-3" />
                 {item.name}

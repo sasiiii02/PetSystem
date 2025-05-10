@@ -8,12 +8,14 @@ const UserEdit = () => {
     name: '',
     email: '',
     phoneNumber: '',
-    city: ''
+    city: '',
+    profilePicture: null
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [previewImage, setPreviewImage] = useState('');
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -26,8 +28,10 @@ const UserEdit = () => {
           name: response.data.name,
           email: response.data.email,
           phoneNumber: response.data.phoneNumber,
-          city: response.data.city
+          city: response.data.city,
+          profilePicture: null
         });
+        setPreviewImage(response.data.profilePicture || 'https://via.placeholder.com/150?text=Profile+Image');
         setLoading(false);
       } catch (err) {
         setError(err.response?.data?.message || 'Error fetching profile');
@@ -41,22 +45,44 @@ const UserEdit = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData({ ...formData, profilePicture: file });
+      setPreviewImage(URL.createObjectURL(file));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('petOwnerToken');
-      const response = await axios.post('http://localhost:5000/api/users/updateProfile', formData, {
-        headers: { Authorization: `Bearer ${token}` }
+      const formDataToSend = new FormData();
+      
+      // Append all form fields to FormData
+      Object.keys(formData).forEach(key => {
+        if (formData[key] !== null) {
+          formDataToSend.append(key, formData[key]);
+        }
+      });
+
+      const response = await axios.put('http://localhost:5000/api/users/updateProfile', formDataToSend, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
       });
       
       if (response.data && response.data.user) {
-        localStorage.setItem('petOwnerToken', response.data.user.token);
+        // Update local storage with new user data
+        localStorage.setItem('petOwnerToken', response.data.token);
         localStorage.setItem('petOwnerUser', JSON.stringify({
           _id: response.data.user._id,
           name: response.data.user.name,
           email: response.data.user.email,
           phoneNumber: response.data.user.phoneNumber,
-          city: response.data.user.city
+          city: response.data.user.city,
+          profilePicture: response.data.user.profilePicture
         }));
         navigate('/profile');
       } else {
@@ -76,9 +102,8 @@ const UserEdit = () => {
       });
       
       if (response.data.message === 'Profile and associated data deleted successfully') {
-        // Clear local storage and redirect to home
         localStorage.removeItem('petOwnerToken');
-        localStorage.removeItem('user');
+        localStorage.removeItem('petOwnerUser');
         navigate('/');
       } else {
         setError('Failed to delete profile');
@@ -94,7 +119,7 @@ const UserEdit = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F4E4D8] to-[#E6D5C1] flex items-center justify-center p-6 sm:p-12">
+    <div className="min-h-screen bg-gradient-to-br from-[#F4E4D8] to-[#E6D5C1] flex items-center justify-center p-6 sm:p-12 mt-12">
       <div className="w-full max-w-[800px] bg-white shadow-2xl rounded-2xl overflow-hidden flex flex-col md:flex-row">
         <div className="w-full md:w-1/2 relative h-64 md:h-auto">
           <div className="absolute inset-0 bg-[url('./assets/staffRegister.jpg')] bg-cover bg-center flex items-center justify-center">
@@ -110,6 +135,29 @@ const UserEdit = () => {
             <Heart className="text-amber-950 mr-3" size={32} />
             <h2 className="text-2xl sm:text-3xl font-bold text-amber-950">Edit Profile</h2>
           </div>
+          <div className="relative mb-6">
+                <img
+                  src={previewImage}
+                  alt="Profile"
+                  className="w-32 h-32 rounded-full border-4 border-white object-cover shadow-lg mx-auto"
+                />
+                <label
+                  htmlFor="profilePicture"
+                  className="absolute bottom-0 right-1/2 transform translate-x-1/2 bg-amber-700 text-white p-2 rounded-full cursor-pointer hover:bg-amber-800 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                  </svg>
+                </label>
+                <input
+                  type="file"
+                  id="profilePicture"
+                  name="profilePicture"
+                  onChange={handleImageChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+              </div>
 
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             <div>

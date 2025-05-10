@@ -6,7 +6,9 @@ import AboutUs from "./Component/AboutUs";
 import StaffLogin from "./Pages/StaffLogin";
 import ContactUs from "./Component/ContactUs";
 import PrivateRoute from "./Component/PrivateRoute";
-import ProfessionalRegistration from "./Pages/ProfessionalRegistration";
+import ProfessionalRegistration from "./Pages/professionalRegistration";
+import ProfessionalEdit from "./Pages/ProfessionalEdit"
+import PetEdit from "./Pages/PetEdit";
 import PetRegister from "./Pages/PetRegister";
 import UserEdit from "./Pages/UserEdit";
 import ProfilePage from "./Component/UserProfileViewAppointment";
@@ -54,6 +56,16 @@ import EditLostPet from './Pages/EditLostPet';
 import EditFoundPet from './Pages/EditFoundPet';
 import MyPetReports from './Pages/MyPetReports';
 
+import Collection from "./Pages/Collection";
+import Product from "./Pages/Product";
+import Cart from "./Pages/Cart";
+import PlaceOrder from "./Pages/PlaceOrder";
+import Orders from "./Pages/Orders";
+import StoreAdminDashboard from "./Pages/StoreAdminDashboard";
+import StoreStripeVerify from "./Pages/storeStripeVerify";
+import PetStoreReview from "./Pages/PetStoreReview";
+import ShopContextProvider from './context/ShopContext.jsx'
+
 // Layout for pet owner routes with UserHeader and UserFooter
 const MainLayout = ({ children }) => {
   return (
@@ -68,6 +80,7 @@ const MainLayout = ({ children }) => {
 const App = () => {
   return (
     <BrowserRouter>
+    <ShopContextProvider>
       <Routes>
         {/* Public Routes with MainLayout */}
         <Route
@@ -138,6 +151,16 @@ const App = () => {
             </MainLayout>
           }
         />
+        <Route
+          path="/ViewPetProfile/:id"
+          element={
+            <MainLayout>
+              <PetEdit />
+            </MainLayout>
+          }
+        />
+        <Route path="/PetEdit/:id" element={<PetEdit />} />
+        <Route path="/admin/professionals/edit/:id" element={<ProfessionalEdit />} />
         <Route
           path="/ProfessionalRegistration"
           element={
@@ -219,7 +242,14 @@ const App = () => {
           }
         />
 
-          <Route path="/AdoptionCoordinatorDashboard" element={<PetAdoptionCoordinatorDashboard />} />
+          {/* Adoption Manager Routes */}
+          <Route 
+            path="/AdoptionCoordinatorDashboard" 
+            element={
+              <MainLayout>
+                <PetAdoptionCoordinatorDashboard />
+              </MainLayout>} />
+
           <Route path="/schedule-visit" element={<AdoptionScheduler />} />
 
         {/* Admin Dashboard Routes */}
@@ -230,6 +260,25 @@ const App = () => {
               <MainLayout>
                 <SysAdminDashboard />
               </MainLayout>
+            </PrivateRoute>
+          }
+        />
+
+        {/* Store Manager Routes */}
+        <Route
+          path="/admin/redirect/store_manager"
+          element={
+            <PrivateRoute>
+              <StoreAdminDashboard />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/store-admin/*"
+          element={
+            <PrivateRoute>
+              <StoreAdminDashboard />
             </PrivateRoute>
           }
         />
@@ -256,6 +305,9 @@ const App = () => {
           <Route path="availability/trainer" element={<Availability_for_trainer />} />
           <Route path="refund-request" element={<CancelationReq />} />
         </Route>
+
+          <Route path="/verify" element={<StoreStripeVerify />} />
+          <Route path="/storeStripeVerify" element={<StoreStripeVerify />} />
 
         {/* Adoption Manager Routes */}
         <Route
@@ -417,7 +469,61 @@ const App = () => {
         <Route path="/edit-lost-pet/:id" element={<MainLayout><EditLostPet /></MainLayout>} />
         <Route path="/edit-found-pet/:id" element={<MainLayout><EditFoundPet /></MainLayout>} />
         <Route path="/my-pet-reports" element={<MainLayout><MyPetReports /></MainLayout>} />
+
+        {/* Marketplace */}
+           <Route
+          path="/collection"
+          element={
+            <MainLayout>
+              <Collection />
+            </MainLayout>
+          }
+        />
+
+          <Route
+          path="/product/:ProductId"
+          element={
+            <MainLayout>
+              <Product />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/cart"
+          element={
+            <MainLayout>
+              <Cart/>
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/placeOrder"
+          element={
+            <MainLayout>
+              <PlaceOrder/>
+            </MainLayout>
+          }
+        />
+          <Route
+          path="/orders"
+          element={
+            <MainLayout>
+              <Orders/>
+            </MainLayout>
+          }
+        />
+        <Route
+          path="/petStoreReview/:productId"
+          element={
+            <PrivateRoute>
+              <MainLayout>
+                <PetStoreReview />
+              </MainLayout>
+            </PrivateRoute>
+          }
+        />
       </Routes>
+      </ShopContextProvider>
     </BrowserRouter>
   );
 };
