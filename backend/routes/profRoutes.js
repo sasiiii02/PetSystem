@@ -1,5 +1,12 @@
 import express from "express";
-import {registerProfessional,loginProfessional,getProfile,getAllProfessionals,updateProfessional,deleteProfileById,getProfessionalById,
+import {registerProfessional,
+  getProfile,
+  getAllProfessionals,
+  updateProfessional,
+  deleteProfileById,
+  getProfessionalById,
+  profLogin,
+  loginLimiter
 } from "../controllers/profController.js";
 import adminAuth from "../middleware/adminAuthMiddleware.js";
 import multer from "multer";
@@ -52,7 +59,7 @@ router.post("/register", upload.single("profilePicture"), (req, res, next) => {
   console.log("File upload middleware - req.body:", req.body);
   next();
 }, registerProfessional);
-router.post("/login", loginProfessional);
+router.post('/profflogin', loginLimiter, profLogin);
 router.get("/profile", adminAuth, getProfile);
 router.get("/all", adminAuth, getAllProfessionals);
 router.get("/:id", adminAuth, getProfessionalById);
