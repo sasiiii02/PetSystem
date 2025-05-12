@@ -19,7 +19,7 @@ export default function ProfessionalAppointmentsTable() {
     const fetchAppointments = async () => {
       try {
         const { data } = await axios.get('http://localhost:5000/api/professional-appointments', {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: ` Bearer ${token}` },
         });
         setAppointments(data);
         setFilteredAppointments(data); // Initialize filtered list
@@ -81,33 +81,28 @@ export default function ProfessionalAppointmentsTable() {
     setSearchTerm('');
   };
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p className="text-center text-amber-950 text-lg font-medium animate-pulse">Loading...</p>;
 
   return (
     <div
-      className="bg-gray-100 p-6 min-h-screen animate-fade-in"
-      style={{
-        backgroundImage: `linear-gradient(rgba(252, 242, 233, 0.5), rgba(243, 231, 220, 0.5))`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
+      className="bg-gradient-to-br from-[#FFF5E6] to-[#F5EFEA] p-8 min-h-screen"
     >
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-semibold text-amber-950">Scheduled Appointments</h2>
+      <div className="flex justify-between items-center mb-6 animate-slide-in" style={{ animationDelay: '0.1s' }}>
+        <h2 className="text-3xl font-bold text-amber-950 tracking-tight">Scheduled Appointments</h2>
       </div>
 
       {/* Search Bar */}
-      <div className="mb-6 flex items-center gap-3 max-w-md mx-auto">
+      <div className="mb-8 flex items-center gap-4 max-w-lg mx-auto animate-slide-in" style={{ animationDelay: '0.2s' }}>
         <div className="relative flex-1">
           <input
             type="text"
             value={searchTerm}
             onChange={handleSearchChange}
             placeholder="Search by pet owner name..."
-            className="w-full p-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all duration-300 hover:shadow-md"
+            className="w-full p-4 pl-12 border border-amber-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent bg-white transition-all duration-300 hover:shadow-lg placeholder-amber-400 text-amber-950"
           />
           <svg
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500"
+            className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-amber-500"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -124,24 +119,24 @@ export default function ProfessionalAppointmentsTable() {
         {searchTerm && (
           <button
             onClick={handleClearSearch}
-            className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors"
+            className="bg-amber-600 text-white px-5 py-3 rounded-xl hover:bg-amber-700 transition-all duration-300 shadow-sm hover:shadow-md font-medium"
           >
             Clear
           </button>
         )}
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow-md">
+      <div className="overflow-x-auto animate-fade-in" style={{ animationDelay: '0.3s' }}>
+        <table className="min-w-full bg-white border border-amber-200 rounded-xl shadow-lg">
           <thead>
-            <tr className="bg-amber-700 text-white">
-              <th className="px-6 py-3 text-left">Pet Owner</th>
-              <th className="px-6 py-3 text-left">Type</th>
-              <th className="px-6 py-3 text-left">Date</th>
-              <th className="px-6 py-3 text-left">Time</th>
-              <th className="px-6 py-3 text-left">Phone</th>
-              <th className="px-6 py-3 text-left">Email</th>
-              <th className="px-6 py-3 text-left">Action</th>
+            <tr className="bg-amber-800 text-white">
+              <th className="px-6 py-4 text-left text-sm font-semibold tracking-wide">Pet Owner</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold tracking-wide">Type</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold tracking-wide">Date</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold tracking-wide">Time</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold tracking-wide">Phone</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold tracking-wide">Email</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold tracking-wide">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -149,11 +144,11 @@ export default function ProfessionalAppointmentsTable() {
               filteredAppointments.map((appt, index) => (
                 <tr
                   key={appt._id}
-                  className={`border-b hover:bg-gray-100 ${
+                  className={`border-b border-amber-100 hover:bg-amber-50 transition-colors duration-200 ${
                     index === 0 && searchTerm ? 'bg-amber-100' : ''
                   }`}
                 >
-                  <td className="px-6 py-4 text-amber-950">{appt.userName}</td>
+                  <td className="px-6 py-4 text-amber-950 font-medium">{appt.userName}</td>
                   <td className="px-6 py-4 text-amber-950">{appt.appointmentType}</td>
                   <td className="px-6 py-4 text-amber-950">
                     {new Date(appt.appointmentDate).toLocaleDateString()}
@@ -164,7 +159,7 @@ export default function ProfessionalAppointmentsTable() {
                   <td className="px-6 py-4">
                     <button
                       onClick={() => handleAttendAppointment(appt._id)}
-                      className="bg-amber-600 text-white px-3 py-1 rounded hover:bg-amber-700 transition-colors"
+                      className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-all duration-300 shadow-sm hover:shadow-md font-medium"
                     >
                       Attend Now
                     </button>
@@ -173,7 +168,7 @@ export default function ProfessionalAppointmentsTable() {
               ))
             ) : (
               <tr>
-                <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
+                <td colSpan="7" className="px-6 py-6 text-center text-amber-600 font-medium">
                   No matching appointments found.
                 </td>
               </tr>
@@ -181,6 +176,37 @@ export default function ProfessionalAppointmentsTable() {
           </tbody>
         </table>
       </div>
+
+      {/* Custom CSS for animations */}
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-fade-in {
+          animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        .animate-slide-in {
+          animation: slideIn 0.6s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 }
