@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { AlertCircle, Heart, X, Trash2, Search } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { AlertCircle, Heart, X, Trash2, Search, Shield, UserPlus, Users, UserCog, LogOut } from 'lucide-react';
+import { motion } from 'framer-motion';
+import defaultProfilePic from '../assets/profilepic.png';
 
 const UsersList = () => {
   const [users, setUsers] = useState([]);
@@ -11,6 +13,18 @@ const UsersList = () => {
   const [loading, setLoading] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState(null); // Stores user ID for deletion
   const navigate = useNavigate();
+
+  // Get admin name from localStorage or set default
+  const admin = JSON.parse(localStorage.getItem('admin')) || { name: 'Admin' };
+  const adminName = admin.name || 'Admin';
+
+  // Handle logout
+  const handleLogout = () => {
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('token');
+    localStorage.removeItem('admin');
+    navigate('/StaffLogin');
+  };
 
   // Fetch all users on mount
   useEffect(() => {
@@ -104,125 +118,185 @@ const UsersList = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F4E4D8] to-[#E6D5C1] flex flex-col items-center justify-center p-6 sm:p-12 mt-12">
-      <div className="w-full max-w-[1300px] bg-white shadow-2xl rounded-2xl p-6 sm:p-12">
-        <div className="flex items-center justify-center mb-6 sm:mb-8">
-          <Heart className="text-amber-950 mr-3" size={32} />
-          <h2 className="text-2xl sm:text-3xl font-bold text-amber-950">Users List</h2>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-[#F4E4D8] to-[#E6D5C1] flex flex-col">
+      {/* Header */}
+      <header className="bg-white shadow-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Left side - Logo and Navigation */}
+            <div className="flex items-center space-x-8">
+              <Link to="/admin/redirect/user_admin" className="flex items-center space-x-2">
+                <Shield className="text-[#D88C6D]" size={24} />
+                <span className="text-xl font-bold text-[#4E2D21]">Dashboard</span>
+              </Link>
+              <nav className="hidden md:flex space-x-4">
+                <Link to="/ProfessionalRegistration" className="flex items-center space-x-1 text-[#4E2D21] hover:text-[#D88C6D] transition-colors">
+                  <UserPlus size={20} />
+                  <span>Add Staff</span>
+                </Link>
+                <Link to="/ProfessionalsList" className="flex items-center space-x-1 text-[#4E2D21] hover:text-[#D88C6D] transition-colors">
+                  <Users size={20} />
+                  <span>Staff List</span>
+                </Link>
+                <Link to="/UsersList" className="flex items-center space-x-1 text-[#4E2D21] hover:text-[#D88C6D] transition-colors">
+                  <UserCog size={20} />
+                  <span>User List</span>
+                </Link>
+                <Link to="/AdminRegister" className="flex items-center space-x-1 text-[#4E2D21] hover:text-[#D88C6D] transition-colors">
+                  <Shield size={20} />
+                  <span>Add Admin</span>
+                </Link>
+              </nav>
+            </div>
 
-        {error && (
-          <p className="text-center text-sm text-red-500 flex items-center justify-center mb-6">
-            <AlertCircle className="mr-2" size={18} /> {error}
-          </p>
-        )}
-
-        {/* Search Bar */}
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:space-x-4">
-          <div className="relative flex-1 mb-4 sm:mb-0">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700"
-              placeholder="Search by name or email"
-              aria-label="Search users by name or email"
-            />
-            <Search
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-              size={20}
-            />
+            {/* Right side - User info and Logout */}
+            <div className="flex items-center space-x-4">
+              <span className="text-[#4E2D21] font-medium">Welcome, {adminName}</span>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleLogout}
+                className="flex items-center space-x-2 bg-[#D88C6D] text-white px-4 py-2 rounded-xl font-medium hover:bg-[#4E2D21] transition-colors"
+              >
+                <LogOut size={20} />
+                <span>Logout</span>
+              </motion.button>
+            </div>
           </div>
         </div>
+      </header>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-amber-700 text-white">
-                <th className="p-3 text-sm font-semibold">Name</th>
-                <th className="p-3 text-sm font-semibold">Email</th>
-                <th className="p-3 text-sm font-semibold">Phone Number</th>
-                <th className="p-3 text-sm font-semibold">City</th>
-                <th className="p-3 text-sm font-semibold w-[120px]">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="p-3 text-center text-gray-700">
-                    No users found
-                  </td>
+      {/* Main Content */}
+      <div className="flex flex-col items-center justify-center p-6 sm:p-12">
+        <div className="w-full max-w-[1300px] bg-white shadow-2xl rounded-2xl p-6 sm:p-12">
+          <div className="flex items-center justify-center mb-6 sm:mb-8">
+            <Heart className="text-amber-950 mr-3" size={32} />
+            <h2 className="text-2xl sm:text-3xl font-bold text-amber-950">Users List</h2>
+          </div>
+
+          {error && (
+            <p className="text-center text-sm text-red-500 flex items-center justify-center mb-6">
+              <AlertCircle className="mr-2" size={18} /> {error}
+            </p>
+          )}
+
+          {/* Search Bar */}
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:space-x-4">
+            <div className="relative flex-1 mb-4 sm:mb-0">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700"
+                placeholder="Search by name or email"
+                aria-label="Search users by name or email"
+              />
+              <Search
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                size={20}
+              />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-amber-700 text-white">
+                  <th className="p-3 text-sm font-semibold">Profile</th>
+                  <th className="p-3 text-sm font-semibold">Name</th>
+                  <th className="p-3 text-sm font-semibold">Email</th>
+                  <th className="p-3 text-sm font-semibold">Phone Number</th>
+                  <th className="p-3 text-sm font-semibold">City</th>
+                  <th className="p-3 text-sm font-semibold w-[120px]">Actions</th>
                 </tr>
-              ) : (
-                filteredUsers.map((user, index) => (
-                  <tr
-                    key={user._id}
-                    className={`border-b border-amber-200 ${
-                      index % 2 === 1 ? 'bg-amber-50' : 'bg-white'
-                    } hover:bg-gray-100`}
-                  >
-                    <td className="p-3 text-gray-900">{user.name || 'N/A'}</td>
-                    <td className="p-3 text-gray-900">{user.email || 'N/A'}</td>
-                    <td className="p-3 text-gray-900">{user.phoneNumber || 'N/A'}</td>
-                    <td className="p-3 text-gray-900">{user.city || 'N/A'}</td>
-                    <td className="p-3">
-                      <button
-                        onClick={() => setDeleteConfirm(user._id)}
-                        className="bg-red-600 text-white px-3 py-1 rounded-lg flex items-center text-sm hover:bg-red-700 transition-colors"
-                        aria-label={`Delete user ${user.name || 'Unknown'}`}
-                      >
-                        <Trash2 size={16} className="mr-1" /> Delete
-                      </button>
+              </thead>
+              <tbody>
+                {filteredUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="p-3 text-center text-gray-700">
+                      No users found
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {deleteConfirm && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          onClick={() => setDeleteConfirm(null)}
-          onKeyDown={(e) => e.key === 'Escape' && setDeleteConfirm(null)}
-          tabIndex={0}
-        >
-          <div className="bg-white rounded-2xl p-6 w-full max-w-[550px] border border-amber-400 max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={() => setDeleteConfirm(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-amber-700"
-              aria-label="Close modal"
-            >
-              <X size={24} />
-            </button>
-            <div className="flex items-center justify-center mb-6">
-              <Heart className="text-amber-950 mr-2" size={30} />
-              <h3 id="delete-confirm-title" className="text-xl sm:text-2xl font-bold text-amber-950">
-                Confirm Deletion
-              </h3>
-            </div>
-            <p className="text-gray-900 mb-6 text-center">
-              Are you sure you want to delete this user's profile? This action cannot be undone.
-            </p>
-            <div className="flex justify-center space-x-4">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="px-6 py-3 bg-gray-300 text-gray-900 rounded-lg text-md font-semibold hover:bg-gray-400 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleDeleteProfile(deleteConfirm)}
-                className="px-6 py-3 bg-amber-700 text-white rounded-lg text-md font-semibold hover:bg-amber-800 transition-colors"
-              >
-                Delete Profile
-              </button>
-            </div>
+                ) : (
+                  filteredUsers.map((user, index) => (
+                    <tr
+                      key={user._id}
+                      className={`border-b border-amber-200 ${
+                        index % 2 === 1 ? 'bg-amber-50' : 'bg-white'
+                      } hover:bg-gray-100`}
+                    >
+                      <td className="p-3">
+                        <div className="w-10 h-10 rounded-full overflow-hidden">
+                          <img
+                            src={user.profilePicture || defaultProfilePic}
+                            alt={`${user.name || 'User'}'s profile`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      </td>
+                      <td className="p-3 text-gray-900">{user.name || 'N/A'}</td>
+                      <td className="p-3 text-gray-900">{user.email || 'N/A'}</td>
+                      <td className="p-3 text-gray-900">{user.phoneNumber || 'N/A'}</td>
+                      <td className="p-3 text-gray-900">{user.city || 'N/A'}</td>
+                      <td className="p-3">
+                        <button
+                          onClick={() => setDeleteConfirm(user._id)}
+                          className="bg-red-600 text-white px-3 py-1 rounded-lg flex items-center text-sm hover:bg-red-700 transition-colors"
+                          aria-label={`Delete user ${user.name || 'Unknown'}`}
+                        >
+                          <Trash2 size={16} className="mr-1" /> Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
-      )}
+
+        {deleteConfirm && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={() => setDeleteConfirm(null)}
+            onKeyDown={(e) => e.key === 'Escape' && setDeleteConfirm(null)}
+            tabIndex={0}
+          >
+            <div className="bg-white rounded-2xl p-6 w-full max-w-[550px] border border-amber-400 max-h-[90vh] overflow-y-auto">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-amber-700"
+                aria-label="Close modal"
+              >
+                <X size={24} />
+              </button>
+              <div className="flex items-center justify-center mb-6">
+                <Heart className="text-amber-950 mr-2" size={30} />
+                <h3 id="delete-confirm-title" className="text-xl sm:text-2xl font-bold text-amber-950">
+                  Confirm Deletion
+                </h3>
+              </div>
+              <p className="text-gray-900 mb-6 text-center">
+                Are you sure you want to delete this user's profile? This action cannot be undone.
+              </p>
+              <div className="flex justify-center space-x-4">
+                <button
+                  onClick={() => setDeleteConfirm(null)}
+                  className="px-6 py-3 bg-gray-300 text-gray-900 rounded-lg text-md font-semibold hover:bg-gray-400 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeleteProfile(deleteConfirm)}
+                  className="px-6 py-3 bg-amber-700 text-white rounded-lg text-md font-semibold hover:bg-amber-800 transition-colors"
+                >
+                  Delete Profile
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

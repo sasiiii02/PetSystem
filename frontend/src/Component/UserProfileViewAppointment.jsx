@@ -325,7 +325,7 @@ const ProfilePage = () => {
                     <img
                       src={user.profilePic}
                       alt="Profile"
-                      className="w-20 h-20 rounded-full border-4 border-white mr-4 object-cover"
+                      className="w-30 h-30 rounded-full border-4 border-white mr-4 object-cover"
                       onError={(e) => {
                         e.target.onerror = null;
                         e.target.src = defaultProfilePic;
@@ -408,7 +408,7 @@ const ProfilePage = () => {
                                     <img
                                       src={pet.petimage || defaultPetImage}
                                       alt={pet.name}
-                                      className="w-16 h-16 rounded-full border-2 border-[#9a7656] object-cover"
+                                      className="w-20 h-20 rounded-full border-2 border-[#9a7656] object-cover"
                                       onError={(e) => {
                                         e.target.onerror = null;
                                         e.target.src = defaultPetImage;
