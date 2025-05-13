@@ -9,9 +9,8 @@ const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// Add interceptor to include JWT token in requests
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("petOwnerToken"); // Change to petOwnerToken
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -27,7 +26,7 @@ const UserEventsPage = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [hasNotifications, setHasNotifications] = useState(false);
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("petOwnerToken");
 
   const theme = {
     primary: "bg-[#D08860]",

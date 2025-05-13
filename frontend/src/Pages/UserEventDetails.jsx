@@ -4,6 +4,19 @@ import EventDetailsHeader from "../Component/EventDetailsHeader";
 import RegisterEventModal from "../Component/RegisterEventModal";
 import axios from "axios";
 
+const api = axios.create({
+  baseURL: "http://localhost:5000/api",
+  headers: { "Content-Type": "application/json" },
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("petOwnerToken"); // Changed from "token"
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 const UserEventDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -16,14 +29,7 @@ const UserEventDetailsPage = () => {
   const [registrationError, setRegistrationError] = useState(null);
   const [registrationSuccess, setRegistrationSuccess] = useState(null);
 
-  const token = localStorage.getItem("token");
-
-  const api = axios.create({
-    baseURL: "http://localhost:5000/api",
-    headers: {
-      Authorization: token ? `Bearer ${token}` : "",
-    },
-  });
+  const token = localStorage.getItem("petOwnerToken"); // Changed from "token"
 
   const fetchData = async () => {
     try {
@@ -43,13 +49,17 @@ const UserEventDetailsPage = () => {
           (reg) =>
             reg.userId._id === userResponse.data._id &&
             reg.paymentStatus === "paid" &&
-            reg.status === "active" // Ensure only active registrations count
+            reg.status === "active"
         );
         setIsRegistered(isUserRegistered);
       }
     } catch (err) {
       setError(err.response?.data?.message || err.message);
       console.error("Error fetching data:", err);
+      if (err.response?.status === 401) {
+        localStorage.removeItem("petOwnerToken"); // Changed from "token"
+        navigate("/login");
+      }
     } finally {
       setLoading(false);
     }
@@ -77,7 +87,7 @@ const UserEventDetailsPage = () => {
       });
 
       if (response.data.success) {
-        if (!localStorage.getItem("token")) {
+        if (!localStorage.getItem("petOwnerToken")) { // Changed from "token"
           throw new Error("Authentication token missing. Please log in again.");
         }
         window.location.href = response.data.checkoutUrl;
@@ -143,7 +153,7 @@ const UserEventDetailsPage = () => {
           onClose={() => {
             setIsModalOpen(false);
             setRegistrationError(null);
-            fetchData(); // Refresh data after closing modal
+            fetchData();
           }}
           error={registrationError}
         />

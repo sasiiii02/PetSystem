@@ -10,8 +10,10 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  const token = localStorage.getItem("petOwnerToken"); // Change to petOwnerToken
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
@@ -23,7 +25,7 @@ const UserRegisteredEventsPage = () => {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [selectedRegistration, setSelectedRegistration] = useState(null);
   const [registrationToCancel, setRegistrationToCancel] = useState(null);
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("petOwnerToken");
   const navigate = useNavigate();
 
   useEffect(() => {

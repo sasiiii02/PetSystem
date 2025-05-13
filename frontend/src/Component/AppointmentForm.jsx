@@ -3,13 +3,14 @@ import axios from "axios";
 import { FaUser, FaPhone, FaEnvelope, FaPaw, FaCalendar, FaClock, FaDollarSign } from "react-icons/fa";
 
 // Axios instance
+
 const api = axios.create({
   baseURL: "http://localhost:5000/api",
   headers: { "Content-Type": "application/json" },
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("petOwnerToken"); // Changed from "token"
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
