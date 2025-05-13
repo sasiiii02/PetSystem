@@ -8,11 +8,10 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("petOwnerToken"); // Changed from "token"
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
-
 const Notifications = () => {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
@@ -34,7 +33,7 @@ const Notifications = () => {
       console.error("Error fetching notifications:", err);
       setError(err.response?.data?.message || "Error fetching notifications");
       if (err.response?.status === 401) {
-        localStorage.removeItem("token");
+        localStorage.removeItem("petOwnerToken");
         navigate("/login");
       }
     } finally {
