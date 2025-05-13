@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 
 const AppointmentCancelationReqTable = () => {
   const [refundRequests, setRefundRequests] = useState([]);
+  const [filteredRequests, setFilteredRequests] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -21,6 +23,7 @@ const AppointmentCancelationReqTable = () => {
         const data = await response.json();
         console.log('Fetched data:', data);
         setRefundRequests(data);
+        setFilteredRequests(data.filter((request) => request.status === 'pending')); // Initialize filtered list
         setError(null);
       } catch (error) {
         console.error('Error fetching refund requests:', error);
@@ -30,6 +33,38 @@ const AppointmentCancelationReqTable = () => {
     fetchRefundRequests();
   }, []);
 
+  // Handle search input and filtering
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredRequests(refundRequests.filter((request) => request.status === 'pending'));
+      return;
+    }
+
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    const filtered = refundRequests
+      .filter((request) => request.status === 'pending')
+      .filter((request) =>
+        (request.userId?.name || '').toLowerCase().includes(lowerSearchTerm)
+      )
+      .sort((a, b) => {
+        const aName = (a.userId?.name || '').toLowerCase();
+        const bName = (b.userId?.name || '').toLowerCase();
+
+        // Exact match
+        if (aName === lowerSearchTerm && bName !== lowerSearchTerm) return -1;
+        if (bName === lowerSearchTerm && aName !== lowerSearchTerm) return 1;
+
+        // Starts with
+        if (aName.startsWith(lowerSearchTerm) && !bName.startsWith(lowerSearchTerm)) return -1;
+        if (bName.startsWith(lowerSearchTerm) && !aName.startsWith(lowerSearchTerm)) return 1;
+
+        // Contains (default sort by name)
+        return aName.localeCompare(bName);
+      });
+
+    setFilteredRequests(filtered);
+  }, [searchTerm, refundRequests]);
+
   const handleRefundAction = async (id, status) => {
     try {
       console.log(`Processing refund ${id} with status ${status}`);
@@ -37,8 +72,6 @@ const AppointmentCancelationReqTable = () => {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          // Add Authorization header if auth is implemented, e.g.:
-          // 'Authorization': `Bearer ${yourToken}`
         },
         body: JSON.stringify({ status }),
       });
@@ -62,59 +95,147 @@ const AppointmentCancelationReqTable = () => {
     }
   };
 
-  // Filter refund requests to only show those with status "pending"
-  const pendingRequests = refundRequests.filter((request) => request.status === 'pending');
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm('');
+  };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Pending Refund Requests</h1>
-      {error && <p className="text-red-500 mb-4">Error: {error}</p>}
-      {pendingRequests.length === 0 && !error && (
-        <p className="text-gray-500 mb-4">No pending refund requests found.</p>
+    <div className="bg-gradient-to-br from-[#FFF5E6] to-[#F5EFEA] p-8 min-h-screen">
+      <div className="flex justify-between items-center mb-6 animate-slide-in" style={{ animationDelay: '0.1s' }}>
+        <h1 className="text-3xl font-bold text-amber-950 tracking-tight">Pending Refund Requests</h1>
+      </div>
+
+      {/* Search Bar */}
+      <div className="mb-8 flex items-center gap-4 max-w-lg mx-auto animate-slide-in" style={{ animationDelay: '0.2s' }}>
+        <div className="relative flex-1">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            placeholder="Search by user name..."
+            className="w-full p-4 pl-12 border border-amber-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent bg-white transition-all duration-300 hover:shadow-lg placeholder-amber-400 text-amber-950"
+          />
+          <svg
+            className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-amber-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </div>
+        {searchTerm && (
+          <button
+            onClick={handleClearSearch}
+            className="bg-amber-600 text-white px-5 py-3 rounded-xl hover:bg-amber-700 transition-all duration-300 shadow-sm hover:shadow-md font-medium"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      {error && (
+        <p className="text-amber-600 font-medium text-center mb-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+          Error: {error}
+        </p>
       )}
-      {pendingRequests.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200">
+      {filteredRequests.length === 0 && !error && (
+        <p className="text-amber-600 font-medium text-center mb-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+          No pending refund requests found.
+        </p>
+      )}
+      {filteredRequests.length > 0 && (
+        <div className="overflow-x-auto animate-fade-in" style={{ animationDelay: '0.3s' }}>
+          <table className="min-w-full bg-white border border-amber-200 rounded-xl shadow-lg">
             <thead>
-              <tr className="bg-gray-100">
-                <th className="py-2 px-4 border-b">User Name</th>
-                <th className="py-2 px-4 border-b">Amount</th>
-                <th className="py-2 px-4 border-b">Processing Fee</th>
-                <th className="py-2 px-4 border-b">Net Amount</th>
-                <th className="py-2 px-4 border-b">Status</th>
-                <th className="py-2 px-4 border-b">Reason</th>
-                <th className="py-2 px-4 border-b">Payment Method</th>
-                <th className="py-2 px-4 border-b">Request Date</th>
-                <th className="py-2 px-4 border-b">Actions</th>
+              <tr className="bg-amber-800 text-white">
+                <th className="px-6 py-4 text-left text-sm font-semibold tracking-wide w-32">User Name</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold tracking-wide w-24">Amount</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold tracking-wide w-24">Processing Fee</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold tracking-wide w-24">Net Amount</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold tracking-wide w-20">Status</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold tracking-wide w-40">Reason</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold tracking-wide w-28">Payment Method</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold tracking-wide w-32">Request Date</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold tracking-wide w-32">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {pendingRequests.map((request) => (
-                <tr key={request._id} className="hover:bg-gray-50">
-                  <td className="py-2 px-4 border-b">{request.userId?.name || 'N/A'}</td>
-                  <td className="py-2 px-4 border-b">${(request.amount || 0).toFixed(2)}</td>
-                  <td className="py-2 px-4 border-b">${(request.processingFee || 0).toFixed(2)}</td>
-                  <td className="py-2 px-4 border-b">${(request.netAmount || 0).toFixed(2)}</td>
-                  <td className="py-2 px-4 border-b">{request.status}</td>
-                  <td className="py-2 px-4 border-b">{request.reason || 'No reason provided'}</td>
-                  <td className="py-2 px-4 border-b">{request.paymentMethod || 'N/A'}</td>
-                  <td className="py-2 px-4 border-b">
+              {filteredRequests.map((request, index) => (
+                <tr
+                  key={request._id}
+                  className={`border-b border-amber-100 hover:bg-amber-50 transition-colors duration-200 ${
+                    index === 0 && searchTerm ? 'bg-amber-100' : ''
+                  }`}
+                >
+                  <td className="px-6 py-4 text-amber-950 font-medium w-32">{request.userId?.name || 'N/A'}</td>
+                  <td className="px-6 py-4 text-amber-950 w-24">${(request.amount || 0).toFixed(2)}</td>
+                  <td className="px-6 py-4 text-amber-950 w-24">${(request.processingFee || 0).toFixed(2)}</td>
+                  <td className="px-6 py-4 text-amber-950 w-24">${(request.netAmount || 0).toFixed(2)}</td>
+                  <td className="px-6 py-4 text-amber-950 w-20">{request.status}</td>
+                  <td className="px-6 py-4 text-amber-950 w-40 overflow-hidden text-ellipsis whitespace-nowrap max-w-xs">
+                    {request.reason || 'No reason provided'}
+                  </td>
+                  <td className="px-6 py-4 text-amber-950 w-28">{request.paymentMethod || 'N/A'}</td>
+                  <td className="px-6 py-4 text-amber-950 w-32">
                     {request.requestDate ? new Date(request.requestDate).toLocaleDateString() : 'N/A'}
                   </td>
-                  <td className="py-2 px-4 border-b">
+                  <td className="px-6 py-4 flex space-x-2 w-32">
                     <button
-                      className="bg-green-500 text-white px-3 py-1 rounded mr-2 hover:bg-green-600 disabled:opacity-50"
+                      className="bg-green-500 text-white p-2 rounded-lg hover:bg-green-600 transition-all duration-300 shadow-sm hover:shadow-md disabled:opacity-50 relative group"
                       onClick={() => handleRefundAction(request._id, 'approved')}
                       disabled={request.status !== 'pending'}
                     >
-                      Accept
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                      <span className="absolute left-1/2 transform -translate-x-1/2 bottom-full mb-2 px-3 py-1 text-sm text-white bg-amber-950 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        Approve Refund
+                      </span>
                     </button>
                     <button
-                      className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 disabled:opacity-50"
+                      className="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition-all duration-300 shadow-sm hover:shadow-md disabled:opacity-50 relative group"
                       onClick={() => handleRefundAction(request._id, 'rejected')}
                       disabled={request.status !== 'pending'}
                     >
-                      Deny
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                      <span className="absolute left-1/2 transform -translate-x-1/2 bottom-full mb-2 px-3 py-1 text-sm text-white bg-amber-950 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        Deny Refund
+                      </span>
                     </button>
                   </td>
                 </tr>
@@ -123,6 +244,37 @@ const AppointmentCancelationReqTable = () => {
           </table>
         </div>
       )}
+
+      {/* Custom CSS for animations */}
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-fade-in {
+          animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        .animate-slide-in {
+          animation: slideIn 0.6s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 };

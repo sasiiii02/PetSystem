@@ -10,6 +10,11 @@ export default function VetAvailability() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [notifications, setNotifications] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalType, setModalType] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
+  const [modalActionId, setModalActionId] = useState(null);
 
   useEffect(() => {
     const fetchAvailabilities = async () => {
@@ -46,42 +51,71 @@ export default function VetAvailability() {
     }
   }, [searchQuery, availabilities]);
 
-  const handleAccept = async (id) => {
-    try {
-      if (!confirm("Are you sure you want to accept this availability?")) {
-        return;
-      }
-
-      const response = await axios.patch(`http://localhost:5000/api/appointments/${id}/accept`);
-      console.log("Accept response:", response.data);
-
-      setAvailabilities(availabilities.filter((avail) => avail._id !== id));
-      setFilteredAvailabilities(filteredAvailabilities.filter((avail) => avail._id !== id));
-
-      alert("Request accepted and added to confirmed appointments!");
-    } catch (err) {
-      console.error("Accept error:", err);
-      const errorMsg = err.response ? err.response.data.error : err.message;
-      alert(`Failed to accept appointment: ${errorMsg}`);
-    }
+  const showNotification = (message, type = "success") => {
+    const id = Date.now();
+    setNotifications((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    }, 3000); // Auto-dismiss after 3 seconds
   };
 
-  const handleDeny = async (id) => {
-    try {
-      if (!confirm("Are you sure you want to deny and delete this availability?")) {
-        return;
+  const openModal = (type, id) => {
+    setModalType(type);
+    setModalActionId(id);
+    setModalMessage(
+      type === "accept"
+        ? "Are you sure you want to accept this availability?"
+        : "Are you sure you want to deny and delete this availability?"
+    );
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setModalType("");
+    setModalActionId(null);
+    setModalMessage("");
+  };
+
+  const handleModalConfirm = async () => {
+    if (modalType === "accept") {
+      try {
+        const response = await axios.patch(
+          `http://localhost:5000/api/appointments/${modalActionId}/accept`
+        );
+        console.log("Accept response:", response.data);
+
+        setAvailabilities(availabilities.filter((avail) => avail._id !== modalActionId));
+        setFilteredAvailabilities(
+          filteredAvailabilities.filter((avail) => avail._id !== modalActionId)
+        );
+
+        showNotification("Request accepted and added to confirmed appointments!", "success");
+      } catch (err) {
+        console.error("Accept error:", err);
+        const errorMsg = err.response ? err.response.data.error : err.message;
+        showNotification(`Failed to accept appointment: ${errorMsg}`, "error");
       }
+    } else if (modalType === "deny") {
+      try {
+        const response = await axios.patch(
+          `http://localhost:5000/api/appointments/${modalActionId}/deny`
+        );
+        console.log("Deny response:", response.data);
 
-      const response = await axios.patch(`http://localhost:5000/api/appointments/${id}/deny`);
-      console.log("Deny response:", response.data);
+        setAvailabilities(availabilities.filter((avail) => avail._id !== modalActionId));
+        setFilteredAvailabilities(
+          filteredAvailabilities.filter((avail) => avail._id !== modalActionId)
+        );
 
-      setAvailabilities(availabilities.filter((avail) => avail._id !== id));
-      setFilteredAvailabilities(filteredAvailabilities.filter((avail) => avail._id !== id));
-    } catch (err) {
-      console.error("Deny error:", err);
-      const errorMsg = err.response ? err.response.data.error : err.message;
-      alert(`Failed to deny appointment: ${errorMsg}`);
+        showNotification("Request denied and removed successfully.", "success");
+      } catch (err) {
+        console.error("Deny error:", err);
+        const errorMsg = err.response ? err.response.data.error : err.message;
+        showNotification(`Failed to deny appointment: ${errorMsg}`, "error");
+      }
     }
+    closeModal();
   };
 
   const formatDate = (dateString) => {
@@ -96,7 +130,7 @@ export default function VetAvailability() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="flex justify-center items-center h-64 animate-fade-in">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-amber-600"></div>
       </div>
     );
@@ -104,7 +138,7 @@ export default function VetAvailability() {
 
   if (error) {
     return (
-      <div className="text-center p-6 text-red-500 bg-red-50 rounded-lg">
+      <div className="text-center p-6 text-red-500 bg-red-50 rounded-lg mx-auto max-w-2xl animate-fade-in">
         <p className="font-semibold">Error loading vet availabilities</p>
         <p>{error}</p>
       </div>
@@ -112,44 +146,78 @@ export default function VetAvailability() {
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <h2 className="text-2xl font-semibold mb-6 flex items-center text-gray-800">
+    <div className="container mx-auto p-6 bg-gradient-to-br from-[#FFF5E6] to-[#F5EFEA] min-h-screen relative">
+      {/* Notification Container */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {notifications.map((notification) => (
+          <div
+            key={notification.id}
+            className={`p-3 rounded-lg shadow-md ${
+              notification.type === "success"
+                ? "bg-amber-100 text-amber-950"
+                : "bg-red-100 text-red-950"
+            } animate-fade-in`}
+            style={{ animationDelay: "0s" }}
+          >
+            {notification.message}
+          </div>
+        ))}
+      </div>
+
+      <h2 className="text-2xl font-semibold mb-6 flex items-center text-amber-950 animate-fade-in">
         <CalendarCheck className="mr-2 text-amber-600" size={24} />
         Vet Availability Requests
       </h2>
 
-      <div className="mb-6 flex items-center gap-4">
+      <div className="mb-6 flex items-center gap-4 animate-slide-up" style={{ animationDelay: "0.1s" }}>
         <div className="relative flex-1 max-w-md">
           <input
             type="text"
             placeholder="Search by professional name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
+            className="w-full pl-10 pr-4 py-2 rounded-lg border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-600 transition-all text-amber-950"
           />
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-amber-500" size={20} />
         </div>
       </div>
 
-      <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full table-auto">
+      {/* Table Container with Conditional Blur */}
+      <div className="relative">
+        <div className={`bg-white shadow-lg rounded-lg transition-all duration-300 ${isModalOpen ? 'blur-sm' : ''}`}>
+          <table className="w-full table-fixed">
             <thead className="bg-amber-950 text-white">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-medium uppercase tracking-wider">Professional Name</th>
-                <th className="px-6 py-4 text-left text-sm font-medium uppercase tracking-wider">Qualification</th> {/* Changed from Specialization to Qualification */}
-                <th className="px-6 py-4 text-left text-sm font-medium uppercase tracking-wider">Email</th>
-                <th className="px-6 py-4 text-left text-sm font-medium uppercase tracking-wider">Given Date</th>
-                <th className="px-6 py-4 text-left text-sm font-medium uppercase tracking-wider">Given Time Slot</th>
-                <th className="px-6 py-4 text-left text-sm font-medium uppercase tracking-wider">Professional Fee</th>
-                <th className="px-6 py-4 text-left text-sm font-medium uppercase tracking-wider">Special Note</th>
-                <th className="px-6 py-4 text-left text-sm font-medium uppercase tracking-wider">Actions</th>
+                <th className="w-[150px] px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Professional Name
+                </th>
+                <th className="w-[120px] px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Qualification
+                </th>
+                <th className="w-[180px] px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="w-[120px] px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Given Date
+                </th>
+                <th className="w-[140px] px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Given Time Slot
+                </th>
+                <th className="w-[120px] px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Professional Fee
+                </th>
+                <th className="w-[150px] px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Special Note
+                </th>
+                <th className="w-[150px] px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
-            <tbody className="text-gray-700">
+            <tbody className="text-amber-950">
               {filteredAvailabilities.length === 0 ? (
-                <tr>
-                  <td colSpan="8" className="text-center py-6 text-gray-500">
+                <tr className="animate-fade-in">
+                  <td colSpan="8" className="text-center py-6 text-amber-950">
                     No vet availability requests found
                   </td>
                 </tr>
@@ -157,30 +225,41 @@ export default function VetAvailability() {
                 filteredAvailabilities.map((availability, index) => (
                   <tr
                     key={availability._id || index}
-                    className="border-b hover:bg-gray-50 transition-colors duration-200"
+                    className="border-b border-amber-200 hover:bg-amber-50 transition-colors duration-200 animate-slide-up"
+                    style={{ animationDelay: `${0.2 + index * 0.1}s` }}
                   >
-                    <td className="px-6 py-4 text-sm">{availability.professionalName || "N/A"}</td>
-                    <td className="px-6 py-4 text-sm">{availability.specialization || "N/A"}</td> {/* Displays qualification */}
-                    <td className="px-6 py-4 text-sm">{availability.email || "N/A"}</td>
-                    <td className="px-6 py-4 text-sm">{formatDate(availability.appointmentDate)}</td>
-                    <td className="px-6 py-4 text-sm">
+                    <td className="w-[150px] px-4 py-3 text-sm truncate">
+                      {availability.professionalName || "N/A"}
+                    </td>
+                    <td className="w-[120px] px-4 py-3 text-sm truncate">
+                      {availability.specialization || "N/A"}
+                    </td>
+                    <td className="w-[180px] px-4 py-3 text-sm truncate">
+                      {availability.email || "N/A"}
+                    </td>
+                    <td className="w-[120px] px-4 py-3 text-sm truncate">
+                      {formatDate(availability.appointmentDate)}
+                    </td>
+                    <td className="w-[140px] px-4 py-3 text-sm truncate">
                       {availability.startTime || "N/A"} - {availability.endTime || "N/A"}
                     </td>
-                    <td className="px-6 py-4 text-sm">
+                    <td className="w-[120px] px-4 py-3 text-sm truncate">
                       ${availability.chargePerAppointment?.toFixed(2) || "0.00"}
                     </td>
-                    <td className="px-6 py-4 text-sm">{availability.specialNotes || "N/A"}</td>
-                    <td className="px-6 py-4 text-sm">
+                    <td className="w-[150px] px-4 py-3 text-sm truncate">
+                      {availability.specialNotes || "N/A"}
+                    </td>
+                    <td className="w-[150px] px-4 py-3 text-sm">
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => handleAccept(availability._id)}
-                          className="bg-[#D08860] text-white px-4 py-1 rounded-lg hover:bg-[#B77A4E] transition-colors duration-200"
+                          onClick={() => openModal("accept", availability._id)}
+                          className="bg-amber-600 text-white px-3 py-1 rounded-lg hover:bg-amber-700 transition-colors duration-200 text-xs"
                         >
                           Accept
                         </button>
                         <button
-                          onClick={() => handleDeny(availability._id)}
-                          className="bg-red-500 text-white px-4 py-1 rounded-lg hover:bg-red-600 transition-colors duration-200"
+                          onClick={() => openModal("deny", availability._id)}
+                          className="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition-colors duration-200 text-xs"
                         >
                           Deny
                         </button>
@@ -192,7 +271,61 @@ export default function VetAvailability() {
             </tbody>
           </table>
         </div>
+
+        {/* Custom Modal Positioned Over Table */}
+        {isModalOpen && (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
+            <div className="bg-white p-6 rounded-lg shadow-2xl border border-amber-200 animate-fade-in">
+              <h3 className="text-lg font-semibold text-amber-950 mb-4">{modalMessage}</h3>
+              <div className="flex justify-end space-x-4">
+                <button
+                  onClick={closeModal}
+                  className="px-4 py-2 bg-amber-200 text-amber-950 rounded-lg hover:bg-amber-300 transition-colors duration-200"
+                >
+                  No
+                </button>
+                <button
+                  onClick={handleModalConfirm}
+                  className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors duration-200"
+                >
+                  Yes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Custom CSS for animations */}
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-fade-in {
+          animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        .animate-slide-up {
+          animation: slideUp 0.6s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 }
