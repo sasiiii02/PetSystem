@@ -6,39 +6,78 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 
+// Custom Notification Component
+const Notification = ({ message, type, onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 5000); // Auto-close after 5 seconds
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div
+      className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm animate-slide-in-from-right ${
+        type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium">{message}</span>
+        <button
+          onClick={onClose}
+          className="ml-4 text-white hover:text-amber-200 transition-colors duration-200"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const GenerateReportPage = () => {
   const [incomeData, setIncomeData] = useState([]);
   const [petsUsersData, setPetsUsersData] = useState([]);
-  const [showIncomeTable, setShowIncomeTable] = useState(false);
-  const [showPetsUsersTable, setShowPetsUsersTable] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [notification, setNotification] = useState({
+    show: false,
+    message: '',
+    type: 'success',
+  });
   const navigate = useNavigate();
   const token = localStorage.getItem('profToken');
+
+  // Show notification
+  const showNotification = (message, type = 'success') => {
+    setNotification({ show: true, message, type });
+  };
+
+  // Hide notification
+  const hideNotification = () => {
+    setNotification({ show: false, message: '', type: 'success' });
+  };
 
   useEffect(() => {
     const validateTokenAndFetchData = async () => {
       if (!token) {
-        setError('No authentication token found. Please log in.');
+        showNotification('No authentication token found. Please log in.', 'error');
         navigate('/professional/login');
         return;
       }
       try {
         const decoded = jwtDecode(token);
         if (decoded.exp * 1000 < Date.now()) {
-          setError('Session expired. Please log in again.');
+          showNotification('Session expired. Please log in again.', 'error');
           localStorage.removeItem('profToken');
           localStorage.removeItem('profRole');
           navigate('/professional/login');
           return;
         }
         if (!['vet', 'groomer', 'pet-trainer'].includes(decoded.role)) {
-          setError('Unauthorized role.');
+          showNotification('Unauthorized role.', 'error');
           navigate('/professional/dashboard');
           return;
         }
         setLoading(true);
-        setError(null);
 
         const [incomeResponse, petsUsersResponse] = await Promise.all([
           axios.get('http://localhost:5000/api/appointments/income-report', {
@@ -69,7 +108,7 @@ const GenerateReportPage = () => {
         } else {
           errorMessage = `Network error: ${error.message}`;
         }
-        setError(errorMessage);
+        showNotification(errorMessage, 'error');
       } finally {
         setLoading(false);
       }
@@ -140,13 +179,14 @@ const GenerateReportPage = () => {
 
       console.log('Saving PDF:', `${reportType}-report.pdf`);
       doc.save(`${reportType}-report.pdf`);
+      showNotification(`PDF for ${reportType} report generated successfully!`, 'success');
     } catch (error) {
       console.error('Error generating PDF:', {
         message: error.message,
         stack: error.stack,
         reportType,
       });
-      alert('Failed to generate PDF: ' + error.message);
+      showNotification('Failed to generate PDF: ' + error.message, 'error');
     }
   };
 
@@ -179,67 +219,84 @@ const GenerateReportPage = () => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Report');
     XLSX.writeFile(wb, fileName);
+    showNotification(`Excel for ${reportType} report generated successfully!`, 'success');
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6 text-amber-950">Generate Reports</h1>
-      {loading && <p className="text-gray-500">Loading report data...</p>}
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-      {!loading && !error && (
-        <div className="space-y-8">
-          {/* Monthly Appointment Income Report */}
-          <div className="bg-white p-6 rounded-md shadow-md">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">Monthly Appointment Income</h2>
-              <div className="space-x-2">
-                <button
-                  onClick={() => setShowIncomeTable(!showIncomeTable)}
-                  className="px-4 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600"
-                >
-                  {showIncomeTable ? 'Hide' : 'View'}
-                </button>
-                <button
-                  onClick={() => downloadPDF('income')}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-                >
-                  Download PDF
-                </button>
-                <button
-                  onClick={() => downloadExcel('income')}
-                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
-                >
-                  Download Excel
-                </button>
+    <div className="min-h-screen bg-gradient-to-br from-[#FFF5E6] to-[#F5EFEA] p-8 animate-fade-in">
+      {/* Notification */}
+      {notification.show && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={hideNotification}
+        />
+      )}
+
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8 text-amber-950 tracking-tight">
+          Generate Reports
+        </h1>
+        {loading && (
+          <p className="text-amber-700 text-lg animate-pulse">
+            Loading report data...
+          </p>
+        )}
+        {!loading && (
+          <div className="space-y-8">
+            {/* Monthly Appointment Income Report */}
+            <div
+              className="bg-white shadow-xl rounded-xl p-8 animate-slide-in"
+              style={{ animationDelay: '0.2s' }}
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-amber-700">
+                  Monthly Appointment Income
+                </h2>
+                <div className="space-x-3">
+                  <button
+                    onClick={() => downloadPDF('income')}
+                    className="bg-amber-700 text-white px-6 py-3 rounded-lg hover:bg-amber-600 transition-all duration-300 shadow-sm hover:shadow-md"
+                  >
+                    Download PDF
+                  </button>
+                  <button
+                    onClick={() => downloadExcel('income')}
+                    className="bg-amber-700 text-white px-6 py-3 rounded-lg hover:bg-amber-600 transition-all duration-300 shadow-sm hover:shadow-md"
+                  >
+                    Download Excel
+                  </button>
+                </div>
               </div>
-            </div>
-            {showIncomeTable && (
               <div className="overflow-x-auto">
-                <table className="min-w-full bg-white border">
+                <table className="min-w-full bg-white border border-amber-200 rounded-lg shadow-sm">
                   <thead>
-                    <tr className="bg-gray-100">
-                      <th className="py-2 px-4 border">Month</th>
-                      <th className="py-2 px-4 border">Total Income ($)</th>
-                      <th className="py-2 px-4 border">Number of Appointments</th>
+                    <tr className="bg-amber-100 text-amber-950">
+                      <th className="py-3 px-6 text-left font-semibold">Month</th>
+                      <th className="py-3 px-6 text-left font-semibold">Total Income ($)</th>
+                      <th className="py-3 px-6 text-left font-semibold">Number of Appointments</th>
                     </tr>
                   </thead>
                   <tbody>
                     {incomeData.length > 0 ? (
                       incomeData.map((item, index) => (
-                        <tr key={index} className="text-center">
-                          <td className="py-2 px-4 border">
+                        <tr
+                          key={index}
+                          className="border-b border-amber-100 hover:bg-amber-50 transition-colors duration-200"
+                        >
+                          <td className="py-3 px-6 text-amber-950">
                             {new Date(item.year, item.month - 1).toLocaleString('default', {
                               month: 'long',
                               year: 'numeric',
                             })}
                           </td>
-                          <td className="py-2 px-4 border">{item.totalIncome.toFixed(2)}</td>
-                          <td className="py-2 px-4 border">{item.appointmentCount}</td>
+                          <td className="py-3 px-6 text-amber-950">{item.totalIncome.toFixed(2)}</td>
+                          <td className="py-3 px-6 text-amber-950">{item.appointmentCount}</td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="3" className="py-2 px-4 text-gray-500">
+                        <td colSpan="3" className="py-4 px-6 text-amber-700 text-center">
                           No income data available.
                         </td>
                       </tr>
@@ -247,60 +304,60 @@ const GenerateReportPage = () => {
                   </tbody>
                 </table>
               </div>
-            )}
-          </div>
-
-          {/* Pets and Users Report */}
-          <div className="bg-white p-6 rounded-md shadow-md">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">Pets and Their Users</h2>
-              <div className="space-x-2">
-                <button
-                  onClick={() => setShowPetsUsersTable(!showPetsUsersTable)}
-                  className="px-4 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600"
-                >
-                  {showPetsUsersTable ? 'Hide' : 'View'}
-                </button>
-                <button
-                  onClick={() => downloadPDF('pets-users')}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-                >
-                  Download PDF
-                </button>
-                <button
-                  onClick={() => downloadExcel('pets-users')}
-                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
-                >
-                  Download Excel
-                </button>
-              </div>
             </div>
-            {showPetsUsersTable && (
+
+            {/* Pets and Users Report */}
+            <div
+              className="bg-white shadow-xl rounded-xl p-8 animate-slide-in"
+              style={{ animationDelay: '0.4s' }}
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-amber-700">
+                  Pets and Their Users
+                </h2>
+                <div className="space-x-3">
+                  <button
+                    onClick={() => downloadPDF('pets-users')}
+                    className="bg-amber-700 text-white px-6 py-3 rounded-lg hover:bg-amber-600 transition-all duration-300 shadow-sm hover:shadow-md"
+                  >
+                    Download PDF
+                  </button>
+                  <button
+                    onClick={() => downloadExcel('pets-users')}
+                    className="bg-amber-700 text-white px-6 py-3 rounded-lg hover:bg-amber-600 transition-all duration-300 shadow-sm hover:shadow-md"
+                  >
+                    Download Excel
+                  </button>
+                </div>
+              </div>
               <div className="overflow-x-auto">
-                <table className="min-w-full bg-white border">
+                <table className="min-w-full bg-white border border-amber-200 rounded-lg shadow-sm">
                   <thead>
-                    <tr className="bg-gray-100">
-                      <th className="py-2 px-4 border">Pet Name</th>
-                      <th className="py-2 px-4 border">Pet Breed</th>
-                      <th className="py-2 px-4 border">Owner Name</th>
-                      <th className="py-2 px-4 border">Owner Email</th>
-                      <th className="py-2 px-4 border">Owner Phone</th>
+                    <tr className="bg-amber-100 text-amber-950">
+                      <th className="py-3 px-6 text-left font-semibold">Pet Name</th>
+                      <th className="py-3 px-6 text-left font-semibold">Pet Breed</th>
+                      <th className="py-3 px-6 text-left font-semibold">Owner Name</th>
+                      <th className="py-3 px-6 text-left font-semibold">Owner Email</th>
+                      <th className="py-3 px-6 text-left font-semibold">Owner Phone</th>
                     </tr>
                   </thead>
                   <tbody>
                     {petsUsersData.length > 0 ? (
                       petsUsersData.map((item, index) => (
-                        <tr key={index} className="text-center">
-                          <td className="py-2 px-4 border">{item.petName}</td>
-                          <td className="py-2 px-4 border">{item.petType}</td>
-                          <td className="py-2 px-4 border">{item.ownerName}</td>
-                          <td className="py-2 px-4 border">{item.ownerEmail}</td>
-                          <td className="py-2 px-4 border">{item.ownerPhone}</td>
+                        <tr
+                          key={index}
+                          className="border-b border-amber-100 hover:bg-amber-50 transition-colors duration-200"
+                        >
+                          <td className="py-3 px-6 text-amber-950">{item.petName}</td>
+                          <td className="py-3 px-6 text-amber-950">{item.petType}</td>
+                          <td className="py-3 px-6 text-amber-950">{item.ownerName}</td>
+                          <td className="py-3 px-6 text-amber-950">{item.ownerEmail}</td>
+                          <td className="py-3 px-6 text-amber-950">{item.ownerPhone}</td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="5" className="py-2 px-4 text-gray-500">
+                        <td colSpan="5" className="py-4 px-6 text-amber-700 text-center">
                           No pets or user data available.
                         </td>
                       </tr>
@@ -308,10 +365,56 @@ const GenerateReportPage = () => {
                   </tbody>
                 </table>
               </div>
-            )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+
+      {/* Custom CSS for animations */}
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes slideInFromRight {
+          from {
+            opacity: 0;
+            transform: translateX(100%);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        .animate-fade-in {
+          animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        .animate-slide-in {
+          animation: slideIn 0.6s ease-out forwards;
+        }
+
+        .animate-slide-in-from-right {
+          animation: slideInFromRight 0.3s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 };

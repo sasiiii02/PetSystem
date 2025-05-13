@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
@@ -20,8 +20,32 @@ export default function ReportPageOne() {
   const [error, setError] = useState(null);
   const reportRef = useRef(null);
 
+  // Fetch default report (daily) on component mount
+  useEffect(() => {
+    const fetchDefaultReport = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        console.log('Fetching default daily report');
+        const response = await axios.get('http://localhost:5000/api/appointments/reports/generate', {
+          params: { period: 'daily' },
+        });
+        console.log('Default report response:', response.data);
+        setReportData(response.data.data);
+      } catch (err) {
+        console.error('Error fetching default report:', err);
+        setError(err.response?.data?.message || err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDefaultReport();
+  }, []);
+
   const handleGenerateReport = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault(); // Handle form submission if triggered manually
     setLoading(true);
     setError(null);
 
@@ -63,7 +87,6 @@ export default function ReportPageOne() {
       return;
     }
 
-    // Structure the report data into an XML-compatible JSON format
     const xmlData = {
       declaration: { attributes: { version: '1.0', encoding: 'utf-8' } },
       elements: [
@@ -119,10 +142,7 @@ export default function ReportPageOne() {
       ],
     };
 
-    // Convert JSON to XML string
     const xmlString = js2xml(xmlData, { compact: false, spaces: 2 });
-
-    // Create a downloadable file
     const blob = new Blob([xmlString], { type: 'application/xml' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -140,12 +160,12 @@ export default function ReportPageOne() {
           {
             label: 'Revenue ($)',
             data: reportData.revenueByCategory.map((item) => item.totalRevenue),
-            backgroundColor: '#D1D5DB', // Light gray
+            backgroundColor: '#FBBF24', // Amber-400
           },
           {
             label: 'Appointment Count',
             data: reportData.revenueByCategory.map((item) => item.appointmentCount),
-            backgroundColor: '#4B5563', // Dark gray
+            backgroundColor: '#D97706', // Amber-600
           },
         ],
       }
@@ -158,12 +178,12 @@ export default function ReportPageOne() {
           {
             label: 'Scheduled/Completed',
             data: reportData.scheduledVsCancelled.map((item) => item.scheduledOrCompleted),
-            backgroundColor: '#D1D5DB', // Light gray
+            backgroundColor: '#FBBF24', // Amber-400
           },
           {
             label: 'Cancelled',
             data: reportData.scheduledVsCancelled.map((item) => item.cancelled),
-            backgroundColor: '#4B5563', // Dark gray
+            backgroundColor: '#D97706', // Amber-600
           },
         ],
       }
@@ -176,8 +196,8 @@ export default function ReportPageOne() {
           {
             label: 'Number of Customers',
             data: reportData.customerFrequency.map((item) => item.customerCount),
-            backgroundColor: '#D1D5DB', // Light gray
-            borderColor: '#4B5563', // Dark gray
+            backgroundColor: '#FBBF24', // Amber-400
+            borderColor: '#D97706', // Amber-600
             borderWidth: 1,
           },
         ],
@@ -185,23 +205,23 @@ export default function ReportPageOne() {
     : null;
 
   return (
-    <div className="min-h-screen bg-gray-100 px-6 py-12 sm:py-16 lg:px-8">
-      <div className="mx-auto max-w-5xl text-center">
-        <h2 className="text-lg font-semibold text-[#D08860] tracking-wider">Appointment Manager Dashboard</h2>
-        <p className="mt-2 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+    <div className="min-h-screen bg-gradient-to-br from-[#FFF5E6] to-[#F5EFEA] px-6 py-12 sm:py-16 lg:px-8">
+      <div className="mx-auto max-w-5xl text-center animate-slide-in" style={{ animationDelay: '0.1s' }}>
+        <h2 className="text-lg font-semibold text-amber-600 tracking-wider">Appointment Manager Dashboard</h2>
+        <p className="mt-2 text-4xl font-bold tracking-tight text-amber-950 sm:text-5xl">
           Insights for Your Pet Care Business
         </p>
       </div>
 
       {/* Time Period Selector */}
-      <div className="mx-auto mt-8 max-w-lg">
-        <form onSubmit={handleGenerateReport} className="bg-white shadow-lg rounded-xl p-8 border border-gray-200">
+      <div className="mx-auto mt-8 max-w-lg animate-slide-in" style={{ animationDelay: '0.2s' }}>
+        <form onSubmit={handleGenerateReport} className="bg-white shadow-lg rounded-xl p-8 border border-amber-200">
           <div className="mb-6">
-            <label className="block text-gray-700 font-medium mb-2 text-lg">Select Time Period:</label>
+            <label className="block text-amber-950 font-medium mb-2 text-lg">Select Time Period:</label>
             <select
               value={period}
               onChange={(e) => setPeriod(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D08860] text-gray-700"
+              className="w-full px-4 py-3 border border-amber-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent text-amber-950"
             >
               <option value="daily">Daily</option>
               <option value="monthly">Monthly</option>
@@ -212,22 +232,22 @@ export default function ReportPageOne() {
           {period === 'custom' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
               <div>
-                <label className="block text-gray-700 font-medium mb-2 text-lg">Start Date:</label>
+                <label className="block text-amber-950 font-medium mb-2 text-lg">Start Date:</label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D08860] text-gray-700"
+                  className="w-full px-4 py-3 border border-amber-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent text-amber-950"
                   required
                 />
               </div>
               <div>
-                <label className="block text-gray-700 font-medium mb-2 text-lg">End Date:</label>
+                <label className="block text-amber-950 font-medium mb-2 text-lg">End Date:</label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D08860] text-gray-700"
+                  className="w-full px-4 py-3 border border-amber-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent text-amber-950"
                   required
                 />
               </div>
@@ -237,7 +257,7 @@ export default function ReportPageOne() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#D08860] text-white py-3 px-4 rounded-lg hover:bg-[#D08860]/80 transition-colors duration-300 disabled:opacity-50 text-lg font-medium"
+            className="w-full bg-amber-600 text-white py-3 px-4 rounded-lg hover:bg-amber-700 transition-colors duration-300 disabled:opacity-50 text-lg font-medium"
           >
             {loading ? 'Generating...' : 'Generate Report'}
           </button>
@@ -246,28 +266,28 @@ export default function ReportPageOne() {
 
       {/* Report Display */}
       {error && (
-        <div className="mx-auto mt-6 max-w-5xl text-center p-4 bg-red-50 text-red-500 rounded-lg">
+        <div className="mx-auto mt-6 max-w-5xl text-center p-4 bg-red-50 text-red-500 rounded-lg animate-fade-in" style={{ animationDelay: '0.3s' }}>
           <p>{error}</p>
         </div>
       )}
 
       {reportData ? (
         <div ref={reportRef} className="mx-auto mt-12 max-w-5xl">
-          <div className="text-center mb-10">
-            <h3 className="text-3xl font-bold text-gray-900">Pet Care Appointment Insights</h3>
-            <p className="text-gray-600 mt-2 text-lg">
+          <div className="text-center mb-10 animate-slide-in" style={{ animationDelay: '0.3s' }}>
+            <h3 className="text-3xl font-bold text-amber-950 tracking-tight">Pet Care Appointment Insights</h3>
+            <p className="text-amber-950 mt-2 text-lg">
               Period: {period === 'daily' ? 'Daily' : period === 'monthly' ? 'Monthly' : `${startDate} to ${endDate}`}
             </p>
             <div className="mt-4 flex justify-center space-x-4">
               <button
                 onClick={handleDownloadPDF}
-                className="bg-[#D08860] text-white py-2 px-6 rounded-lg hover:bg-[#D08860]/80 transition-colors duration-300 text-lg font-medium"
+                className="bg-amber-600 text-white py-2 px-6 rounded-lg hover:bg-amber-700 transition-colors duration-300 text-lg font-medium shadow-sm hover:shadow-md"
               >
                 Download PDF
               </button>
               <button
                 onClick={handleDownloadXML}
-                className="bg-[#D08860] text-white py-2 px-6 rounded-lg hover:bg-[#D08860]/80 transition-colors duration-300 text-lg font-medium"
+                className="bg-amber-600 text-white py-2 px-6 rounded-lg hover:bg-amber-700 transition-colors duration-300 text-lg font-medium shadow-sm hover:shadow-md"
               >
                 Download XML
               </button>
@@ -275,8 +295,8 @@ export default function ReportPageOne() {
           </div>
 
           {/* 1. Revenue by Appointment Category (Payment Status: Paid) */}
-          <div className="bg-white shadow-lg rounded-xl p-8 border border-gray-200 mb-10">
-            <div className="bg-[#D08860] text-white rounded-t-lg p-4 flex items-center">
+          <div className="bg-white shadow-lg rounded-xl p-8 border border-amber-200 mb-10 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+            <div className="bg-amber-600 text-white rounded-t-lg p-4 flex items-center">
               <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 1.343-3 3v2c0 1.657 1.343 3 3 3s3-1.343 3-3v-2c0-1.657-1.343-3-3-3zm0 0V6m0 8v2"></path>
               </svg>
@@ -302,21 +322,21 @@ export default function ReportPageOne() {
                 />
               </div>
             ) : (
-              <p className="mt-6 text-gray-500 text-center">No data available for this period.</p>
+              <p className="mt-6 text-amber-950 text-center">No data available for this period.</p>
             )}
             {reportData.revenueByCategory.length > 0 ? (
               <table className="w-full text-left mt-6 border-collapse">
                 <thead>
-                  <tr className="bg-gray-100 text-gray-700">
-                    <th className="px-4 py-3 font-medium border-b border-gray-200">Category</th>
-                    <th className="px-4 py-3 font-medium border-b border-gray-200">Appointments</th>
-                    <th className="px-4 py-3 font-medium border-b border-gray-200">Revenue ($)</th>
-                    <th className="px-4 py-3 font-medium border-b border-gray-200">Avg. Revenue per Appointment ($)</th>
+                  <tr className="bg-amber-100 text-amber-950">
+                    <th className="px-4 py-3 font-medium border-b border-amber-200">Category</th>
+                    <th className="px-4 py-3 font-medium border-b border-amber-200">Appointments</th>
+                    <th className="px-4 py-3 font-medium border-b border-amber-200">Revenue ($)</th>
+                    <th className="px-4 py-3 font-medium border-b border-amber-200">Avg. Revenue per Appointment ($)</th>
                   </tr>
                 </thead>
                 <tbody>
                   {reportData.revenueByCategory.map((item, index) => (
-                    <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
+                    <tr key={index} className="border-b border-amber-200 hover:bg-amber-50">
                       <td className="px-4 py-3">{item.category}</td>
                       <td className="px-4 py-3">{item.appointmentCount}</td>
                       <td className="px-4 py-3">{item.totalRevenue.toFixed(2)}</td>
@@ -326,13 +346,13 @@ export default function ReportPageOne() {
                 </tbody>
               </table>
             ) : (
-              <p className="mt-6 text-gray-500 text-center">No data available for this period.</p>
+              <p className="mt-6 text-amber-950 text-center">No data available for this period.</p>
             )}
           </div>
 
           {/* 2. Scheduled vs. Cancelled Appointments Breakdown */}
-          <div className="bg-white shadow-lg rounded-xl p-8 border border-gray-200 mb-10">
-            <div className="bg-[#D08860] text-white rounded-t-lg p-4 flex items-center">
+          <div className="bg-white shadow-lg rounded-xl p-8 border border-amber-200 mb-10 animate-fade-in" style={{ animationDelay: '0.5s' }}>
+            <div className="bg-amber-600 text-white rounded-t-lg p-4 flex items-center">
               <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
@@ -362,16 +382,16 @@ export default function ReportPageOne() {
                 />
               </div>
             ) : (
-              <p className="mt-6 text-gray-500 text-center">No data available for this period.</p>
+              <p className="mt-6 text-amber-950 text-center">No data available for this period.</p>
             )}
             {reportData.scheduledVsCancelled.length > 0 ? (
               <table className="w-full text-left mt-6 border-collapse">
                 <thead>
-                  <tr className="bg-gray-100 text-gray-700">
-                    <th className="px-4 py-3 font-medium border-b border-gray-200">Appointment Type</th>
-                    <th className="px-4 py-3 font-medium border-b border-gray-200">Scheduled/Completed</th>
-                    <th className="px-4 py-3 font-medium border-b border-gray-200">Cancelled</th>
-                    <th className="px-4 py-3 font-medium border-b border-gray-200">Cancellation Rate (%)</th>
+                  <tr className="bg-amber-100 text-amber-950">
+                    <th className="px-4 py-3 font-medium border-b border-amber-200">Appointment Type</th>
+                    <th className="px-4 py-3 font-medium border-b border-amber-200">Scheduled/Completed</th>
+                    <th className="px-4 py-3 font-medium border-b border-amber-200">Cancelled</th>
+                    <th className="px-4 py-3 font-medium border-b border-amber-200">Cancellation Rate (%)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -379,7 +399,7 @@ export default function ReportPageOne() {
                     const total = item.scheduledOrCompleted + item.cancelled;
                     const cancellationRate = total > 0 ? ((item.cancelled / total) * 100).toFixed(2) : 0;
                     return (
-                      <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
+                      <tr key={index} className="border-b border-amber-200 hover:bg-amber-50">
                         <td className="px-4 py-3">{item.appointmentType}</td>
                         <td className="px-4 py-3">{item.scheduledOrCompleted}</td>
                         <td className="px-4 py-3">{item.cancelled}</td>
@@ -390,13 +410,13 @@ export default function ReportPageOne() {
                 </tbody>
               </table>
             ) : (
-              <p className="mt-6 text-gray-500 text-center">No data available for this period.</p>
+              <p className="mt-6 text-amber-950 text-center">No data available for this period.</p>
             )}
           </div>
 
           {/* 3. Customer Appointment Frequency */}
-          <div className="bg-white shadow-lg rounded-xl p-8 border border-gray-200 mb-10">
-            <div className="bg-[#D08860] text-white rounded-t-lg p-4 flex items-center">
+          <div className="bg-white shadow-lg rounded-xl p-8 border border-amber-200 mb-10 animate-fade-in" style={{ animationDelay: '0.6s' }}>
+            <div className="bg-amber-600 text-white rounded-t-lg p-4 flex items-center">
               <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
               </svg>
@@ -425,15 +445,15 @@ export default function ReportPageOne() {
                 />
               </div>
             ) : (
-              <p className="mt-6 text-gray-500 text-center">No data available for this period.</p>
+              <p className="mt-6 text-amber-950 text-center">No data available for this period.</p>
             )}
             {reportData.customerFrequency.length > 0 ? (
               <table className="w-full text-left mt-6 border-collapse">
                 <thead>
-                  <tr className="bg-gray-100 text-gray-700">
-                    <th className="px-4 py-3 font-medium border-b border-gray-200">Appointments per Customer</th>
-                    <th className="px-4 py-3 font-medium border-b border-gray-200">Number of Customers</th>
-                    <th className="px-4 py-3 font-medium border-b border-gray-200">Percentage of Total (%)</th>
+                  <tr className="bg-amber-100 text-amber-950">
+                    <th className="px-4 py-3 font-medium border-b border-amber-200">Appointments per Customer</th>
+                    <th className="px-4 py-3 font-medium border-b border-amber-200">Number of Customers</th>
+                    <th className="px-4 py-3 font-medium border-b border-amber-200">Percentage of Total (%)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -442,7 +462,7 @@ export default function ReportPageOne() {
                     return reportData.customerFrequency.map((item, index) => {
                       const percentage = totalCustomers > 0 ? ((item.customerCount / totalCustomers) * 100).toFixed(2) : 0;
                       return (
-                        <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
+                        <tr key={index} className="border-b border-amber-200 hover:bg-amber-50">
                           <td className="px-4 py-3">{item.appointmentCount}</td>
                           <td className="px-4 py-3">{item.customerCount}</td>
                           <td className="px-4 py-3">{percentage}</td>
@@ -453,13 +473,44 @@ export default function ReportPageOne() {
                 </tbody>
               </table>
             ) : (
-              <p className="mt-6 text-gray-500 text-center">No data available for this period.</p>
+              <p className="mt-6 text-amber-950 text-center">No data available for this period.</p>
             )}
           </div>
         </div>
       ) : (
-        <p className="mx-auto mt-12 max-w-5xl text-center text-gray-500">Generate a report to see insights.</p>
+        <p className="mx-auto mt-12 max-w-5xl text-center text-amber-950 animate-fade-in">Loading report...</p>
       )}
+
+      {/* Custom CSS for animations */}
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-fade-in {
+          animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        .animate-slide-in {
+          animation: slideIn 0.6s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 }

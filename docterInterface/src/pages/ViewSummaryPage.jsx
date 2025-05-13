@@ -5,13 +5,45 @@ import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import { useNavigate } from 'react-router-dom';
 
+// Custom Notification Component
+const Notification = ({ message, type, onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 5000); // Auto-close after 5 seconds
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div
+      className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm animate-slide-in-from-right ${
+        type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium">{message}</span>
+        <button
+          onClick={onClose}
+          className="ml-4 text-white hover:text-amber-200 transition-colors duration-200"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  );
+};
+
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
 const ViewSummaryPage = () => {
-  const [selectedReport, setSelectedReport] = useState(null);
+  const [selectedReport, setSelectedReport] = useState('type-distribution'); // Default to type-distribution
   const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [notification, setNotification] = useState({
+    show: false,
+    message: '',
+    type: 'success',
+  });
   const navigate = useNavigate();
   const token = localStorage.getItem('profToken');
 
@@ -24,29 +56,40 @@ const ViewSummaryPage = () => {
     { id: 'time-slot-distribution', name: 'Time Slot Distribution', chartType: 'pie' },
   ];
 
+  // Show notification
+  const showNotification = (message, type = 'success') => {
+    setNotification({ show: true, message, type });
+  };
+
+  // Hide notification
+  const hideNotification = () => {
+    setNotification({ show: false, message: '', type: 'success' });
+  };
+
   useEffect(() => {
     const validateToken = async () => {
       if (!token) {
-        setError('No authentication token found. Please log in.');
+        showNotification('No authentication token found. Please log in.', 'error');
         navigate('/professional/login');
         return;
       }
       try {
         const decoded = jwtDecode(token);
         if (decoded.exp * 1000 < Date.now()) {
-          setError('Session expired. Please log in again.');
+          showNotification('Session expired. Please log in again.', 'error');
           localStorage.removeItem('profToken');
           localStorage.removeItem('profRole');
           navigate('/professional/login');
           return;
         }
         if (!['vet', 'groomer', 'pet-trainer'].includes(decoded.role)) {
-          setError('Unauthorized role.');
+          showNotification('Unauthorized role.', 'error');
           navigate('/professional/dashboard');
           return;
         }
+        fetchReportData('type-distribution');
       } catch (error) {
-        setError('Invalid token. Please log in again.');
+        showNotification('Invalid token. Please log in again.', 'error');
         localStorage.removeItem('profToken');
         localStorage.removeItem('profRole');
         navigate('/professional/login');
@@ -57,17 +100,16 @@ const ViewSummaryPage = () => {
 
   const fetchReportData = async (reportId) => {
     setLoading(true);
-    setError(null);
     setChartData(null);
     try {
       const response = await axios.get(`http://localhost:5000/api/appointments/${reportId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = response.data;
-      console.log(`${reportId} data:`, data); // Debug log
+      console.log(`${reportId} data:`, data);
 
       if (!data || data.length === 0) {
-        setError(`No data available for ${reportId.replace('-', ' ')}.`);
+        showNotification(`No data available for ${reportId.replace('-', ' ')}.`, 'error');
         return;
       }
 
@@ -80,8 +122,8 @@ const ViewSummaryPage = () => {
               {
                 label: 'Appointments by Type',
                 data: data.map((item) => item.count),
-                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
-                hoverBackgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+                backgroundColor: ['#FFCA28', '#FFD54F', '#FFE082'],
+                hoverBackgroundColor: ['#FFCA28', '#FFD54F', '#FFE082'],
               },
             ],
           };
@@ -102,7 +144,7 @@ const ViewSummaryPage = () => {
                 );
                 return entry ? entry.count : 0;
               }),
-              backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'][index],
+              backgroundColor: ['#FFCA28', '#FFD54F', '#FFE082'][index],
               stack: 'Stack 0',
             })),
           };
@@ -114,8 +156,8 @@ const ViewSummaryPage = () => {
               {
                 label: 'Appointments by Fee Range',
                 data: data.map((item) => item.count),
-                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
-                hoverBackgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
+                backgroundColor: ['#FFCA28', '#FFD54F', '#FFE082', '#FFF9C4', '#FFF59D'],
+                hoverBackgroundColor: ['#FFCA28', '#FFD54F', '#FFE082', '#FFF9C4', '#FFF59D'],
               },
             ],
           };
@@ -129,7 +171,7 @@ const ViewSummaryPage = () => {
               {
                 label: 'Appointments by Month',
                 data: data.map((item) => item.count),
-                backgroundColor: '#36A2EB',
+                backgroundColor: '#FFD54F',
               },
             ],
           };
@@ -141,8 +183,8 @@ const ViewSummaryPage = () => {
               {
                 label: 'Appointments by Payment Status',
                 data: data.map((item) => item.count),
-                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
-                hoverBackgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+                backgroundColor: ['#FFCA28', '#FFD54F', '#FFE082'],
+                hoverBackgroundColor: ['#FFCA28', '#FFD54F', '#FFE082'],
               },
             ],
           };
@@ -154,8 +196,8 @@ const ViewSummaryPage = () => {
               {
                 label: 'Appointments by Time Slot',
                 data: data.map((item) => item.count),
-                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
-                hoverBackgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+                backgroundColor: ['#FFCA28', '#FFD54F', '#FFE082'],
+                hoverBackgroundColor: ['#FFCA28', '#FFD54F', '#FFE082'],
               },
             ],
           };
@@ -179,7 +221,7 @@ const ViewSummaryPage = () => {
       } else {
         errorMessage = `Network error: ${error.message}`;
       }
-      setError(errorMessage);
+      showNotification(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
@@ -190,75 +232,207 @@ const ViewSummaryPage = () => {
     fetchReportData(reportId);
   };
 
+  // Mock stats data (static for UI purposes)
+  const stats = [
+    { title: 'Total Appointments', value: '45', icon: '📅' },
+    { title: 'Completed', value: '30', icon: '✅' },
+    { title: 'Cancelled', value: '5', icon: '❌' },
+    { title: 'Queries', value: '10', icon: '💬' },
+  ];
+
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6 text-amber-950">Appointment Summary Reports</h1>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">Select a Report</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {reportTypes.map((report) => (
+    <div className="min-h-screen bg-gradient-to-br from-[#FFF5E6] to-[#F5EFEA] p-8 animate-fade-in">
+      {/* Notification */}
+      {notification.show && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={hideNotification}
+        />
+      )}
+
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <h1 className="text-4xl font-bold mb-10 text-amber-950 tracking-tight animate-slide-in">
+          Appointment Summary Reports
+        </h1>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12 animate-slide-in">
+          {stats.map((stat, index) => (
             <div
-              key={report.id}
-              className={`p-4 rounded-md shadow-md cursor-pointer transition-colors ${
-                selectedReport === report.id
-                  ? 'bg-amber-100 border-amber-500 border-2'
-                  : 'bg-white hover:bg-gray-100'
-              }`}
-              onClick={() => handleReportSelect(report.id)}
+              key={stat.title}
+              className="bg-white p-6 rounded-2xl shadow-xl text-center hover:shadow-2xl transform hover:scale-105 transition-all duration-300 bg-gradient-to-br from-amber-50 to-amber-100"
+              style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <h3 className="text-md font-medium">{report.name}</h3>
+              <div className="text-3xl mb-3 text-amber-500 transform hover:rotate-12 transition-transform duration-300">{stat.icon}</div>
+              <h3 className="text-lg font-semibold text-amber-950 mb-1">{stat.title}</h3>
+              <p className="text-3xl font-bold text-amber-700">{stat.value}</p>
             </div>
           ))}
         </div>
-      </div>
-      {loading && <p className="text-gray-500">Loading report data...</p>}
-      {!loading && !error && !chartData && selectedReport && (
-        <p className="text-gray-500">No data available for this report.</p>
-      )}
-      {!loading && chartData && (
-        <div className="bg-white p-6 rounded-md shadow-md">
-          {reportTypes.find((r) => r.id === selectedReport)?.chartType === 'pie' ? (
-            <Pie
-              data={chartData}
-              options={{
-                plugins: {
-                  legend: { position: 'top' },
-                  tooltip: { enabled: true },
-                  title: {
-                    display: true,
-                    text: reportTypes.find((r) => r.id === selectedReport)?.name,
-                    font: { size: 18 },
-                  },
-                },
-                maintainAspectRatio: false,
-              }}
-              height={400}
-            />
-          ) : (
-            <Bar
-              data={chartData}
-              options={{
-                plugins: {
-                  legend: selectedReport === 'status-over-time' ? { position: 'top' } : { display: false },
-                  tooltip: { enabled: true },
-                  title: {
-                    display: true,
-                    text: reportTypes.find((r) => r.id === selectedReport)?.name,
-                    font: { size: 18 },
-                  },
-                },
-                scales: {
-                  x: { title: { display: true, text: selectedReport === 'status-over-time' ? 'Month' : 'Category' } },
-                  y: { title: { display: true, text: 'Number of Appointments' }, beginAtZero: true },
-                },
-                maintainAspectRatio: false,
-              }}
-              height={400}
-            />
-          )}
+
+        {/* Report Type Buttons */}
+        <div className="mb-12 max-w-4xl mx-auto flex flex-wrap justify-center gap-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+          <h2 className="w-full text-xl font-semibold mb-4 text-amber-700 text-center">Select a Report</h2>
+          {reportTypes.map((report, index) => (
+            <button
+              key={report.id}
+              className={`px-6 py-3 rounded-xl shadow-md transition-all duration-300 ${
+                selectedReport === report.id
+                  ? 'bg-amber-600 text-white hover:bg-amber-700'
+                  : 'bg-white text-amber-950 hover:bg-amber-100 hover:shadow-lg'
+              }`}
+              onClick={() => handleReportSelect(report.id)}
+              style={{ animationDelay: `${index * 0.1 + 0.4}s` }}
+            >
+              {report.name}
+            </button>
+          ))}
         </div>
-      )}
+
+        {/* Chart or Loading/No Data State */}
+        {loading && (
+          <div className="flex justify-center items-center h-64">
+            <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        )}
+        {!loading && !chartData && selectedReport && (
+          <div className="text-center py-12 animate-slide-in" style={{ animationDelay: '0.6s' }}>
+            <svg
+              className="w-16 h-16 mx-auto text-amber-400 mb-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 12h6m-3-3v6m-9 3h18a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+            <p className="text-amber-700 text-lg">No data available for this report.</p>
+          </div>
+        )}
+        {!loading && chartData && (
+          <div
+            className="bg-white p-10 rounded-2xl shadow-2xl border border-amber-100 bg-gradient-to-br from-amber-50 to-white animate-slide-up"
+            style={{ animationDelay: '0.6s' }}
+          >
+            {reportTypes.find((r) => r.id === selectedReport)?.chartType === 'pie' ? (
+              <Pie
+                data={chartData}
+                options={{
+                  plugins: {
+                    legend: { position: 'top', labels: { color: '#92400E' } },
+                    tooltip: { enabled: true },
+                    title: {
+                      display: true,
+                      text: reportTypes.find((r) => r.id === selectedReport)?.name,
+                      font: { size: 20 },
+                      color: '#92400E',
+                    },
+                  },
+                  maintainAspectRatio: false,
+                }}
+                height={400}
+              />
+            ) : (
+              <Bar
+                data={chartData}
+                options={{
+                  plugins: {
+                    legend: selectedReport === 'status-over-time' ? { position: 'top', labels: { color: '#92400E' } } : { display: false },
+                    tooltip: { enabled: true },
+                    title: {
+                      display: true,
+                      text: reportTypes.find((r) => r.id === selectedReport)?.name,
+                      font: { size: 20 },
+                      color: '#92400E',
+                    },
+                  },
+                  scales: {
+                    x: {
+                      title: { display: true, text: selectedReport === 'status-over-time' ? 'Month' : 'Category', color: '#92400E' },
+                      ticks: { color: '#92400E' },
+                    },
+                    y: {
+                      title: { display: true, text: 'Number of Appointments', color: '#92400E' },
+                      ticks: { color: '#92400E' },
+                      beginAtZero: true,
+                    },
+                  },
+                  maintainAspectRatio: false,
+                }}
+                height={400}
+              />
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Custom CSS for animations */}
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes slideInFromRight {
+          from {
+            opacity: 0;
+            transform: translateX(100%);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-fade-in {
+          animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        .animate-slide-in {
+          animation: slideIn 0.6s ease-out forwards;
+        }
+
+        .animate-slide-in-from-right {
+          animation: slideInFromRight 0.3s ease-out forwards;
+        }
+
+        .animate-slide-up {
+          animation: slideUp 0.8s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 };

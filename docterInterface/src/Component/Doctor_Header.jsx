@@ -62,7 +62,7 @@ export default function Doctor_Sidebar() {
               {/* Logout Button */}
               <button
                 onClick={handleLogout}
-                className="w-full bg-amber-950 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-amber-900 transition"
+                className="w-full bg-gray-100 text-gray-900 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-200 transition"
               >
                 Logout
               </button>
@@ -158,7 +158,7 @@ export default function Doctor_Sidebar() {
                   {/* Logout Button */}
                   <button
                     onClick={handleLogout}
-                    className="w-full bg-amber-950 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-amber-900 transition"
+                    className="w-full bg-gray-100 text-gray-900 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-200 transition"
                   >
                     Logout
                   </button>
