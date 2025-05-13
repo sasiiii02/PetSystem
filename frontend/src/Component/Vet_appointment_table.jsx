@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Calendar } from 'lucide-react'; // Added Calendar icon for the header
+import { Search, Calendar } from 'lucide-react';
 
 // Fallback API URL if environment variables are not available
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -10,13 +10,15 @@ const AppointmentVeterinarianTable = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [actionLoading, setActionLoading] = useState(null);
+  const [notifications, setNotifications] = useState([]);
 
   // Fetch veterinarian appointments and sort by date (newest to oldest)
   useEffect(() => {
     const fetchVeterinarianAppointments = async () => {
       try {
         const url = `${API_URL}/api/appointments/veterinarian-appointments`;
-        console.log('Fetching from URL:', url); // Debug log
+        console.log('Fetching from URL:', url);
 
         const response = await fetch(url);
         const text = await response.text();
@@ -35,7 +37,7 @@ const AppointmentVeterinarianTable = () => {
         );
 
         setAppointments(sortedData);
-        setFilteredAppointments(sortedData); // Initialize filtered appointments
+        setFilteredAppointments(sortedData);
       } catch (err) {
         console.error('Fetch error:', err);
         setError(err.message);
@@ -59,15 +61,40 @@ const AppointmentVeterinarianTable = () => {
     }
   }, [searchQuery, appointments]);
 
-  // Button handlers
-  const handleNotify = (appointment) => {
-    console.log('Notify clicked for:', appointment);
-    alert(`Notifying ${appointment.userName} at ${appointment.phoneNo}`);
+  const showNotification = (message, type = "success") => {
+    const id = Date.now();
+    setNotifications((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    }, 3000); // Auto-dismiss after 3 seconds
   };
 
-  const handleManage = (appointment) => {
-    console.log('Manage clicked for:', appointment);
-    alert(`Managing appointment for ${appointment.email}`);
+  const handleNotify = async (appointment) => {
+    try {
+      setActionLoading(appointment._id);
+      // Simulate a notification API call (replace with actual API call if available)
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate async operation
+      showNotification(`Notified ${appointment.userName} at ${appointment.phoneNo}`, "success");
+    } catch (err) {
+      console.error("Notify error:", err);
+      showNotification("Failed to notify user", "error");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleManage = async (appointment) => {
+    try {
+      setActionLoading(appointment._id);
+      // Simulate a manage API call (replace with actual API call if available)
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate async operation
+      showNotification(`Managed appointment for ${appointment.email}`, "success");
+    } catch (err) {
+      console.error("Manage error:", err);
+      showNotification("Failed to manage appointment", "error");
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   // Format date for display
@@ -83,7 +110,7 @@ const AppointmentVeterinarianTable = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="flex justify-center items-center h-64 animate-fade-in">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-amber-600"></div>
       </div>
     );
@@ -91,7 +118,7 @@ const AppointmentVeterinarianTable = () => {
 
   if (error) {
     return (
-      <div className="text-center p-6 text-red-500 bg-red-50 rounded-lg">
+      <div className="text-center p-6 text-red-500 bg-red-50 rounded-lg mx-auto max-w-2xl animate-fade-in">
         <p className="font-semibold">Error loading data</p>
         <p>{error}</p>
       </div>
@@ -99,98 +126,147 @@ const AppointmentVeterinarianTable = () => {
   }
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-6 bg-gradient-to-br from-[#FFF5E6] to-[#F5EFEA] min-h-screen relative">
+      {/* Notification Container */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {notifications.map((notification) => (
+          <div
+            key={notification.id}
+            className={`p-3 rounded-lg shadow-md ${
+              notification.type === "success"
+                ? "bg-amber-100 text-amber-950"
+                : "bg-red-100 text-red-950"
+            } animate-fade-in`}
+            style={{ animationDelay: "0s" }}
+          >
+            {notification.message}
+          </div>
+        ))}
+      </div>
+
       {/* Header */}
-      <h2 className="text-2xl font-semibold mb-6 flex items-center text-gray-800">
+      <h2 className="text-2xl font-semibold mb-6 flex items-center text-amber-950 animate-fade-in">
         <Calendar className="mr-2 text-amber-600" size={24} />
         Veterinarian Appointments
       </h2>
 
       {/* Search Bar */}
-      <div className="mb-6 flex items-center gap-4">
+      <div className="mb-6 flex items-center gap-4 animate-slide-up" style={{ animationDelay: "0.1s" }}>
         <div className="relative flex-1 max-w-md">
           <input
             type="text"
             placeholder="Search by user name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all"
+            className="w-full pl-10 pr-4 py-2 rounded-lg border border-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-600 transition-all text-amber-950"
           />
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-amber-500" size={20} />
         </div>
       </div>
 
       {/* Table Container */}
-      <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full table-auto">
-            <thead className="bg-amber-950 text-white">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-medium uppercase tracking-wider">User Name</th>
-                <th className="px-6 py-4 text-left text-sm font-medium uppercase tracking-wider">Appointment Date</th>
-                <th className="px-6 py-4 text-left text-sm font-medium uppercase tracking-wider">Time</th>
-                <th className="px-6 py-4 text-left text-sm font-medium uppercase tracking-wider">Veterinarian ID</th>
-                <th className="px-6 py-4 text-left text-sm font-medium uppercase tracking-wider">Price</th>
-                <th className="px-6 py-4 text-left text-sm font-medium uppercase tracking-wider">Phone Number</th>
-                <th className="px-6 py-4 text-left text-sm font-medium uppercase tracking-wider">Email</th>
-                <th className="px-6 py-4 text-left text-sm font-medium uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-left text-sm font-medium uppercase tracking-wider">Actions</th>
+      <div className="bg-white shadow-lg rounded-lg">
+        <table className="w-full table-fixed">
+          <thead className="bg-amber-950 text-white">
+            <tr>
+              <th className="w-[150px] px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">User Name</th>
+              <th className="w-[120px] px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Appointment Date</th>
+              <th className="w-[100px] px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Time</th>
+              <th className="w-[120px] px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Veterinarian ID</th>
+              <th className="w-[100px] px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Price</th>
+              <th className="w-[120px] px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Phone Number</th>
+              <th className="w-[180px] px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Email</th>
+              <th className="w-[100px] px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
+              <th className="w-[150px] px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="text-amber-950">
+            {filteredAppointments.length === 0 ? (
+              <tr className="animate-fade-in">
+                <td colSpan="9" className="text-center py-6 text-amber-950">
+                  No appointments found
+                </td>
               </tr>
-            </thead>
-            <tbody className="text-gray-700">
-              {filteredAppointments.length === 0 ? (
-                <tr>
-                  <td colSpan="9" className="text-center py-6 text-gray-500">
-                    No appointments found
+            ) : (
+              filteredAppointments.map((appointment, index) => (
+                <tr
+                  key={appointment._id || index}
+                  className="border-b border-amber-200 hover:bg-amber-50 transition-colors duration-200 animate-slide-up"
+                  style={{ animationDelay: `${0.2 + index * 0.1}s` }}
+                >
+                  <td className="w-[150px] px-4 py-3 text-sm truncate">{appointment.userName}</td>
+                  <td className="w-[120px] px-4 py-3 text-sm truncate">{formatDate(appointment.appointmentDate)}</td>
+                  <td className="w-[100px] px-4 py-3 text-sm truncate">{appointment.appointmentTime || 'N/A'}</td>
+                  <td className="w-[120px] px-4 py-3 text-sm truncate">{appointment.doctorId}</td>
+                  <td className="w-[100px] px-4 py-3 text-sm truncate">${appointment.appointmentFee?.toFixed(2) || '0.00'}</td>
+                  <td className="w-[120px] px-4 py-3 text-sm truncate">{appointment.phoneNo}</td>
+                  <td className="w-[180px] px-4 py-3 text-sm truncate">{appointment.email}</td>
+                  <td className="w-[100px] px-4 py-3 text-sm truncate">
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                        appointment.status === 'scheduled'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {appointment.status}
+                    </span>
+                  </td>
+                  <td className="w-[150px] px-4 py-3 text-sm">
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleNotify(appointment)}
+                        className="bg-amber-600 text-white px-3 py-1 rounded-lg hover:bg-amber-700 transition-colors duration-200 text-xs"
+                        disabled={actionLoading === appointment._id}
+                      >
+                        {actionLoading === appointment._id ? "Processing..." : "Notify"}
+                      </button>
+                      <button
+                        onClick={() => handleManage(appointment)}
+                        className="bg-green-500 text-white px-3 py-1 rounded-lg hover:bg-green-600 transition-colors duration-200 text-xs"
+                        disabled={actionLoading === appointment._id}
+                      >
+                        {actionLoading === appointment._id ? "Processing..." : "Manage"}
+                      </button>
+                    </div>
                   </td>
                 </tr>
-              ) : (
-                filteredAppointments.map((appointment, index) => (
-                  <tr
-                    key={appointment._id || index}
-                    className="border-b hover:bg-gray-50 transition-colors duration-200"
-                  >
-                    <td className="px-6 py-4 text-sm">{appointment.userName}</td>
-                    <td className="px-6 py-4 text-sm">{formatDate(appointment.appointmentDate)}</td>
-                    <td className="px-6 py-4 text-sm">{appointment.appointmentTime || 'N/A'}</td>
-                    <td className="px-6 py-4 text-sm">{appointment.doctorId}</td>
-                    <td className="px-6 py-4 text-sm">${appointment.appointmentFee?.toFixed(2) || '0.00'}</td>
-                    <td className="px-6 py-4 text-sm">{appointment.phoneNo}</td>
-                    <td className="px-6 py-4 text-sm">{appointment.email}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                          appointment.status === 'scheduled'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {appointment.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleNotify(appointment)}
-                          className="bg-blue-500 text-white px-4 py-1 rounded-lg hover:bg-blue-600 transition-colors duration-200"
-                        >
-                          Notify
-                        </button>
-                        <button
-                          onClick={() => handleManage(appointment)}
-                          className="bg-green-500 text-white px-4 py-1 rounded-lg hover:bg-green-600 transition-colors duration-200"
-                        >
-                          Manage
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
+
+      {/* Custom CSS for animations */}
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-fade-in {
+          animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        .animate-slide-up {
+          animation: slideUp 0.6s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 };
