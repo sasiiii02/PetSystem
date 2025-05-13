@@ -219,13 +219,14 @@ const UserEdit = () => {
     <div className="min-h-screen bg-gradient-to-br from-[#F4E4D8] to-[#E6D5C1] flex items-center justify-center p-6 sm:p-12 mt-12">
       <div className="w-full max-w-[800px] bg-white shadow-2xl rounded-2xl overflow-hidden flex flex-col md:flex-row">
         <div className="w-full md:w-1/2 relative h-64 md:h-auto">
-          <div className="absolute inset-0 bg-[url('./assets/staffRegister.jpg')] bg-cover bg-center flex items-center justify-center">
-            <div className="text-white text-center p-8">
+          <div className="absolute inset-0 bg-[url('./assets/editprofile.jpg')] bg-cover bg-center flex items-start justify-center pt-4">
+            <div className="text-white text-center p-6">
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">Edit Your Profile</h2>
               <p className="text-lg sm:text-xl">Update your details to continue your journey</p>
             </div>
           </div>
         </div>
+
 
         <div className="w-full md:w-1/2 p-6 sm:p-12">
           <div className="flex items-center justify-center mb-6 sm:mb-8">
@@ -268,7 +269,7 @@ const UserEdit = () => {
                 value={formData.name}
                 onChange={handleChange}
                 required
-                className={`w-full px-4 py-3 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
+                className={`w-full px-4 py-2 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
                   error.includes('name') ? 'border-red-500' : 'border-amber-200'
                 }`}
                 placeholder="Your Name"
@@ -285,7 +286,7 @@ const UserEdit = () => {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className={`w-full px-4 py-3 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
+                className={`w-full px-4 py-2 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
                   error.includes('email') ? 'border-red-500' : 'border-amber-200'
                 }`}
                 placeholder="your@email.com"
@@ -304,7 +305,7 @@ const UserEdit = () => {
                 required
                 pattern="\d{10}"
                 title="Phone number must be a 10-digit number"
-                className={`w-full px-4 py-3 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
+                className={`w-full px-4 py-2 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
                   error.includes('phoneNumber') ? 'border-red-500' : 'border-amber-200'
                 }`}
                 placeholder="1234567890"
@@ -321,7 +322,7 @@ const UserEdit = () => {
                 value={formData.city}
                 onChange={handleChange}
                 required
-                className={`w-full px-4 py-3 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
+                className={`w-full px-4 py-2 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
                   error.includes('city') ? 'border-red-500' : 'border-amber-200'
                 }`}
                 placeholder="Your City"

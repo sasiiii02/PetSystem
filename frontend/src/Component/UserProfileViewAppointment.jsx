@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, List, X, CalendarClock, ChevronDown, ChevronUp, FileText, User, Mail, Phone, MapPin, CreditCard, PawPrint, ShoppingBag, Ticket, Edit } from 'lucide-react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom'; // Added useNavigate for logout
+import addPetImage from '../assets/add.jpg';
 
 const theme = {
   primary: "bg-[#D08860]",
@@ -306,7 +307,6 @@ const ProfilePage = () => {
 
   // Placeholder images
   const defaultPetImage = "https://via.placeholder.com/150?text=Pet+Image";
-  const addPetImage = "https://via.placeholder.com/150?text=Add+Pet";
 
   return (
     <div className={`min-h-screen bg-amber-50 py-12 px-4 sm:px-6 lg:px-8 mt-30`}>

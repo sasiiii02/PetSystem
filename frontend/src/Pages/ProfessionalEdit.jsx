@@ -83,12 +83,10 @@ const ProfessionalEdit = () => {
     fetchProfessional();
   }, [id]);
 
-  // Handle form input changes
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Handle image change
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -97,7 +95,6 @@ const ProfessionalEdit = () => {
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -108,8 +105,7 @@ const ProfessionalEdit = () => {
       }
 
       const formDataToSend = new FormData();
-      
-      // Append all form fields to FormData
+
       Object.keys(formData).forEach(key => {
         if (formData[key] !== null) {
           formDataToSend.append(key, formData[key]);
@@ -238,19 +234,17 @@ const ProfessionalEdit = () => {
 
       {/* Main Content */}
       <div className="flex items-center justify-center p-6 sm:p-12">
-        <div className="w-full max-w-[800px] bg-white shadow-2xl rounded-2xl overflow-hidden flex flex-col md:flex-row">
+        <div className="w-full max-w-[900px] bg-white shadow-2xl rounded-2xl overflow-hidden flex flex-col md:flex-row box-border">
           {/* Left Image Section */}
-          <div className="w-full md:i-1/2 relative h-64 md:h-auto">
-            <div className="absolute inset-0 bg-[url('./assets/staffRegister.jpg')] bg-cover bg-center flex items-center justify-center">
-              <div className="text-white text-center p-8">
-                <h2 className="text-3xl sm:text-4xl font-bold mb-4">Edit Professional Profile</h2>
-                <p className="text-lg sm:text-xl">Update professional details</p>
-              </div>
+          <div className="w-full md:w-1/2 h-64 md:h-auto flex items-center justify-center bg-[url('./assets/editprofesional.jpg')] bg-cover bg-center">
+            <div className="text-white text-center p-8">
+              <h2 className="text-3xl sm:text-4xl font-bold mb-4">Edit Professional Profile</h2>
+              <p className="text-lg sm:text-xl">Update professional details</p>
             </div>
           </div>
 
           {/* Right Form Section */}
-          <div className="w-full md:w-1/2 p-6 sm:p-12">
+          <div className="w-full md:w-1/2 p-6 sm:p-12 flex flex-col justify-center">
             <div className="flex items-center justify-center mb-6 sm:mb-8">
               <Heart className="text-amber-950 mr-3" size={32} />
               <h2 className="text-2xl sm:text-3xl font-bold text-amber-950">Edit Professional</h2>
@@ -291,7 +285,7 @@ const ProfessionalEdit = () => {
                   value={formData.pName}
                   onChange={handleChange}
                   required
-                  className={`w-full px-4 py-3 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
+                  className={`w-full px-4 py-2 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
                     error.includes('name') ? 'border-red-500' : 'border-amber-200'
                   }`}
                   placeholder="Professional Name"
@@ -309,7 +303,7 @@ const ProfessionalEdit = () => {
                   value={formData.pemail}
                   onChange={handleChange}
                   required
-                  className={`w-full px-4 py-3 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
+                  className={`w-full px-4 py-2 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
                     error.includes('email') ? 'border-red-500' : 'border-amber-200'
                   }`}
                   placeholder="professional@email.com"
@@ -329,10 +323,10 @@ const ProfessionalEdit = () => {
                   required
                   pattern="\d{10}"
                   title="Phone number must be a 10-digit number"
-                  className={`w-full px-4 py-3 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
+                  className={`w-full px-4 py-2 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
                     error.includes('phoneNumber') ? 'border-red-500' : 'border-amber-200'
                   }`}
-                  placeholder="1234567890"
+                  placeholder="1224567890"
                   aria-label="Phone Number"
                 />
               </div>
@@ -347,7 +341,7 @@ const ProfessionalEdit = () => {
                   value={formData.qualification}
                   onChange={handleChange}
                   required
-                  className={`w-full px-4 py-3 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
+                  className={`w-full px-4 py-2 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
                     error.includes('qualification') ? 'border-red-500' : 'border-amber-200'
                   }`}
                   placeholder="Professional Qualification"
@@ -365,7 +359,7 @@ const ProfessionalEdit = () => {
                   value={formData.experience}
                   onChange={handleChange}
                   required
-                  className={`w-full px-4 py-3 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
+                  className={`w-full px-4 py-2 rounded-lg border871c border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
                     error.includes('experience') ? 'border-red-500' : 'border-amber-200'
                   }`}
                   placeholder="Years of Experience"
@@ -381,7 +375,7 @@ const ProfessionalEdit = () => {
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
+                  className={`w-full px-4 py-2 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
                     error.includes('description') ? 'border-red-500' : 'border-amber-200'
                   }`}
                   placeholder="Professional Description"
@@ -399,7 +393,7 @@ const ProfessionalEdit = () => {
                   value={formData.role}
                   onChange={handleChange}
                   required
-                  className={`w-full px-4 py-3 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
+                  className={`w-full px-4 py-2 rounded-lg border border-amber-200 text-gray-900 bg-white focus:outline-none focus:border-amber-700 focus:ring-1 focus:ring-amber-700 ${
                     error.includes('role') ? 'border-red-500' : 'border-amber-200'
                   }`}
                   aria-label="Professional Role"
@@ -419,7 +413,7 @@ const ProfessionalEdit = () => {
               <div className="flex flex-col space-y-4 pt-4">
                 <button
                   type="submit"
-                  className="w-full bg-amber-700 text-white px-8 py-3 sm:py-4 rounded-lg text-md sm:text-lg font-semibold hover:bg-amber-800 transition-colors"
+                  className="w-full bg-amber-700 text-white px-8 py-2 sm:py-4 rounded-lg text-md sm:text-lg font-semibold hover:bg-amber-800 transition-colors"
                   aria-label="Update professional profile"
                 >
                   Update Profile

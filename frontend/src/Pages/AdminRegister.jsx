@@ -93,13 +93,13 @@ const AdminRegister = () => {
 
       {/* Main Content */}
       <div className="flex items-center justify-center p-6 sm:p-12">
-        <div className="w-full max-w-6xl bg-white shadow-2xl rounded-3xl overflow-hidden flex flex-col md:flex-row">
+        <div className="w-full max-w-4xl bg-white shadow-2xl rounded-3xl overflow-hidden flex flex-col md:flex-row">
           {/* Left Image Section */}
           <div className="w-full md:w-1/2 relative h-64 md:h-auto">
-            <div className="absolute inset-0 bg-[url('./assets/staffRegister.jpg')] bg-cover bg-center flex items-center justify-center">
+            <div className="absolute inset-0 bg-[url('./assets/addadmin.jpg')] bg-cover bg-center flex items-center justify-center">
               <div className="text-white text-center p-8">
-                <h2 className="text-3xl sm:text-4xl font-bold mb-4">Join Our Team</h2>
-                <p className="text-lg sm:text-xl">Register as an Admin</p>
+                <h2 className="text-3xl sm:text-4xl font-bold mb-4">Add An Admin</h2>
+                <p className="text-lg sm:text-xl">Manage Our System</p>
               </div>
             </div>
           </div>
@@ -156,7 +156,7 @@ const AdminRegister = () => {
                 </label>
                 <input
                   type={showPassword ? "text" : "password"}
-                  id="password"
+                  id="/password"
                   name="password"
                   value={formData.password}
                   onChange={handleChange}

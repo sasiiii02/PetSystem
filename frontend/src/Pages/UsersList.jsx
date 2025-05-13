@@ -4,6 +4,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import { AlertCircle, Heart, X, Trash2, Search, Shield, UserPlus, Users, UserCog, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import defaultProfilePic from '../assets/profilepic.png';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+// Register ChartJS components
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 const UsersList = () => {
   const [users, setUsers] = useState([]);
@@ -12,6 +17,7 @@ const UsersList = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState(null); // Stores user ID for deletion
+  const [dailyRegistrations, setDailyRegistrations] = useState([]);
   const navigate = useNavigate();
 
   // Get admin name from localStorage or set default
@@ -61,6 +67,65 @@ const UsersList = () => {
     });
     setFilteredUsers(filtered);
   }, [searchQuery, users]);
+
+  // Calculate daily registrations
+  useEffect(() => {
+    if (users.length > 0) {
+      const registrationsByDay = users.reduce((acc, user) => {
+        const date = new Date(user.createdAt).toLocaleDateString();
+        acc[date] = (acc[date] || 0) + 1;
+        return acc;
+      }, {});
+
+      const sortedDates = Object.keys(registrationsByDay).sort((a, b) => new Date(a) - new Date(b));
+      const last7Days = sortedDates.slice(-7); // Get last 7 days
+
+      setDailyRegistrations(last7Days.map(date => ({
+        date,
+        count: registrationsByDay[date]
+      })));
+    }
+  }, [users]);
+
+  // Chart data
+  const chartData = {
+    labels: dailyRegistrations.map(item => item.date),
+    datasets: [
+      {
+        label: 'Daily User Registrations',
+        data: dailyRegistrations.map(item => item.count),
+        borderColor: '#D88C6D',
+        backgroundColor: 'rgba(216, 140, 109, 0.1)',
+        tension: 0.4,
+        fill: true,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: 'Daily User Registration Trends',
+        font: {
+          size: 16,
+          weight: 'bold',
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1,
+        },
+      },
+    },
+  };
 
   // Handle delete profile
   const handleDeleteProfile = async (userId) => {
@@ -252,6 +317,17 @@ const UsersList = () => {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+
+        {/* Chart Section */}
+        <div className="w-full max-w-[1300px] bg-white shadow-2xl rounded-2xl p-6 sm:p-12 mt-6">
+          <div className="flex items-center justify-center mb-6">
+            <Heart className="text-amber-950 mr-3" size={32} />
+            <h2 className="text-2xl sm:text-3xl font-bold text-amber-950">User Registration Analytics</h2>
+          </div>
+          <div className="h-[400px]">
+            <Line data={chartData} options={chartOptions} />
           </div>
         </div>
 
