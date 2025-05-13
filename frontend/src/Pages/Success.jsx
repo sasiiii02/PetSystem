@@ -9,7 +9,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("petOwnerToken"); // Changed from "token"
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -30,10 +30,9 @@ const Success = () => {
     console.log("Success Page - Appointment ID:", appointmentId);
     console.log("Success Page - Registration ID:", registrationId);
     console.log("Success Page - Event ID:", eventId);
-    console.log("Success Page - Token:", localStorage.getItem("token"));
-
+    console.log("Success Page - Token:", localStorage.getItem("petOwnerToken"));
     const confirmPayment = async (retries = 5, delay = 2000) => {
-      if (!localStorage.getItem("token")) {
+      if (!localStorage.getItem("petOwnerToken")) {
         setMessage("You are not logged in. Please log in to confirm your payment.");
         setIsError(true);
         setTimeout(() => navigate("/login"), 3000);

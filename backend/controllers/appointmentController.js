@@ -2892,3 +2892,89 @@ export const updateRefundStatus = async (req, res) => {
     });
   }
 };
+
+
+
+export const proffAppointmentDisplayByFilter = async (req, res) => {
+  try {
+    console.log('Received request at:', new Date().toISOString(), 'with query:', req.query);
+    const { role, filter } = req.query;
+    const currentDate = new Date();
+
+    if (!role || !filter) {
+      console.warn('Missing query parameters: role or filter');
+      return res.status(400).json({ message: 'Missing required query parameters: role and filter' });
+    }
+
+    let dateFilter = {};
+    switch (filter) {
+      case 'today':
+        dateFilter = {
+          appointmentDate: {
+            $gte: new Date(currentDate.setHours(0, 0, 0, 0)),
+            $lt: new Date(currentDate.setHours(23, 59, 59, 999)),
+          },
+        };
+        break;
+      case 'week':
+        const startOfWeek = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay()));
+        const endOfWeek = new Date(currentDate.setDate(startOfWeek.getDate() + 6));
+        dateFilter = {
+          appointmentDate: { $gte: startOfWeek, $lte: endOfWeek },
+        };
+        break;
+      case 'month':
+        const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+        dateFilter = {
+          appointmentDate: { $gte: startOfMonth, $lte: endOfMonth },
+        };
+        break;
+      default:
+        console.warn('Invalid filter value:', filter);
+        return res.status(400).json({ message: 'Invalid filter value. Use today, week, or month.' });
+    }
+
+    console.log('Applying date filter:', dateFilter);
+    const appointments = await ConfirmAppointmentReq.find({
+      professionalType: role,
+      status: 'confirmed',
+      ...dateFilter,
+    }).select('doctorId appointmentDate startTime endTime chargePerAppointment specialNotes');
+    console.log('Found appointments count:', appointments.length);
+
+    const professionalIds = appointments.map((appointment) => appointment.doctorId);
+    console.log('Professional IDs to query:', professionalIds);
+
+    if (professionalIds.length === 0) {
+      console.log('No professionals found for the given criteria');
+      return res.status(200).json([]);
+    }
+
+    const professionals = await Professional.find({ pID: { $in: professionalIds } }).select(
+      'pName pID qualification experience profilePicture'
+    );
+    console.log('Found professionals count:', professionals.length);
+
+    // Combine data, prioritizing ConfirmAppointmentReq fields
+    const result = appointments.map((appointment) => {
+      const prof = professionals.find((p) => p.pID === appointment.doctorId);
+      return {
+        pID: appointment.doctorId,
+        pName: prof ? prof.pName : 'Unknown',
+        qualification: prof ? prof.qualification : 'Not specified',
+        experience: prof ? prof.experience : 'Not specified',
+        profilePicture: prof ? prof.profilePicture : 'https://via.placeholder.com/300x200',
+        chargePerAppointment: appointment.chargePerAppointment || 0,
+        specialNotes: appointment.specialNotes || 'No special notes',
+        appointmentDate: appointment.appointmentDate ? appointment.appointmentDate.toISOString().split('T')[0] : 'Not specified',
+        availableTime: appointment.startTime && appointment.endTime ? `${appointment.startTime} - ${appointment.endTime}` : 'Not specified',
+      };
+    });
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Error in proffAppointmentDisplayByFilter at:', new Date().toISOString(), error);
+    res.status(500).json({ message: 'Error fetching professionals', error: error.message });
+  }
+};

@@ -38,7 +38,8 @@ import {
   getPetById,
   getActiveProfessionals,
   generateReports,
-  getAllRefundRequests
+  getAllRefundRequests,
+  proffAppointmentDisplayByFilter
 
 } from '../controllers/appointmentController.js';
 import { authenticateProfessional } from '../middleware/professionalAuth.js';
@@ -102,6 +103,7 @@ router.get('/pet/:petId', getPetById);
 
 router.get('/active-professionals', getActiveProfessionals);
 
+router.get('/list', proffAppointmentDisplayByFilter);
 
 router.get('/reports/generate', generateReports);
 

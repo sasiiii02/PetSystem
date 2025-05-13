@@ -1,3 +1,4 @@
+//product model
 import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema({ // Fixed typo: Scheema -> Schema
