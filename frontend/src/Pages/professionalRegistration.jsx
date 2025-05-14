@@ -37,7 +37,7 @@ const ProfessionalRegistration = () => {
     switch (role) {
       case "groomer":
         return "gro";
-      case "veterinarian":
+      case "vet":
         return "vet";
       case "pet-trainer":
         return "pet";
@@ -136,7 +136,7 @@ const ProfessionalRegistration = () => {
             pIDNumber: "",
           });
           setProfilePicture(null);
-          navigate("/StaffLogin");
+          navigate("/ProfessionalRegistration");
         } else {
           console.error("Registration failed:", data);
           setErrors({ submit: data.message || "Registration failed" });
@@ -252,7 +252,7 @@ const ProfessionalRegistration = () => {
                   className="w-full px-4 py-1.5 rounded-xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#9a7656]"
                 >
                   <option value="groomer">Groomer</option>
-                  <option value="veterinarian">Veterinarian</option>
+                  <option value="vet">Veterinarian</option>
                   <option value="pet-trainer">Pet Trainer</option>
                 </select>
               </div>

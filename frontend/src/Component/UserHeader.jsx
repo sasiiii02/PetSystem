@@ -92,6 +92,14 @@ export default function UserHeader() {
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     setRegError("");
+    if (!/^\d{10}$/.test(regPhoneNumber)) {
+      setRegError("Phone number must be exactly 10 digits");
+      return;
+    }
+    if (regPassword.length < 8) {
+      setRegError("Password must be at least 8 characters");
+      return;
+    }
     if (regPassword !== conPassword) {
       setRegError("Passwords do not match");
       return;
