@@ -14,10 +14,8 @@ const SendNotification = ({ attendees, eventId }) => {
   const [successMessage, setSuccessMessage] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
 
-  // Fetch notifications on mount
   const fetchNotifications = async () => {
     try {
-      // Fetch admin-sent notifications
       const sentResponse = await api.get(`/notifications/event/${eventId}?type=admin`);
       if (sentResponse.data.success) {
         setSentNotifications(
@@ -29,7 +27,6 @@ const SendNotification = ({ attendees, eventId }) => {
         );
       }
 
-      // Fetch user-triggered notifications
       const userResponse = await api.get(`/notifications/event/${eventId}?type=user`);
       if (userResponse.data.success) {
         setUserNotifications(
@@ -72,7 +69,7 @@ const SendNotification = ({ attendees, eventId }) => {
       if (response.data.success) {
         setSuccessMessage(response.data.message);
         setMessage("");
-        await fetchNotifications(); // Refresh both sent and user notifications
+        await fetchNotifications();
       } else {
         setErrorMessage("Failed to send notification.");
       }
@@ -89,14 +86,14 @@ const SendNotification = ({ attendees, eventId }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6 mt-6">
-      <h3 className="text-2xl font-bold text-amber-950 mb-6">Send Notifications</h3>
+    <div className="bg-white/80 rounded-2xl shadow-lg p-8 border border-amber-100 mt-8">
+      <h3 className="text-xl font-semibold text-gray-800 mb-6">Send Notifications</h3>
 
       <div className="relative mb-4">
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          className="w-full h-32 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D08860] focus:border-transparent transition-all resize-none"
+          className="w-full h-32 p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D08860] focus:border-transparent text-base resize-none"
           placeholder="Write your message to the attendees..."
         />
         <div className="absolute bottom-2 right-2 text-sm text-gray-500">
@@ -105,20 +102,24 @@ const SendNotification = ({ attendees, eventId }) => {
       </div>
 
       {successMessage && (
-        <div className="mb-4 p-3 bg-green-50 text-green-600 rounded-lg">{successMessage}</div>
+        <div className="mb-4 p-3 bg-green-50 text-green-800 rounded-xl text-base border border-green-200">
+          {successMessage}
+        </div>
       )}
       {errorMessage && (
-        <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg">{errorMessage}</div>
+        <div className="mb-4 p-3 bg-red-50 text-red-800 rounded-xl text-base border border-red-200">
+          {errorMessage}
+        </div>
       )}
 
-      <div className="flex justify-end space-x-4 items-center">
-        <span className="text-sm text-gray-500">
+      <div className="flex justify-between items-center">
+        <span className="text-base text-gray-600">
           {message.trim().length > 0 ? "Ready to send" : "Compose a message"}
         </span>
         <button
           onClick={handleSendNotification}
           disabled={loading || !message.trim()}
-          className="bg-[#D08860] text-white px-6 py-2 rounded-lg hover:bg-[#B7704E] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+          className="bg-gradient-to-r from-[#D08860] to-[#B3704D] text-white px-6 py-3 rounded-xl hover:bg-[#80533b] transition-colors duration-300 transform hover:scale-105 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
         >
           {loading ? (
             <div className="flex items-center gap-2">
@@ -142,44 +143,44 @@ const SendNotification = ({ attendees, eventId }) => {
       </div>
 
       <div className="mt-6">
-        <h4 className="text-lg font-semibold text-amber-950 mb-4">Sent Notifications</h4>
+        <h4 className="text-lg font-medium text-gray-800 mb-4">Sent Notifications</h4>
         {sentNotifications.length > 0 ? (
           <div className="space-y-3">
             {sentNotifications.map((notification) => (
               <div
                 key={notification.id}
-                className="bg-gray-50 p-3 rounded-lg border-l-4 border-[#D08860]"
+                className="bg-gray-50 p-4 rounded-xl border-l-4 border-[#D08860] hover:shadow-md transition duration-300"
               >
-                <p className="text-gray-800">{notification.message}</p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-gray-800 text-base">{notification.message}</p>
+                <p className="text-sm text-gray-500 mt-1">
                   Sent at {notification.time}
                 </p>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-gray-500">No sent notifications.</p>
+          <p className="text-gray-600 text-base">No sent notifications.</p>
         )}
       </div>
 
       <div className="mt-6">
-        <h4 className="text-lg font-semibold text-amber-950 mb-4">User Notifications (e.g., Refunds)</h4>
+        <h4 className="text-lg font-medium text-gray-800 mb-4">User Notifications (e.g., Refunds)</h4>
         {userNotifications.length > 0 ? (
           <div className="space-y-3">
             {userNotifications.map((notification) => (
               <div
                 key={notification.id}
-                className="bg-gray-50 p-3 rounded-lg border-l-4 border-[#D08860]"
+                className="bg-gray-50 p-4 rounded-xl border-l-4 border-[#D08860] hover:shadow-md transition duration-300"
               >
-                <p className="text-gray-800">{notification.message}</p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-gray-800 text-base">{notification.message}</p>
+                <p className="text-sm text-gray-500 mt-1">
                   By {notification.userName} at {notification.time}
                 </p>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-gray-500">No user notifications.</p>
+          <p className="text-gray-600 text-base">No user notifications.</p>
         )}
       </div>
     </div>

@@ -78,22 +78,22 @@ export default function EventForm({ event, onSave }) {
   };
 
   return (
-    <section className="min-h-screen py-12 bg-[#F5EFEA]">
-      <div className="container mx-auto px-4 lg:px-8">
-        <div className="max-w-2xl mx-auto bg-white shadow-2xl rounded-xl overflow-hidden">
+    <section className="bg-gradient-to-br from-[#FFF5E6] to-[#F5EFEA] min-h-screen pt-32 pb-20">
+      <div className="container mx-auto px-4 lg:px-8 max-w-4xl">
+        <div className="bg-white/80 rounded-2xl shadow-lg p-8 border border-amber-100">
           {/* Header */}
-          <div className="bg-[#D08860] py-6 px-8">
-            <h2 className="text-4xl font-bold text-white text-center">
+          <div className="bg-gradient-to-r from-[#D08860] to-[#B3704D] py-6 px-8 rounded-t-xl mb-6">
+            <h2 className="text-3xl font-bold text-white text-center">
               {event?._id ? "Edit Your Event" : "Create New Event"}
             </h2>
           </div>
 
           {/* Form Container */}
-          <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          <form onSubmit={handleSubmit} className="p-0 space-y-6">
             {/* Title and Date Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="relative">
-                <label className="block text-sm font-semibold text-amber-950 mb-2">
+                <label className="block text-base font-medium text-gray-700 mb-2">
                   Event Title
                 </label>
                 <input
@@ -103,11 +103,11 @@ export default function EventForm({ event, onSave }) {
                   onChange={handleChange}
                   required
                   placeholder="Enter event title"
-                  className="w-full px-4 py-3 border-2 border-[#D08860]/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D08860] transition duration-300"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D08860] focus:border-transparent text-base"
                 />
               </div>
               <div className="relative">
-                <label className="block text-sm font-semibold text-amber-950 mb-2">
+                <label className="block text-base font-medium text-gray-700 mb-2">
                   Date
                 </label>
                 <input
@@ -116,7 +116,7 @@ export default function EventForm({ event, onSave }) {
                   value={eventData.date}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border-2 border-[#D08860]/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D08860] transition duration-300"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D08860] focus:border-transparent text-base"
                 />
               </div>
             </div>
@@ -124,7 +124,7 @@ export default function EventForm({ event, onSave }) {
             {/* Time and Location Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="relative">
-                <label className="block text-sm font-semibold text-amber-950 mb-2">
+                <label className="block text-base font-medium text-gray-700 mb-2">
                   Time
                 </label>
                 <input
@@ -134,11 +134,11 @@ export default function EventForm({ event, onSave }) {
                   onChange={handleChange}
                   required
                   placeholder="e.g., 2:30 PM"
-                  className="w-full px-4 py-3 border-2 border-[#D08860]/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D08860] transition duration-300"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D08860] focus:border-transparent text-base"
                 />
               </div>
               <div className="relative">
-                <label className="block text-sm font-semibold text-amber-950 mb-2">
+                <label className="block text-base font-medium text-gray-700 mb-2">
                   Location
                 </label>
                 <input
@@ -148,7 +148,7 @@ export default function EventForm({ event, onSave }) {
                   onChange={handleChange}
                   required
                   placeholder="Enter event location"
-                  className="w-full px-4 py-3 border-2 border-[#D08860]/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D08860] transition duration-300"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D08860] focus:border-transparent text-base"
                 />
               </div>
             </div>
@@ -156,7 +156,7 @@ export default function EventForm({ event, onSave }) {
             {/* Max Attendees and Price Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="relative">
-                <label className="block text-sm font-semibold text-amber-950 mb-2">
+                <label className="block text-base font-medium text-gray-700 mb-2">
                   Maximum Attendees
                 </label>
                 <input
@@ -167,11 +167,11 @@ export default function EventForm({ event, onSave }) {
                   required
                   min="1"
                   placeholder="Enter max attendees"
-                  className="w-full px-4 py-3 border-2 border-[#D08860]/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D08860] transition duration-300"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D08860] focus:border-transparent text-base"
                 />
               </div>
               <div className="relative">
-                <label className="block text-sm font-semibold text-amber-950 mb-2">
+                <label className="block text-base font-medium text-gray-700 mb-2">
                   Price
                 </label>
                 <input
@@ -183,14 +183,14 @@ export default function EventForm({ event, onSave }) {
                   min="0"
                   step="0.01"
                   placeholder="Enter price"
-                  className="w-full px-4 py-3 border-2 border-[#D08860]/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D08860] transition duration-300"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D08860] focus:border-transparent text-base"
                 />
               </div>
             </div>
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-semibold text-amber-950 mb-2">
+              <label className="block text-base font-medium text-gray-700 mb-2">
                 Event Description
               </label>
               <textarea
@@ -200,13 +200,13 @@ export default function EventForm({ event, onSave }) {
                 required
                 rows="4"
                 placeholder="Describe your event"
-                className="w-full px-4 py-3 border-2 border-[#D08860]/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D08860] transition duration-300"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D08860] focus:border-transparent text-base"
               />
             </div>
 
             {/* Event Image */}
             <div>
-              <label className="block text-sm font-semibold text-amber-950 mb-2">
+              <label className="block text-base font-medium text-gray-700 mb-2">
                 Event Image (JPEG/PNG, max 5MB)
               </label>
               <input
@@ -214,14 +214,14 @@ export default function EventForm({ event, onSave }) {
                 name="eventImage"
                 accept="image/jpeg,image/png"
                 onChange={handleFileChange}
-                className="w-full px-4 py-3 border-2 border-[#D08860]/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D08860] transition duration-300"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D08860] focus:border-transparent text-base"
               />
               {eventData.previewImage && (
                 <div className="mt-4 flex justify-center">
                   <img
                     src={eventData.previewImage}
                     alt="Event Preview"
-                    className="max-w-xs max-h-60 object-cover rounded-lg shadow-md"
+                    className="max-w-md max-h-64 object-cover rounded-lg shadow-md"
                   />
                 </div>
               )}
@@ -229,14 +229,14 @@ export default function EventForm({ event, onSave }) {
 
             {/* Error Message */}
             {error && (
-              <div className="text-red-500 text-sm">{error}</div>
+              <div className="text-red-500 text-base font-medium mt-2">{error}</div>
             )}
 
             {/* Submit Button */}
             <div className="pt-4">
               <button
                 type="submit"
-                className="w-full bg-[#D08860] text-white py-4 rounded-lg hover:bg-[#C07650] transition duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D08860]"
+                className="w-full bg-gradient-to-r from-[#D08860] to-[#B3704D] text-white px-6 py-3 rounded-xl hover:bg-[#80533b] transition duration-300 transform hover:scale-105 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D08860] text-base font-medium"
               >
                 {event?._id ? "Update Event" : "Create Event"}
               </button>

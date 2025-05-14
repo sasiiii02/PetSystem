@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import axios from "axios";
 import ReportChart from "../Component/EventReportChart";
 import Footer from "../Component/EventFooter";
@@ -12,9 +13,9 @@ const Notification = () => {
   const [registrationsPerEvent, setRegistrationsPerEvent] = useState([]);
   const [revenuePerEvent, setRevenuePerEvent] = useState([]);
   const [registrationTrends, setRegistrationTrends] = useState([]);
-  const [eventStatusBreakdown, setEventStatusBreakdown] = useState([]);
   const [registrationsByLocation, setRegistrationsByLocation] = useState([]);
   const [refundedRegistrations, setRefundedRegistrations] = useState([]);
+  const [refundsPerEvent, setRefundsPerEvent] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
@@ -32,14 +33,12 @@ const Notification = () => {
           registrationsRes,
           revenueRes,
           trendsRes,
-          statusRes,
           locationRes,
           refundsRes,
         ] = await Promise.all([
           api.get("/reports/registrations-per-event"),
           api.get("/reports/revenue-per-event", { params }),
           api.get("/reports/registration-trends", { params }),
-          api.get("/reports/event-status-breakdown"),
           api.get("/reports/registrations-by-location"),
           api.get("/reports/refunded-registrations"),
         ]);
@@ -56,15 +55,25 @@ const Notification = () => {
           label: item._id,
           value: item.totalRegistrations,
         })));
-        setEventStatusBreakdown(statusRes.data.data.map(item => ({
-          label: item._id,
-          value: item.count,
-        })));
         setRegistrationsByLocation(locationRes.data.data.map(item => ({
           label: item._id,
           value: item.totalRegistrations,
         })));
         setRefundedRegistrations(refundsRes.data.data);
+
+        // Aggregate refunds per event
+        const refundsByEvent = refundsRes.data.data.reduce((acc, item) => {
+          const eventTitle = item.eventTitle;
+          if (!acc[eventTitle]) {
+            acc[eventTitle] = 0;
+          }
+          acc[eventTitle] += item.refundAmount;
+          return acc;
+        }, {});
+        setRefundsPerEvent(Object.entries(refundsByEvent).map(([label, value]) => ({
+          label,
+          value,
+        })));
       } catch (err) {
         console.error("Error fetching reports:", err);
         setError("Failed to load reports. Please try again.");
@@ -100,102 +109,151 @@ const Notification = () => {
     document.body.removeChild(link);
   };
 
+  const handleResetFilters = () => {
+    setDateRange({ start: "", end: "" });
+  };
+
+  const totalRegistrations = registrationsPerEvent.reduce((sum, item) => sum + item.value, 0);
+  const totalRevenue = revenuePerEvent.reduce((sum, item) => sum + item.value, 0);
+  const totalRefunds = refundedRegistrations.reduce((sum, item) => sum + item.refundAmount, 0);
+
   return (
-    <div className="relative min-h-screen flex flex-col">
-      <div className="relative z-10 flex-grow max-w-6xl mx-auto px-4 py-8">
+    <div className="relative min-h-screen flex flex-col bg-gradient-to-br from-[#FFF5E6] to-[#F5EFEA] pt-32 pb-20">
+      <div className="relative z-10 flex-grow max-w-6xl mx-auto px-4">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Event <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D08860] to-[#B3704D]">Analytics</span>
+          </h1>
+          <Link
+            to="/admin/redirect/event_manager/events"
+            className="flex items-center px-6 py-3 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-xl transition-colors border border-amber-200 shadow-md hover:shadow-lg transform hover:scale-105 duration-300"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 mr-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Events
+          </Link>
+        </div>
+
         {loading ? (
-          <div className="flex justify-center mt-20">
-            <div className="animate-pulse flex space-x-4">
-              <div className="rounded-full bg-amber-200 h-12 w-12"></div>
-              <div className="flex-1 space-y-4 py-1">
-                <div className="h-4 bg-amber-200 rounded w-3/4"></div>
-                <div className="space-y-2">
-                  <div className="h-4 bg-amber-200 rounded"></div>
-                  <div className="h-4 bg-amber-200 rounded w-5/6"></div>
-                </div>
-              </div>
+          <div className="bg-white/80 rounded-2xl shadow-lg p-8 border border-amber-100 hover:shadow-xl transition-all duration-300">
+            <div className="text-center">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#D08860]"></div>
+              <p className="text-gray-600 text-base mt-4">Loading analytics...</p>
             </div>
           </div>
         ) : error ? (
-          <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded shadow-md max-w-4xl mx-auto">
-            <div className="flex items-center">
-              <div className="text-red-500">
-                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-red-700">{error}</p>
-              </div>
+          <div className="bg-white/80 rounded-2xl shadow-lg p-8 border border-amber-100 hover:shadow-xl transition-all duration-300">
+            <div className="flex items-center justify-center">
+              <svg className="h-6 w-6 text-red-500 mr-3" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <p className="text-red-500 text-base font-medium">{error}</p>
             </div>
           </div>
         ) : (
-          <div className="max-w-6xl mx-auto">
-            <h1 className="text-3xl font-bold text-amber-900 mb-8">Event Analytics</h1>
+          <div className="space-y-8">
+            {/* Summary Card */}
+            <div className="bg-white/80 rounded-2xl shadow-lg p-8 border border-amber-100 hover:shadow-xl transition-all duration-300">
+              <h2 className="text-xl font-semibold text-gray-800 mb-6">Overview</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div className="bg-gradient-to-r from-[#FFF5E6] to-[#F5EFEA] p-4 rounded-xl shadow-sm transform transition hover:scale-105">
+                  <p className="text-base text-gray-600">Total Registrations</p>
+                  <p className="text-2xl font-bold text-[#D08860]">{totalRegistrations}</p>
+                </div>
+                <div className="bg-gradient-to-r from-[#FFF5E6] to-[#F5EFEA] p-4 rounded-xl shadow-sm transform transition hover:scale-105">
+                  <p className="text-base text-gray-600">Total Revenue</p>
+                  <p className="text-2xl font-bold text-[#D08860]">${totalRevenue.toLocaleString()}</p>
+                </div>
+                <div className="bg-gradient-to-r from-[#FFF5E6] to-[#F5EFEA] p-4 rounded-xl shadow-sm transform transition hover:scale-105">
+                  <p className="text-base text-gray-600">Total Refunds</p>
+                  <p className="text-2xl font-bold text-[#D08860]">${totalRefunds.toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
 
-            <div className="mb-6 bg-white p-4 rounded-lg shadow-md border border-gray-100">
-              <h2 className="text-lg font-semibold text-amber-900 mb-4">Filter Reports</h2>
+            {/* Filter Section */}
+            <div className="bg-white/80 rounded-2xl shadow-lg p-8 border border-amber-100 hover:shadow-xl transition-all duration-300">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-800">Filter Reports</h2>
+                {(dateRange.start || dateRange.end) && (
+                  <button
+                    onClick={handleResetFilters}
+                    className="text-[#D08860] hover:text-[#B3704D] text-base transition duration-300"
+                  >
+                    Reset Filters
+                  </button>
+                )}
+              </div>
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-amber-900">Start Date</label>
+                  <label className="block text-base font-medium text-gray-700">Start Date</label>
                   <input
                     type="date"
                     value={dateRange.start}
                     onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-4 focus:border-amber-700 focus:ring-amber-700 sm:text-sm"
+                    className="mt-1 block w-full rounded-xl border-gray-300 shadow-sm p-4 focus:ring-2 focus:ring-[#D08860] focus:border-transparent text-base transition-all duration-300"
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-amber-900">End Date</label>
+                  <label className="block text-base font-medium text-gray-700">End Date</label>
                   <input
                     type="date"
                     value={dateRange.end}
                     onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-4 focus:border-amber-700 focus:ring-amber-700 sm:text-sm"
+                    className="mt-1 block w-full rounded-xl border-gray-300 shadow-sm p-4 focus:ring-2 focus:ring-[#D08860] focus:border-transparent text-base transition-all duration-300"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="mb-6 flex flex-wrap gap-4">
+            {/* Export Buttons */}
+            <div className="flex flex-wrap gap-4">
               <button
                 onClick={() => handleExportCSV(registrationsPerEvent, "registrations_per_event")}
-                className="px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-all"
+                className="px-4 py-2 bg-gradient-to-r from-[#D08860] to-[#B3704D] text-white rounded-xl hover:bg-[#80533b] transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
               >
                 Export Registrations
               </button>
               <button
                 onClick={() => handleExportCSV(revenuePerEvent, "revenue_per_event")}
-                className="px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-all"
+                className="px-4 py-2 bg-gradient-to-r from-[#D08860] to-[#B3704D] text-white rounded-xl hover:bg-[#80533b] transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
               >
                 Export Revenue
               </button>
               <button
                 onClick={() => handleExportCSV(registrationTrends, "registration_trends")}
-                className="px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-all"
+                className="px-4 py-2 bg-gradient-to-r from-[#D08860] to-[#B3704D] text-white rounded-xl hover:bg-[#80533b] transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
               >
                 Export Trends
               </button>
               <button
-                onClick={() => handleExportCSV(eventStatusBreakdown, "event_status_breakdown")}
-                className="px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-all"
-              >
-                Export Status
-              </button>
-              <button
                 onClick={() => handleExportCSV(registrationsByLocation, "registrations_by_location")}
-                className="px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-all"
+                className="px-4 py-2 bg-gradient-to-r from-[#D08860] to-[#B3704D] text-white rounded-xl hover:bg-[#80533b] transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
               >
                 Export Locations
               </button>
               <button
                 onClick={() => handleExportCSV(refundedRegistrations, "refunded_registrations", true)}
-                className="px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-all"
+                className="px-4 py-2 bg-gradient-to-r from-[#D08860] to-[#B3704D] text-white rounded-xl hover:bg-[#80533b] transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
               >
                 Export Refunds
               </button>
+              <button
+                onClick={() => handleExportCSV(refundsPerEvent, "refunds_per_event")}
+                className="px-4 py-2 bg-gradient-to-r from-[#D08860] to-[#B3704D] text-white rounded-xl hover:bg-[#80533b] transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
+              >
+                Export Refunds by Event
+              </button>
             </div>
 
+            {/* Charts */}
             <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
               <ReportChart
                 type="bar"
@@ -214,22 +272,23 @@ const Notification = () => {
               />
               <ReportChart
                 type="pie"
-                data={eventStatusBreakdown}
-                title="Event Status Breakdown"
-              />
-              <ReportChart
-                type="pie"
                 data={registrationsByLocation}
                 title="Registrations by Location"
               />
+              <ReportChart
+                type="bar"
+                data={refundsPerEvent}
+                title="Total Refunds by Event"
+              />
             </div>
 
-            <div className="mt-6 bg-white p-6 rounded-lg shadow-md border border-gray-100">
-              <h2 className="text-lg font-semibold text-amber-900 mb-4">Refunded Registrations</h2>
+            {/* Refunded Registrations Table */}
+            <div className="bg-white/80 rounded-2xl shadow-lg p-8 border border-amber-100 hover:shadow-xl transition-all duration-300">
+              <h2 className="text-xl font-semibold text-gray-800 mb-6">Refunded Registrations</h2>
               {refundedRegistrations.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-gradient-to-r from-[#FFF5E6] to-[#F5EFEA]">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
@@ -241,15 +300,15 @@ const Notification = () => {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {refundedRegistrations.map((item, index) => (
-                        <tr key={index}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.eventTitle}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.userName}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.userEmail}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.tickets}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <tr key={index} className="hover:bg-gray-50 transition-all duration-300">
+                          <td className="px-6 py-4 whitespace-nowrap text-base text-gray-900">{item.eventTitle}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-base text-gray-900">{item.userName}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-base text-gray-900">{item.userEmail}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-base text-gray-900">{item.tickets}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-base text-gray-900">
                             {item.refundAmount.toLocaleString("en-US", { style: "currency", currency: "USD" })}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <td className="px-6 py-4 whitespace-nowrap text-base text-gray-900">
                             {new Date(item.cancelledAt).toLocaleString()}
                           </td>
                         </tr>
@@ -258,14 +317,30 @@ const Notification = () => {
                   </table>
                 </div>
               ) : (
-                <p className="text-gray-600">No refunded registrations found.</p>
+                <div className="text-center py-8 bg-gradient-to-r from-[#FFF5E6] to-[#F5EFEA] rounded-xl">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-12 w-12 mx-auto text-gray-400 mb-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.768-.231-1.47-.62-2.062M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.768.231-1.47.62-2.062M14 14h2.62M5.625 14h2.62m0 0a2.96 2.96 0 00.62 2.062M5.625 14H4a1 1 0 00-.707.293l-2 2a1 1 0 000 1.414l2 2a1 1 0 00.707.293h15a1 1 0 00.707-.293l2-2a1 1 0 000-1.414l-2-2a1 1 0 00-.707-.293H14zm0 0V10a2 2 0 10-4 0v4m0 0a2 2 0 104 0z"
+                    />
+                  </svg>
+                  <p className="text-gray-600 text-base">No refunded registrations found.</p>
+                </div>
               )}
             </div>
           </div>
         )}
       </div>
 
-      <Footer />
+      
     </div>
   );
 };
