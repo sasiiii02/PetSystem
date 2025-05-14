@@ -114,9 +114,9 @@ const App = () => {
         <Route
           path="/AdminRegister"
           element={
-            <MainLayout>
+           
               <AdminRegister />
-            </MainLayout>
+            
           }
         />
         <Route
@@ -138,9 +138,9 @@ const App = () => {
         <Route
           path="/UsersList"
           element={
-            <MainLayout>
+            
               <UsersList />
-            </MainLayout>
+            
           }
         />
         <Route
@@ -172,17 +172,17 @@ const App = () => {
         <Route
           path="/ProfessionalRegistration"
           element={
-            <MainLayout>
+            
               <ProfessionalRegistration />
-            </MainLayout>
+            
           }
         />
         <Route
           path="/ProfessionalsList"
           element={
-            <MainLayout>
+            
               <ProfessionalsList />
-            </MainLayout>
+            
           }
         />
         <Route
@@ -265,9 +265,9 @@ const App = () => {
           path="/admin/redirect/user_admin"
           element={
             <PrivateRoute>
-              <MainLayout>
+              
                 <SysAdminDashboard />
-              </MainLayout>
+              
             </PrivateRoute>
           }
         />
