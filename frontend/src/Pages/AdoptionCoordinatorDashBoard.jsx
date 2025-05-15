@@ -113,7 +113,7 @@ const PetAdoptionCoordinatorDashboard = () => {
   // Fetch adoption forms
   const fetchAdoptionForms = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
       if (!token) {
         console.error("No token found in localStorage");
         setError("Authentication required. Please log in again.");
@@ -152,7 +152,7 @@ const PetAdoptionCoordinatorDashboard = () => {
   // Add this function to fetch home visits
   const fetchHomeVisits = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
       const response = await axios.get('http://localhost:5000/api/homevisits', {
         headers: {
           Authorization: `Bearer ${token}`
@@ -1987,7 +1987,7 @@ const PetAdoptionCoordinatorDashboard = () => {
 
   const handleApproveApplication = async (formId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
       await axios.put(
         `http://localhost:5000/api/adoptionform/update/${formId}`,
         { status: 'approved' },
@@ -2089,7 +2089,7 @@ const PetAdoptionCoordinatorDashboard = () => {
   const handleSubmitVisit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
       if (!token) {
         setNotification({
           show: true,
@@ -2249,7 +2249,7 @@ const PetAdoptionCoordinatorDashboard = () => {
   // Update the delete handler
   const handleDeleteLostFoundPet = async (petId, type) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
       if (!token) {
         setNotification({
           show: true,
@@ -2308,7 +2308,7 @@ const PetAdoptionCoordinatorDashboard = () => {
 
   const handleUpdateVisitStatus = async (visitId, status) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
       await axios.put(
         `http://localhost:5000/api/homevisits/${visitId}`,
         { status },
@@ -2343,7 +2343,7 @@ const PetAdoptionCoordinatorDashboard = () => {
   // Add this new handler function after handleUpdateVisitStatus
   const handleMarkAsVisited = async (visitId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
       
       // First, get the visit details to find the associated adoption form
       const visit = homeVisits.find(v => v._id === visitId);

@@ -125,7 +125,7 @@ const PetAdoptionForm = () => {
 
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('petOwnerToken');
       if (!token) {
         navigate('/login');
         return;
