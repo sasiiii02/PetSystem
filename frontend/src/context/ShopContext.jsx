@@ -117,6 +117,9 @@ const ShopContextProvider = (props) => {
       cartData[itemId][size] = 1;
     }
     setCartItems(cartData);
+    
+    // Show success notification for adding to cart
+    toast.success('Product added to cart!');
 
     const token = getToken();
     if (token) {
@@ -131,7 +134,7 @@ const ShopContextProvider = (props) => {
           }
         );
         if (!response.data.success) {
-          toast.error(response.data.message || 'Failed to update cart in database');
+          toast.error(response.data.message );
           setCartItems(originalCartItems);
         }
       } catch (error) {
@@ -141,7 +144,7 @@ const ShopContextProvider = (props) => {
           setCartItems(localCart ? JSON.parse(localCart) : {});
           toast.error('Session expired. Please login again.');
         } else {
-          toast.error(error.response?.data?.message || 'Failed to update cart in database');
+          toast.error(error.response?.data?.message);
           setCartItems(originalCartItems);
         }
       }
@@ -178,7 +181,7 @@ const ShopContextProvider = (props) => {
           }
         );
         if (!response.data.success) {
-          toast.error('Failed to update cart in database');
+          
           setCartItems(originalCartItems);
         }
       } catch (error) {
@@ -188,7 +191,7 @@ const ShopContextProvider = (props) => {
           setCartItems(localCart ? JSON.parse(localCart) : {});
           toast.error('Session expired. Please login again.');
         } else {
-          toast.error('Failed to update cart in database');
+          
           setCartItems(originalCartItems);
         }
       }

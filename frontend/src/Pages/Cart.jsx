@@ -29,6 +29,9 @@ const Cart = () => {
 
   const handleCheckout = () => {
     console.log('Checkout button clicked');
+    
+    
+    
     const token = localStorage.getItem('petOwnerToken');
     console.log('Token in handleCheckout:', token);
     

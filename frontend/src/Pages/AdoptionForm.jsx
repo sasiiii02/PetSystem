@@ -125,7 +125,7 @@ const PetAdoptionForm = () => {
 
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('petOwnerToken');
       if (!token) {
         navigate('/login');
         return;
@@ -188,7 +188,7 @@ const PetAdoptionForm = () => {
 
   // Success message component
   const SuccessMessage = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0  bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
       <div className="bg-white p-12 rounded-3xl shadow-2xl text-center max-w-md">
         <CheckCircle className="mx-auto mb-6 text-green-500" size={80} />
         <h2 className="text-3xl font-bold text-[#80533b] mb-4">Application Submitted!</h2>

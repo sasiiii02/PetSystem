@@ -4,6 +4,7 @@ import StoreAdminSidebar from '../Component/StoreAdminSidebar';
 import StoreAdminAdd from './StoreAdminAdd';
 import StoreAdminList from './StoreAdminList';
 import StoreAdminOrders from './StoreAdminOrders';
+import SalesReportGenerator from './SalesReportGenerator';
 
 const StoreAdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('add');
@@ -37,6 +38,8 @@ const StoreAdminDashboard = () => {
         return <StoreAdminList token={token} />;
       case 'orders':
         return <StoreAdminOrders token={token} />;
+      case 'reports':
+        return <SalesReportGenerator token={token} />;
       default:
         return <StoreAdminAdd token={token} />;
     }

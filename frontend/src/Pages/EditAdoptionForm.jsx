@@ -22,7 +22,7 @@ const EditAdoptionForm = () => {
     additionalInfo: ''
   });
 
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('petOwnerToken');
 
   useEffect(() => {
     const fetchFormData = async () => {

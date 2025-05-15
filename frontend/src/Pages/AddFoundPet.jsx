@@ -12,7 +12,6 @@ const AddFoundPet = () => {
     petType: '',
     breed: '',
     color: '',
-    age: '',
     gender: '',
     foundDate: '',
     foundLocation: '',
@@ -120,18 +119,6 @@ const AddFoundPet = () => {
                   type="text"
                   name="color"
                   value={formData.color}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-[#D08860] focus:border-[#D08860]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
-                <input
-                  type="text"
-                  name="age"
-                  value={formData.age}
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-[#D08860] focus:border-[#D08860]"

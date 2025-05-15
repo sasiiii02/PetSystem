@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 // Create a new found pet
 export const createFoundPet = async (req, res) => {
   try {
-    const { petType, breed, color, age, gender, foundDate, foundLocation, description, contactNumber, email } = req.body;
+    const { petType, breed, color, gender, foundDate, foundLocation, description, contactNumber, email } = req.body;
     
     // Handle image upload
     const image = req.file ? req.file.filename : null;
@@ -18,7 +18,6 @@ export const createFoundPet = async (req, res) => {
       petType,
       breed,
       color,
-      age,
       gender,
       foundDate,
       foundLocation,
@@ -72,7 +71,7 @@ export const getFoundPet = async (req, res) => {
 // Update found pet
 export const updateFoundPet = async (req, res) => {
   try {
-    const { petType, breed, color, age, gender, foundDate, foundLocation, description, contactNumber, email } = req.body;
+    const { petType, breed, color, gender, foundDate, foundLocation, description, contactNumber, email } = req.body;
     
     const foundPet = await FoundPet.findById(req.params.id);
     if (!foundPet) {
@@ -103,7 +102,6 @@ export const updateFoundPet = async (req, res) => {
         petType,
         breed,
         color,
-        age,
         gender,
         foundDate,
         foundLocation,
@@ -130,7 +128,10 @@ export const deleteFoundPet = async (req, res) => {
     }
 
     // Check if user is authorized
-    if (foundPet.userId.toString() !== req.user.userId.toString()) {
+    if (!req.user.userId && !req.user.adminId) {
+      return res.status(403).json({ message: 'Not authorized to delete this pet' });
+    }
+    if (req.user.userId && foundPet.userId.toString() !== req.user.userId.toString()) {
       return res.status(403).json({ message: 'Not authorized to delete this pet' });
     }
 

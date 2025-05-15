@@ -13,6 +13,7 @@ import {
   Dog,
   CalendarCheck
 } from 'lucide-react';
+import jsPDF from 'jspdf';
 
 const PetRegisterUserDashboard = () => {
   const [adoptionForms, setAdoptionForms] = useState([]);
@@ -156,6 +157,35 @@ const PetRegisterUserDashboard = () => {
     form.petName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     form.status?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Function to download adoption report as PDF
+  const handleDownloadReport = (form) => {
+    const doc = new jsPDF();
+    // Header with color
+    doc.setFillColor(208, 136, 96); // #D08860
+    doc.rect(0, 0, 210, 30, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.text('Adoption Application Report', 105, 20, { align: 'center' });
+    doc.setTextColor(60, 40, 27); // #3C281B
+    doc.setFontSize(12);
+    let y = 40;
+    doc.text(`Pet Name:`, 14, y); doc.setFont('helvetica', 'bold'); doc.text(`${form.petName || ''}`, 50, y); doc.setFont('helvetica', 'normal'); y += 10;
+    doc.text(`Pet Type:`, 14, y); doc.setFont('helvetica', 'bold'); doc.text(`${form.petType || ''}`, 50, y); doc.setFont('helvetica', 'normal'); y += 10;
+    doc.text(`Home Type:`, 14, y); doc.setFont('helvetica', 'bold'); doc.text(`${form.homeType || ''}`, 50, y); doc.setFont('helvetica', 'normal'); y += 10;
+    doc.text(`Employment:`, 14, y); doc.setFont('helvetica', 'bold'); doc.text(`${form.employmentStatus || ''}`, 50, y); doc.setFont('helvetica', 'normal'); y += 10;
+    doc.text(`Has Yard:`, 14, y); doc.setFont('helvetica', 'bold'); doc.text(`${form.hasYard ? 'Yes' : 'No'}`, 50, y); doc.setFont('helvetica', 'normal'); y += 10;
+    doc.text(`Other Pets:`, 14, y); doc.setFont('helvetica', 'bold'); doc.text(`${form.hasOtherPets ? 'Yes' : 'No'}`, 50, y); doc.setFont('helvetica', 'normal'); y += 10;
+    doc.text(`Submitted:`, 14, y); doc.setFont('helvetica', 'bold'); doc.text(`${new Date(form.createdAt).toLocaleDateString()}`, 50, y); doc.setFont('helvetica', 'normal'); y += 10;
+    doc.text(`Status:`, 14, y); doc.setFont('helvetica', 'bold'); doc.text(`Approved`, 50, y); doc.setFont('helvetica', 'normal'); y += 15;
+    doc.setTextColor(34, 197, 94); // green
+    doc.setFontSize(14);
+    doc.text('Congratulations! Your adoption application is approved.', 14, y); y += 10;
+    doc.setTextColor(60, 40, 27);
+    doc.setFontSize(12);
+    doc.text('Please visit our shelter to complete the adoption process and take your new pet home.', 14, y);
+    doc.save(`Adoption_Report_${form.petName || 'Pet'}.pdf`);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F4E4D8] to-[#E6D5C1] pt-24 p-6">
@@ -405,8 +435,8 @@ const PetRegisterUserDashboard = () => {
                           </div>
                         )}
 
-                        {/* Only show edit and delete buttons if the form is not approved */}
-                        {form.status !== 'approved' && (
+                        {/* Only show edit and delete buttons if the form is not approved or rejected */}
+                        {form.status !== 'approved' && form.status !== 'rejected' && (
                           <div className="mt-4 flex justify-end space-x-3">
                             <button
                               onClick={() => navigate(`/edit-adoption-form/${form._id}`)}
@@ -437,6 +467,13 @@ const PetRegisterUserDashboard = () => {
                                 </p>
                               </div>
                             </div>
+                            <button
+                              onClick={() => handleDownloadReport(form)}
+                              className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center space-x-2"
+                            >
+                              <FileText size={18} />
+                              <span>Download Report</span>
+                            </button>
                           </div>
                         )}
 

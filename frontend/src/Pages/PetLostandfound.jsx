@@ -11,6 +11,7 @@ const PetLostandfound = () => {
   const [activeTab, setActiveTab] = useState('lost');
   const [pets, setPets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchPets();
@@ -69,6 +70,18 @@ const PetLostandfound = () => {
     }
   };
 
+  // Filter pets based on search query
+  const filteredPets = pets.filter(pet => {
+    const query = searchQuery.toLowerCase();
+    return (
+      pet.petName?.toLowerCase().includes(query) ||
+      pet.breed?.toLowerCase().includes(query) ||
+      (activeTab === 'lost'
+        ? pet.lastSeenLocation?.toLowerCase().includes(query)
+        : pet.foundLocation?.toLowerCase().includes(query))
+    );
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#FFF5E6] to-[#FFF5E6] py-8 mt-20">
       <div className="max-w-7xl mx-auto px-4">
@@ -121,18 +134,32 @@ const PetLostandfound = () => {
           </button>
         </div>
 
+        {/* Search Bar */}
+        <div className="mb-8 max-w-xl mx-auto">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
+              placeholder="Search by pet name, breed, or location..."
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#D08860] focus:border-transparent"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+
         {loading ? (
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D08860] mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading pets...</p>
           </div>
-        ) : pets.length === 0 ? (
+        ) : filteredPets.length === 0 ? (
           <div className="text-center">
             <p className="text-gray-600">No {activeTab} pets found.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {pets.map((pet) => (
+            {filteredPets.map((pet) => (
               <div key={pet._id} className="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div className="relative pt-[125%]">
                   {pet.image ? (

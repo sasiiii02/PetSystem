@@ -5,7 +5,8 @@ import {
   getHomeVisitById,
   updateHomeVisit,
   deleteHomeVisit,
-  getUserHomeVisits
+  getUserHomeVisits,
+  rejectHomeVisitsByForm
 } from '../controllers/homeVisitControllers.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 
@@ -27,5 +28,8 @@ router.post('/', createHomeVisit);
 router.get('/:id', getHomeVisitById);
 router.put('/:id', updateHomeVisit);
 router.delete('/:id', deleteHomeVisit);
+
+// Add this route for rejecting all home visits by adoptionFormId
+router.put('/by-form/:formId/reject', rejectHomeVisitsByForm);
 
 export default router; 

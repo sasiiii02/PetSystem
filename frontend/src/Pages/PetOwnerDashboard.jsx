@@ -22,6 +22,7 @@ import {
   Scissors,
   Info
 } from 'lucide-react';
+import jsPDF from 'jspdf';
 
 const PetOwnerDashboard = () => {
   const [pets, setPets] = useState([]);
@@ -178,6 +179,61 @@ const PetOwnerDashboard = () => {
     }
   };
 
+  // Download adoption report as PDF
+  const handleDownloadReport = (pet) => {
+    const doc = new jsPDF();
+    // Header with color
+    doc.setFillColor(208, 136, 96); // #D08860
+    doc.rect(0, 0, 210, 30, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.text('Adoption Report', 105, 20, { align: 'center' });
+    doc.setTextColor(60, 40, 27); // #3C281B
+    doc.setFontSize(12);
+    let y = 40;
+    doc.text(`Pet Name:`, 14, y); doc.setFont('helvetica', 'bold'); doc.text(`${pet.petName || ''}`, 50, y); doc.setFont('helvetica', 'normal'); y += 10;
+    doc.text(`Breed:`, 14, y); doc.setFont('helvetica', 'bold'); doc.text(`${pet.petBreed || ''}`, 50, y); doc.setFont('helvetica', 'normal'); y += 10;
+    doc.text(`Species:`, 14, y); doc.setFont('helvetica', 'bold'); doc.text(`${pet.petSpecies || ''}`, 50, y); doc.setFont('helvetica', 'normal'); y += 10;
+    doc.text(`Age:`, 14, y); doc.setFont('helvetica', 'bold'); doc.text(`${pet.petAge || ''}`, 50, y); doc.setFont('helvetica', 'normal'); y += 10;
+    doc.text(`Gender:`, 14, y); doc.setFont('helvetica', 'bold'); doc.text(`${pet.petGender || ''}`, 50, y); doc.setFont('helvetica', 'normal'); y += 10;
+    doc.text(`Vaccinated:`, 14, y); doc.setFont('helvetica', 'bold'); doc.text(`${pet.vaccinated ? 'Yes' : 'No'}`, 50, y); doc.setFont('helvetica', 'normal'); y += 10;
+    doc.text(`Neutered:`, 14, y); doc.setFont('helvetica', 'bold'); doc.text(`${pet.neutered ? 'Yes' : 'No'}`, 50, y); doc.setFont('helvetica', 'normal'); y += 10;
+    doc.text(`Special Needs:`, 14, y); doc.setFont('helvetica', 'bold'); doc.text(`${pet.specialNeeds ? 'Yes' : 'No'}`, 50, y); doc.setFont('helvetica', 'normal'); y += 10;
+    doc.text(`Status:`, 14, y); doc.setFont('helvetica', 'bold'); doc.setTextColor(0, 128, 255); doc.text(`Adopted`, 50, y); doc.setTextColor(60, 40, 27); doc.setFont('helvetica', 'normal'); y += 12;
+    doc.text(`Owner Name:`, 14, y); doc.setFont('helvetica', 'bold'); doc.text(`${pet.ownerFirstName || ''} ${pet.ownerLastName || ''}`, 50, y); doc.setFont('helvetica', 'normal'); y += 10;
+    doc.text(`Owner Email:`, 14, y); doc.setFont('helvetica', 'bold'); doc.text(`${pet.email || ''}`, 50, y); doc.setFont('helvetica', 'normal'); y += 10;
+    doc.text(`Owner Phone:`, 14, y); doc.setFont('helvetica', 'bold'); doc.text(`${pet.phone || ''}`, 50, y); doc.setFont('helvetica', 'normal'); y += 12;
+    if (pet.petDescription) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Description:', 14, y); y += 8;
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(80, 80, 80);
+      doc.setFontSize(10);
+      doc.text(doc.splitTextToSize(pet.petDescription, 180), 14, y); y += 12;
+      doc.setTextColor(60, 40, 27);
+      doc.setFontSize(12);
+    }
+    if (pet.reason) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Reason for Adoption:', 14, y); y += 8;
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(80, 80, 80);
+      doc.setFontSize(10);
+      doc.text(doc.splitTextToSize(pet.reason, 180), 14, y); y += 12;
+      doc.setTextColor(60, 40, 27);
+      doc.setFontSize(12);
+    }
+    // Add message to take pet to shelter
+    y += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 128, 0);
+    doc.text('Congratulations on your pet being adopted!', 14, y); y += 10;
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(60, 40, 27);
+    doc.text('Please bring your pet to our shelter within 48 hours to complete the adoption process.', 14, y);
+    doc.save(`${pet.petName || 'pet'}-adoption-report.pdf`);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#F4E4D8] to-[#E6D5C1] pt-24 flex items-center justify-center">
@@ -258,6 +314,15 @@ const PetOwnerDashboard = () => {
                               <Trash2 size={20} />
                             </button>
                           </>
+                        )}
+                        {isPetAdopted(pet._id) && (
+                          <button
+                            onClick={() => handleDownloadReport(pet)}
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors border border-green-200"
+                          >
+                            <CheckCircle size={20} className="inline-block mr-1" />
+                            Download Report
+                          </button>
                         )}
                       </div>
                     </div>

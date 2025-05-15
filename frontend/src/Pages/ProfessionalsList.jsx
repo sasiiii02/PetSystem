@@ -244,9 +244,9 @@ const ProfessionalsList = () => {
               aria-label="Filter professionals by role"
             >
               <option value="All">All Roles</option>
-              <option value="Veterinarian">Veterinarian</option>
-              <option value="Groomer">Groomer</option>
-              <option value="Pet Trainer">Pet Trainer</option>
+              <option value="vet">Veterinarian</option>
+              <option value="groomer">Groomer</option>
+              <option value="pet-trainer">Pet Trainer</option>
             </select>
           </div>
 
