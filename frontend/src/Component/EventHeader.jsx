@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react';
-import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const NAV_ITEMS = [
@@ -61,7 +61,7 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* Bottom Section: Logout & Notifications */}
+          {/* Bottom Section: Logout */}
           <div className="p-4 border-t border-amber-100">
             <div className="space-y-4">
               {/* Logout Button */}
@@ -72,14 +72,6 @@ export default function Header() {
               >
                 Log Out
               </Link>
-
-              {/* Notifications */}
-              <div className="flex items-center justify-center">
-                <button className="relative p-3 rounded-full bg-amber-50 text-amber-800 hover:text-white hover:bg-gradient-to-r hover:from-[#D08860] hover:to-[#B3704D] focus:outline-none focus:ring-2 focus:ring-amber-200 transition-all duration-300 transform hover:scale-110 shadow-sm hover:shadow-md">
-                  <span className="sr-only">View notifications</span>
-                  <BellIcon className="h-6 w-6" />
-                </button>
-              </div>
             </div>
           </div>
         </div>

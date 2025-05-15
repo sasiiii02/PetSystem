@@ -92,14 +92,16 @@ const EventDetails = () => {
   }
 
   const eventDate = new Date(event.date);
-  const today = new Date("2025-05-14");
+  const today = new Date("2025-05-14T22:52:00+05:30");
   const isPastEvent = eventDate < today;
   const eventStatus = isPastEvent ? "Past" : "Upcoming";
   const ticketStats = {
-    registered: attendees.reduce((sum, attendee) => sum + attendee.tickets, 0),
-    max: event.maxAttendees,
-    percentage: event.maxAttendees > 0 ? (attendees.reduce((sum, attendee) => sum + attendee.tickets, 0) / event.maxAttendees) * 100 : 0,
+    registered: event.registeredTickets || 0,
+    max: event.maxAttendees || 0,
+    percentage: event.maxAttendees > 0 ? ((event.registeredTickets || 0) / event.maxAttendees) * 100 : 0,
   };
+  const activeRegistrations = attendees.filter(attendee => attendee.status?.toLowerCase() === "active").length;
+  const canceledRegistrations = attendees.filter(attendee => attendee.status?.toLowerCase() === "cancelled").length;
 
   return (
     <div className="bg-gradient-to-br from-[#FFF5E6] to-[#F5EFEA] min-h-screen flex flex-col pt-32 pb-20">
@@ -125,34 +127,51 @@ const EventDetails = () => {
           </Link>
         </div>
 
-        {/* Admin-Specific Event Summary */}
-        <div className="bg-white/80 rounded-2xl shadow-lg p-8 border border-amber-100 mb-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Admin Overview</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <p className="text-base text-gray-600">
-                <span className="font-medium text-gray-800">Status:</span>{" "}
-                <span className={`inline-block px-2 py-1 rounded-full text-sm ${isPastEvent ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}>
-                  {eventStatus}
-                </span>
-              </p>
-              <p className="text-base text-gray-600">
-                <span className="font-medium text-gray-800">Tickets Sold:</span> {ticketStats.registered} / {ticketStats.max} ({ticketStats.percentage.toFixed(1)}% filled)
-              </p>
-              <p className="text-base text-gray-600">
-                <span className="font-medium text-gray-800">Total Revenue:</span> ${(ticketStats.registered * event.price).toFixed(2)}
+        {/* Enhanced Event Overview Section */}
+        <div className="bg-white/90 rounded-2xl shadow-xl p-8 border border-amber-100 mb-8 transition-all duration-300 hover:shadow-2xl">
+          <h2 className="text-2xl font-bold text-white bg-gradient-to-r from-[#D08860] to-[#B3704D] rounded-t-xl p-4 -m-8 mb-6">
+            Event Overview
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Status Card */}
+            <div className="bg-gradient-to-r from-[#FFF5E6] to-[#F5EFEA] p-4 rounded-xl shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+              <p className="text-sm font-medium text-gray-700 mb-1">Status</p>
+              <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${isPastEvent ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}>
+                {eventStatus}
+              </span>
+            </div>
+            {/* Tickets Sold Card */}
+            <div className="bg-gradient-to-r from-[#FFF5E6] to-[#F5EFEA] p-4 rounded-xl shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+              <p className="text-sm font-medium text-gray-700 mb-1">Tickets Sold</p>
+              <p className="text-lg font-semibold text-gray-800">
+                {ticketStats.registered} / {ticketStats.max}
+                <span className="text-sm font-normal text-gray-600 ml-1">({ticketStats.percentage.toFixed(1)}% filled)</span>
               </p>
             </div>
-            <div>
-              <p className="text-base text-gray-600">
-                <span className="font-medium text-gray-800">Created At:</span> {new Date(event.createdAt).toLocaleDateString()}
-              </p>
-              <p className="text-base text-gray-600">
-                <span className="font-medium text-gray-800">Last Updated:</span> {new Date(event.updatedAt).toLocaleDateString()}
-              </p>
-              <p className="text-base text-gray-600">
-                <span className="font-medium text-gray-800">Pet Policy:</span> Dogs & Cats (1 pet + 1-2 people per ticket)
-              </p>
+            {/* Total Revenue Card */}
+            <div className="bg-gradient-to-r from-[#FFF5E6] to-[#F5EFEA] p-4 rounded-xl shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+              <p className="text-sm font-medium text-gray-700 mb-1">Total Revenue</p>
+              <p className="text-lg font-semibold text-gray-800">${(ticketStats.registered * (event.price || 0)).toFixed(2)}</p>
+            </div>
+            {/* Active Registrations Card */}
+            <div className="bg-green-50 p-4 rounded-xl shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+              <p className="text-sm font-medium text-green-800 mb-1">Active Registrations</p>
+              <p className="text-2xl font-bold text-green-800">{activeRegistrations}</p>
+            </div>
+            {/* Canceled Registrations Card */}
+            <div className="bg-red-50 p-4 rounded-xl shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+              <p className="text-sm font-medium text-red-800 mb-1">Canceled Registrations</p>
+              <p className="text-2xl font-bold text-red-800">{canceledRegistrations}</p>
+            </div>
+            {/* Created At Card */}
+            <div className="bg-gradient-to-r from-[#FFF5E6] to-[#F5EFEA] p-4 rounded-xl shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+              <p className="text-sm font-medium text-gray-700 mb-1">Created At</p>
+              <p className="text-lg font-semibold text-gray-800">{new Date(event.createdAt).toLocaleDateString()}</p>
+            </div>
+            {/* Pet Policy Card */}
+            <div className="bg-gradient-to-r from-[#FFF5E6] to-[#F5EFEA] p-4 rounded-xl shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+              <p className="text-sm font-medium text-gray-700 mb-1">Pet Policy</p>
+              <p className="text-lg font-semibold text-gray-800">Dogs & Cats (1 pet + 1-2 people per ticket)</p>
             </div>
           </div>
         </div>

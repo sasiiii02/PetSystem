@@ -48,10 +48,15 @@ const UserEventDetailsPage = () => {
 
         const userRegistrations = regResponse.data.registrations || [];
         const isUserRegistered = userRegistrations.some(
-          (reg) =>
-            reg.userId._id === userResponse.data._id &&
-            reg.paymentStatus === "paid" &&
-            reg.status === "active"
+          (reg) => {
+            const userId = reg.userId;
+            const userIdToCompare = typeof userId === "string" ? userId : userId?._id;
+            return (
+              userIdToCompare === userResponse.data._id &&
+              reg.paymentStatus === "paid" &&
+              reg.status === "active"
+            );
+          }
         );
         setIsRegistered(isUserRegistered);
       }

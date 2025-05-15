@@ -1,5 +1,5 @@
 'use client'
-//with active cancell filter
+
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -66,7 +66,7 @@ const UserRegisteredEventsPage = () => {
   }, [token, navigate]);
 
   const filterRegistrations = (regs, filterType) => {
-    const now = new Date("2025-05-14T00:35:00+05:30"); // Current date and time
+    const now = new Date("2025-05-14T22:05:00+05:30"); // Current date and time
     let filtered = [];
     if (filterType === "active") {
       filtered = regs.filter(
@@ -157,6 +157,52 @@ const UserRegisteredEventsPage = () => {
     return total * 0.5; // 50% refund
   };
 
+  const handleDownloadReport = () => {
+    if (filteredRegistrations.length === 0) {
+      alert("No registrations available to download.");
+      return;
+    }
+
+    const headers = [
+      "Event Title",
+      "Date",
+      "Time",
+      "Location",
+      "Tickets",
+      "Total Cost",
+      "Payment Status",
+      "Status",
+      "Cancellation Reason",
+      "Refund Amount",
+    ];
+
+    const csvRows = [
+      headers.join(","),
+      ...filteredRegistrations.map((reg) =>
+        [
+          `"${reg.eventId?.title || "Event Not Found"}"`,
+          `"${reg.eventId?.date ? new Date(reg.eventId.date).toLocaleDateString() : "N/A"}"`,
+          `"${reg.eventId?.time || "N/A"}"`,
+          `"${reg.eventId?.location || "Unknown Location"}"`,
+          reg.tickets,
+          (reg.eventId?.price || 0) * reg.tickets,
+          reg.paymentStatus || "N/A",
+          reg.status || "N/A",
+          `"${reg.status?.toLowerCase() === "cancelled" ? (reg.cancellationReason || "No reason provided") : "N/A"}"`,
+          reg.status?.toLowerCase() === "cancelled" ? (reg.refundAmount ? reg.refundAmount.toFixed(2) : "0.00") : "N/A",
+        ].join(",")
+      ),
+    ];
+
+    const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
+    const link = document.createElement("a");
+    link.setAttribute("href", encodeURI(csvContent));
+    link.setAttribute("download", `registered_events_report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto mt-32 px-6 py-20 text-center bg-gradient-to-br from-[#FFF5E6] to-[#F5EFEA]">
@@ -210,6 +256,26 @@ const UserRegisteredEventsPage = () => {
             }`}
           >
             Canceled Registrations
+          </button>
+          <button
+            onClick={handleDownloadReport}
+            className="px-6 py-3 bg-gradient-to-r from-[#26A69A] to-[#00695C] text-white rounded-xl hover:bg-[#004D40] transition-colors shadow-lg hover:shadow-xl transform hover:scale-105 duration-300"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 mr-2 inline-block"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              />
+            </svg>
+            Download Report
           </button>
           <Link
             to="/events"
@@ -319,7 +385,7 @@ const UserRegisteredEventsPage = () => {
                     <span
                       className={`px-2 py-1 rounded-full text-sm font-medium ${
                         registration.status?.toLowerCase() === "active"
-                          ? "bg-[#93de95] text-white"
+                          ? "bg-green-100 text-green-800"
                           : "bg-[#B0BEC5] text-gray-800"
                       }`}
                     >
@@ -390,7 +456,7 @@ const UserRegisteredEventsPage = () => {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
+                          d="M15 5v2m0 4v2m0 4v2M5 5a2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
                         />
                       </svg>
                       <span className="font-medium">
@@ -463,11 +529,11 @@ const UserRegisteredEventsPage = () => {
                         onClick={() => handleCancel(registration)}
                         disabled={
                           !registration.eventId?.date ||
-                          new Date(registration.eventId.date) < new Date("2025-05-14T00:35:00+05:30")
+                          new Date(registration.eventId.date) < new Date("2025-05-14T22:05:00+05:30")
                         }
                         className={`flex items-center px-4 py-2 rounded-xl text-white transition-colors shadow-sm hover:shadow-md transform hover:scale-105 duration-300 ${
                           !registration.eventId?.date ||
-                          new Date(registration.eventId.date) < new Date("2025-05-14T00:35:00+05:30")
+                          new Date(registration.eventId.date) < new Date("2025-05-14T22:05:00+05:30")
                             ? "bg-gray-400 cursor-not-allowed"
                             : "bg-red-600 hover:bg-red-700"
                         }`}

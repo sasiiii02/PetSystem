@@ -33,11 +33,11 @@ const ReportChart = ({ type, data, title }) => {
         label: title,
         data: data.map(item => item.value || item.totalRegistrations || item.count || item.totalRevenue || item.refundAmount),
         backgroundColor: [
-          "rgba(208, 136, 96, 0.8)",
-          "rgba(179, 112, 77, 0.8)",
-          "rgba(245, 203, 167, 0.8)",
-          "rgba(229, 152, 102, 0.8)",
-          "rgba(160, 64, 0, 0.8)",
+          "rgba(208, 136, 96, 0.9)",
+          "rgba(179, 112, 77, 0.9)",
+          "rgba(245, 203, 167, 0.9)",
+          "rgba(229, 152, 102, 0.9)",
+          "rgba(160, 64, 0, 0.9)",
         ],
         borderColor: [
           "#D08860",
@@ -46,13 +46,13 @@ const ReportChart = ({ type, data, title }) => {
           "#E59866",
           "#A04000",
         ],
-        borderWidth: 1,
+        borderWidth: 2,
         hoverBackgroundColor: [
-          "#C07A50",
-          "#A06040",
-          "#E5B897",
-          "#D58856",
-          "#903000",
+          "rgba(192, 122, 80, 0.9)",
+          "rgba(160, 96, 64, 0.9)",
+          "rgba(229, 184, 151, 0.9)",
+          "rgba(213, 136, 86, 0.9)",
+          "rgba(144, 48, 0, 0.9)",
         ],
       },
     ],
@@ -65,42 +65,42 @@ const ReportChart = ({ type, data, title }) => {
         position: "top",
         labels: {
           color: "#4B2E1A",
-          font: { size: 14 },
-          padding: 20,
+          font: { size: 16 },
+          padding: 25,
         },
       },
       title: {
         display: true,
         text: title,
         color: "#4B2E1A",
-        font: { size: 18, weight: "bold" },
-        padding: { top: 10, bottom: 20 },
+        font: { size: 20, weight: "bold" },
+        padding: { top: 15, bottom: 25 },
       },
       tooltip: {
-        backgroundColor: "#FFF5E6",
+        backgroundColor: "#FFF8F0",
         titleColor: "#4B2E1A",
         bodyColor: "#4B2E1A",
         borderColor: "#D08860",
-        borderWidth: 1,
-        titleFont: { size: 14 },
-        bodyFont: { size: 12 },
+        borderWidth: 2,
+        titleFont: { size: 16 },
+        bodyFont: { size: 14 },
       },
     },
     scales: type !== "pie" ? {
       y: {
         beginAtZero: true,
-        ticks: { color: "#4B2E1A", font: { size: 12 } },
-        grid: { color: "rgba(208, 136, 96, 0.1)" },
+        ticks: { color: "#4B2E1A", font: { size: 14 } },
+        grid: { color: "rgba(208, 136, 96, 0.2)" },
       },
       x: {
-        ticks: { color: "#4B2E1A", font: { size: 12 } },
+        ticks: { color: "#4B2E1A", font: { size: 14 } },
         grid: { display: false },
       },
     } : {},
   };
 
   return (
-    <div className="bg-white/80 rounded-2xl shadow-lg p-6 border border-amber-100 hover:shadow-xl transition-all duration-300">
+    <div className="bg-[#FFF8F0] rounded-3xl shadow-2xl p-8 border-2 border-[#D08860]/20 hover:shadow-3xl transition-all duration-300">
       {type === "bar" && <Bar data={chartData} options={options} />}
       {type === "line" && <Line data={chartData} options={options} />}
       {type === "pie" && <Pie data={chartData} options={options} />}
