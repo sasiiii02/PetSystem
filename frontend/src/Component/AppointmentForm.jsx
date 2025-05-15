@@ -3,7 +3,6 @@ import axios from "axios";
 import { FaUser, FaPhone, FaEnvelope, FaPaw, FaCalendar, FaClock, FaDollarSign } from "react-icons/fa";
 
 // Axios instance
-
 const api = axios.create({
   baseURL: "http://localhost:5000/api",
   headers: { "Content-Type": "application/json" },
@@ -23,18 +22,29 @@ const AppointmentForm = ({ professional, onClose, appointmentType, appointmentFe
     userName: "",
     phoneNo: "",
     email: "",
-    appointmentType: appointmentType || "",
+    appointmentType: "",
     appointmentFee: appointmentFee || "",
   });
 
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Map activeSection values to backend-compatible appointmentType values
+  const mapAppointmentType = (type) => {
+    const typeMap = {
+      vet: "veterinarian",
+      groomer: "groomer",
+      "pet-trainer": "trainer",
+    };
+    return typeMap[type.toLowerCase()] || "";
+  };
+
   useEffect(() => {
+    const mappedType = mapAppointmentType(appointmentType);
     setFormData((prev) => ({
       ...prev,
       doctorId: professional?.id || "",
-      appointmentType: appointmentType || "",
+      appointmentType: mappedType,
       appointmentFee: appointmentFee || "",
     }));
   }, [professional, appointmentType, appointmentFee]);
