@@ -39,7 +39,8 @@ import {
   getActiveProfessionals,
   generateReports,
   getAllRefundRequests,
-  proffAppointmentDisplayByFilter
+  proffAppointmentDisplayByFilter,
+
 
 } from '../controllers/appointmentController.js';
 import { authenticateProfessional } from '../middleware/professionalAuth.js';
@@ -110,6 +111,8 @@ router.get('/reports/generate', generateReports);
 
 router.patch('/refundrequests/:id/status', updateRefundStatus);
 router.get('/refundrequestforreview', getAllRefundRequests);
+
+
 
 
 export default router;

@@ -18,6 +18,7 @@ export const createAppointment = async (req, res) => {
   session.startTransaction();
 
   try {
+    // Validate user authentication
     if (!req.user || !req.user.userId) {
       await session.abortTransaction();
       return res.status(401).json({ success: false, message: "User authentication required" });
@@ -26,45 +27,57 @@ export const createAppointment = async (req, res) => {
 
     const { doctorId, appointmentDate, appointmentTime, userName, phoneNo, email, appointmentType, appointmentFee } = req.body;
 
+    // Validate required fields
     if (!doctorId || !appointmentDate || !appointmentTime || !userName || !phoneNo || !email || !appointmentType || !appointmentFee) {
       await session.abortTransaction();
       return res.status(400).json({ success: false, message: "All fields are required" });
     }
 
+    // Validate date
     const parsedDate = new Date(appointmentDate);
     if (isNaN(parsedDate.getTime())) {
       await session.abortTransaction();
       return res.status(400).json({ success: false, message: "Invalid date format" });
     }
 
+    // Validate appointment fee
     if (isNaN(appointmentFee) || Number(appointmentFee) <= 0) {
       await session.abortTransaction();
       return res.status(400).json({ success: false, message: "Invalid appointment fee" });
     }
 
+    // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       await session.abortTransaction();
       return res.status(400).json({ success: false, message: "Invalid email format" });
     }
 
+    // Validate phone number
     const phoneRegex = /^[0-9]{10}$/;
     if (!phoneRegex.test(phoneNo)) {
       await session.abortTransaction();
       return res.status(400).json({ success: false, message: "Invalid phone number format (must be 10 digits)" });
     }
 
-    const existingAppointment = await Appointment.findOne({
-      doctorId,
-      appointmentDate: parsedDate,
-      appointmentTime,
-    }).session(session);
+    // Check for existing appointment
+    try {
+      const existingAppointment = await Appointment.findOne({
+        doctorId,
+        appointmentDate: parsedDate,
+        appointmentTime,
+      }).session(session);
 
-    if (existingAppointment) {
-      await session.abortTransaction();
-      return res.status(409).json({ success: false, message: "Time slot already booked" });
+      if (existingAppointment) {
+        await session.abortTransaction();
+        return res.status(409).json({ success: false, message: "Time slot already booked" });
+      }
+    } catch (dbError) {
+      console.error("Database error while checking existing appointment:", dbError);
+      throw new Error(`Database error while checking existing appointment: ${dbError.message}`);
     }
 
+    // Create new appointment
     const newAppointment = new Appointment({
       userId,
       doctorId,
@@ -77,33 +90,58 @@ export const createAppointment = async (req, res) => {
       appointmentFee,
     });
 
-    await newAppointment.save({ session });
+    // Save the appointment
+    try {
+      await newAppointment.save({ session });
+    } catch (dbError) {
+      console.error("Database error while saving appointment:", dbError);
+      throw new Error(`Database error while saving appointment: ${dbError.message}`);
+    }
 
-    const checkoutSession = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: `${appointmentType.charAt(0).toUpperCase() + appointmentType.slice(1)} Appointment with ${doctorId}`,
-              description: `Date: ${parsedDate.toDateString()}, Time: ${appointmentTime}`,
+    // Create Stripe checkout session
+    let checkoutSession;
+    try {
+      checkoutSession = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              product_data: {
+                name: `${appointmentType.charAt(0).toUpperCase() + appointmentType.slice(1)} Appointment with ${doctorId}`,
+                description: `Date: ${parsedDate.toDateString()}, Time: ${appointmentTime}`,
+              },
+              unit_amount: Math.round(appointmentFee * 100),
             },
-            unit_amount: Math.round(appointmentFee * 100),
+            quantity: 1,
           },
-          quantity: 1,
-        },
-      ],
-      mode: "payment",
-      success_url: `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}&appointment_id=${newAppointment._id}`,
-      cancel_url: `${req.headers.origin}/cancel`,
-      metadata: { appointmentId: newAppointment._id.toString() },
-    });
+        ],
+        mode: "payment",
+        success_url: `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}&appointment_id=${newAppointment._id}`,
+        cancel_url: `${req.headers.origin}/cancel`,
+        metadata: { appointmentId: newAppointment._id.toString() },
+      });
+    } catch (stripeError) {
+      console.error("Stripe error while creating checkout session:", stripeError);
+      throw new Error(`Stripe error while creating checkout session: ${stripeError.message}`);
+    }
 
-    newAppointment.paymentIntentId = checkoutSession.payment_intent;
-    await newAppointment.save({ session });
+    // Update appointment with payment intent ID
+    try {
+      newAppointment.paymentIntentId = checkoutSession.payment_intent;
+      await newAppointment.save({ session });
+    } catch (dbError) {
+      console.error("Database error while updating paymentIntentId:", dbError);
+      throw new Error(`Database error while updating paymentIntentId: ${dbError.message}`);
+    }
 
-    await session.commitTransaction();
+    // Commit transaction
+    try {
+      await session.commitTransaction();
+    } catch (txError) {
+      console.error("Transaction commit error:", txError);
+      throw new Error(`Transaction commit error: ${txError.message}`);
+    }
 
     res.status(200).json({
       success: true,
@@ -113,12 +151,14 @@ export const createAppointment = async (req, res) => {
     });
   } catch (error) {
     await session.abortTransaction();
-    console.error("Error creating appointment:", error);
+    console.error("Error creating appointment:", error.message);
     res.status(500).json({ success: false, message: "Server error", error: error.message });
   } finally {
     session.endSession();
   }
 };
+
+
 
 export const confirmPayment = async (req, res) => {
   const session = await mongoose.startSession();
@@ -2978,3 +3018,12 @@ export const proffAppointmentDisplayByFilter = async (req, res) => {
     res.status(500).json({ message: 'Error fetching professionals', error: error.message });
   }
 };
+
+
+
+
+
+
+
+
+

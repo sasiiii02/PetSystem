@@ -10,7 +10,7 @@ const professionalSchema = new mongoose.Schema({
   role: {
     type: String,
     required: true,
-    enum: ['groomer', 'vet', 'pet-trainer'], // Changed "veterinarian" to "vet"
+    enum: ['groomer', 'vet', 'pet-trainer'], 
     default: 'groomer',
     lowercase: true,
   },

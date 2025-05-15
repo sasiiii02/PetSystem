@@ -367,7 +367,7 @@ const PetDetails = () => {
       setAppointment(response.data.appointment);
       setError(null);
       showNotification('Appointment ended successfully!', 'success');
-      navigate('/professional/appointments');
+      navigate('/professional/redirect/view-appointments');
     } catch (error) {
       console.error('Error ending appointment:', {
         message: error.message,
