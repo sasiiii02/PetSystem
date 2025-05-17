@@ -71,10 +71,10 @@ const PetRegister = () => {
         {/* Left Section: Image */}
         <div className="w-full md:w-1/2 relative h-64 md:h-auto">
           <div
-            className="absolute inset-0 bg-[url('./assets/staffRegister.jpg')] bg-cover bg-center flex items-center justify-center"
+            className="absolute inset-0 bg-[url('./assets/addpet.jpg')] bg-cover bg-center  justify-center"
           >
             <div className="text-white text-center p-8">
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4">Register Your Pet</h2>
+              <h2 className="text-3xl sm:text-4xl font-bold mb-4 ">Register Your Pet</h2>
               <p className="text-lg sm:text-xl">Add your pet to our family</p>
             </div>
           </div>
