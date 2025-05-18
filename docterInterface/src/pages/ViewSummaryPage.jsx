@@ -234,10 +234,10 @@ const ViewSummaryPage = () => {
 
   // Mock stats data (static for UI purposes)
   const stats = [
-    { title: 'Total Appointments', value: '45', icon: '📅' },
-    { title: 'Completed', value: '30', icon: '✅' },
-    { title: 'Cancelled', value: '5', icon: '❌' },
-    { title: 'Queries', value: '10', icon: '💬' },
+    { title: 'Total Appointments', value: '', icon: '📅' },
+    { title: 'Completed', value: '', icon: '✅' },
+    { title: 'Cancelled', value: '', icon: '❌' },
+    { title: 'Queries', value: '', icon: '💬' },
   ];
 
   return (
