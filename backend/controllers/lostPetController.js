@@ -155,7 +155,10 @@ export const deleteLostPet = async (req, res) => {
     }
 
     // Check if user is authorized
-    if (lostPet.userId.toString() !== req.user.userId.toString()) {
+    if (!req.user.userId && !req.user.adminId) {
+      return res.status(403).json({ message: 'Not authorized to delete this pet' });
+    }
+    if (req.user.userId && lostPet.userId.toString() !== req.user.userId.toString()) {
       return res.status(403).json({ message: 'Not authorized to delete this pet' });
     }
 

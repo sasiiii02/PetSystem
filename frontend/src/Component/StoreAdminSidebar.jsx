@@ -1,40 +1,43 @@
 import React from 'react'
 import { assets } from '../assets/assets'
+import { PlusCircle, ShoppingBag, Package, FileText } from 'lucide-react'
 
 const StoreAdminSidebar = ({ activeTab, setActiveTab }) => {
   const menuItems = [
-    { id: 'add', label: 'Add Items', icon: assets.add_icon },
-    { id: 'list', label: 'List Items', icon: assets.order_icon },
-    { id: 'orders', label: 'Orders', icon: assets.order_icon },
+    { id: 'add', label: 'Add Products', icon: <PlusCircle className="h-5 w-5" /> },
+    { id: 'list', label: 'Product List', icon: <ShoppingBag className="h-5 w-5" /> },
+    { id: 'orders', label: 'Manage Orders', icon: <Package className="h-5 w-5" /> },
+    { id: 'reports', label: 'Sales Reports', icon: <FileText className="h-5 w-5" /> },
   ];
 
   return (
-    <div className='w-[18%] min-h-screen border-r-2 bg-white shadow-sm'>
-      <div className='flex flex-col h-full'>
-        
-        
-        <div className='flex-1 flex flex-col gap-2 p-4 mt-20'>
+    <div className="w-72 bg-gradient-to-b from-[#80533b] to-[#D08860] shadow-2xl min-h-screen">
+      <div className="p-6 border-b border-white/20 flex items-center">
+        <img className="w-8 h-8 mr-3" src={assets.logo} alt="" />
+        <h1 className="text-2xl font-bold text-white">Store Admin</h1>
+      </div>
+      
+      <nav className="p-4">
+        <ul className="space-y-2">
           {menuItems.map((item) => (
-            <button
+            <li
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                activeTab === item.id 
-                  ? 'bg-amber-100 text-amber-900 border border-amber-200' 
-                  : 'hover:bg-gray-50 text-gray-700'
-              }`}
+              className={`
+                flex items-center p-3 rounded-lg cursor-pointer 
+                ${activeTab === item.id 
+                  ? 'bg-white/20 text-white' 
+                  : 'text-white/90 hover:bg-[#D08860]/20'}
+                transition-all duration-300
+              `}
             >
-              <img className='w-5 h-5' src={item.icon} alt="" />
-              <p className='hidden md:block'>{item.label}</p>
-            </button>
+              {item.icon}
+              <span className="ml-3">{item.label}</span>
+            </li>
           ))}
-        </div>
-
-      
-          
-        </div>
-        </div>
-    
+        </ul>
+      </nav>
+    </div>
   )
 }
 

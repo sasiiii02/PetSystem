@@ -154,10 +154,44 @@ export const updateProfile = async (req, res) => {
     user.phoneNumber = phoneNumber || user.phoneNumber;
     user.city = city || user.city;
 
-    // Handle profile picture upload
+    // Handle profile picture upload to Cloudinary
     if (req.file) {
-      user.profilePicture = req.file.path;
+      try {
+        console.log("Uploading file to Cloudinary:", req.file);
+        const result = await cloudinary.uploader.upload(req.file.path, {
+          folder: "users",
+          use_filename: true,
+          resource_type: "auto"
+        });
+        
+        if (!result || !result.secure_url) {
+          throw new Error("Failed to get secure URL from Cloudinary");
+        }
+        
+        user.profilePicture = result.secure_url;
+        console.log("File uploaded successfully to Cloudinary:", user.profilePicture);
+
+        // Clean up the temporary file
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (unlinkError) {
+          console.error("Error deleting temporary file:", unlinkError);
+        }
+      } catch (uploadError) {
+        console.error("Cloudinary upload error:", uploadError);
+        // Clean up the temporary file even if upload fails
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (unlinkError) {
+          console.error("Error deleting temporary file after failed upload:", unlinkError);
+        }
+        return res.status(500).json({ 
+          message: "Error uploading profile picture",
+          error: process.env.NODE_ENV === 'development' ? uploadError.message : undefined
+        });
+      }
     }
+
 
     // Save the updated user
     await user.save();

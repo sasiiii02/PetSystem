@@ -74,6 +74,8 @@ import Dashboard from './Pages/EventDashboard';
 import CreateEvent from './Pages/EventCreateEvent';
 import EventManagerLayout from "./Component/EventManagerLayout";
 
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 // Layout for pet owner routes with UserHeader and UserFooter
 const MainLayout = ({ children }) => {
   return (
@@ -89,6 +91,8 @@ const App = () => {
   return (
     <BrowserRouter>
     <ShopContextProvider>
+      {/* Toast Container for notifications */}
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop={true} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme="light" />
       <Routes>
         {/* Public Routes with MainLayout */}
         <Route
@@ -114,9 +118,9 @@ const App = () => {
         <Route
           path="/AdminRegister"
           element={
-            <MainLayout>
+            
               <AdminRegister />
-            </MainLayout>
+            
           }
         />
         <Route
@@ -138,9 +142,9 @@ const App = () => {
         <Route
           path="/UsersList"
           element={
-            <MainLayout>
+            
               <UsersList />
-            </MainLayout>
+            
           }
         />
         <Route
@@ -172,17 +176,17 @@ const App = () => {
         <Route
           path="/ProfessionalRegistration"
           element={
-            <MainLayout>
+            
               <ProfessionalRegistration />
-            </MainLayout>
+            
           }
         />
         <Route
           path="/ProfessionalsList"
           element={
-            <MainLayout>
+            
               <ProfessionalsList />
-            </MainLayout>
+            
           }
         />
         <Route
@@ -265,9 +269,9 @@ const App = () => {
           path="/admin/redirect/user_admin"
           element={
             <PrivateRoute>
-              <MainLayout>
+              
                 <SysAdminDashboard />
-              </MainLayout>
+              
             </PrivateRoute>
           }
         />

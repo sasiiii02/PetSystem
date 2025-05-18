@@ -67,4 +67,17 @@ export const getUserHomeVisits = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+};
+
+export const rejectHomeVisitsByForm = async (req, res) => {
+  try {
+    const { formId } = req.params;
+    const result = await HomeVisit.updateMany(
+      { adoptionFormId: formId },
+      { $set: { userResponse: 'rejected', status: 'rejected' } }
+    );
+    res.status(200).json({ message: 'Home visits rejected', result });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 }; 

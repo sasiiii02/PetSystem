@@ -158,18 +158,40 @@ const ProfilePage = () => {
     setProductError('');
 
     try {
-      const response = await api.get('/products'); // Adjust endpoint as per your backend (you may need to create this route)
-      setProducts(response.data || []);
-    } catch (error) {
-      if (error.response?.status === 401) {
-        setProductError('Please log in to view products');
-      } else if (error.response?.status === 404) {
-        setProductError('No purchased products found');
-        setProducts([]);
-      } else {
-        setProductError(error.response?.data?.message || 'Failed to fetch products');
+      const token = localStorage.getItem('petOwnerToken');
+      if (!token) {
+        setProductError('Please login to view orders');
+        setIsLoadingProducts(false);
+        return;
       }
-      console.error('Fetch products error:', error);
+
+      const tokenData = JSON.parse(atob(token.split('.')[1]));
+      const userId = tokenData.userId;
+
+      const response = await axios.post(
+        `http://localhost:5000/api/order/user`,
+        { userId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.data.success) {
+        setProducts(response.data.orders || []);
+      } else {
+        setProductError(response.data.message || 'Failed to fetch orders');
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      if (error.response?.status === 401) {
+        setProductError('Session expired. Please login again');
+        navigate('/login');
+      } else {
+        setProductError(error.response?.data?.message || 'Failed to fetch orders');
+      }
     } finally {
       setIsLoadingProducts(false);
     }
@@ -234,7 +256,7 @@ const ProfilePage = () => {
     setIsCancelling(true);
 
     try {
-      const response = await api.patch(`/appointments/${appointmentId}/cancel`);
+      await api.patch(`/appointments/${appointmentId}/cancel`);
       alert('Appointment cancelled successfully');
       fetchAppointments();
     } catch (error) {
@@ -657,43 +679,91 @@ const ProfilePage = () => {
                     <div className="text-red-500 mb-6 text-center font-medium">{productError}</div>
                   )}
                   {isLoadingProducts ? (
-                    <div className="text-center py-8 text-amber-800">Loading products...</div>
+                    <div className="text-center py-8 text-amber-800">Loading orders...</div>
                   ) : products.length > 0 ? (
                     <div className="space-y-4">
-                      {products.map((product) => (
-                        <div key={product._id} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition border border-amber-100">
+                      {products.map((order) => (
+                        <div
+                          key={order._id}
+                          className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition border border-amber-100"
+                        >
                           <div className="flex justify-between items-start">
                             <div>
                               <h3 className="font-bold text-lg text-amber-800">
-                                {product.name || 'N/A'}
+                                Order #{order._id.slice(-6)}
                               </h3>
-                              <p className="text-amber-700">Order ID: {product._id.slice(-6)}</p>
-                              <p className="text-amber-700">Seller: {product.seller || 'N/A'}</p>
+                              <p className="text-amber-700">Date: {new Date(order.date).toLocaleDateString()}</p>
+                              <p className="text-amber-700">Total: <span className="font-semibold">${order.totalPrice}</span></p>
                             </div>
                             <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                              product.status === 'delivered' ? 'bg-green-100 text-green-800' : 'bg-amber-200 text-amber-800'
+                              order.status === 'Delivered' ? 'bg-green-100 text-green-800' :
+                              order.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' :
+                              order.status === 'Shipped' ? 'bg-purple-100 text-purple-800' :
+                              order.status === 'Out for Delivery' ? 'bg-indigo-100 text-indigo-800' :
+                              order.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
+                              'bg-amber-200 text-amber-800'
                             }`}>
-                              {product.status || 'Pending'}
+                              {order.status || 'Pending'}
                             </span>
                           </div>
-                          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="flex items-center">
-                              <Calendar className="mr-2 text-amber-600" size={18} />
-                              <span className="text-amber-700">
-                                Purchased on {formatDate(product.createdAt)}
-                              </span>
+                          
+                          <div className="mt-4 pt-3 border-t border-amber-200">
+                            <h4 className="font-medium mb-2 text-amber-800">Products:</h4>
+                            <div className="space-y-3">
+                              {order.products.map((product, index) => (
+                                <div key={index} className="flex items-center gap-3">
+                                  {product.image ? (
+                                    <img src={product.image} alt={product.name} className="w-12 h-12 rounded-md object-cover border border-amber-200" />
+                                  ) : (
+                                    <div className="w-12 h-12 bg-amber-100 rounded-md flex items-center justify-center">
+                                      <span className="text-amber-800 text-xs">No image</span>
+                                    </div>
+                                  )}
+                                  <div>
+                                    <p className="font-medium text-amber-900">{product.name}</p>
+                                    <div className="flex items-center gap-2 text-sm text-amber-700">
+                                      <span>${product.price}</span>
+                                      <span>·</span>
+                                      <span>Qty: {product.quantity}</span>
+                                      <span>·</span>
+                                      <span>Size: {product.size}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                            <div className="flex items-center">
-                              <FileText className="mr-2 text-amber-600" size={18} />
-                              <span className="text-amber-700">Price: ${product.price || 'N/A'}</span>
-                            </div>
+                          </div>
+                          
+                          <div className="mt-4 flex items-center">
+                            <span className={`flex items-center gap-1 text-sm ${
+                              order.payment ? 'text-green-600' : 'text-amber-600'
+                            }`}>
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                {order.payment ? (
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                ) : (
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clipRule="evenodd" />
+                                )}
+                              </svg>
+                              <span>{order.payment ? 'Paid' : 'Payment pending'}</span>
+                            </span>
+                            <span className="mx-3 text-amber-300">|</span>
+                            <span className="text-sm text-amber-700">Method: {order.paymentMethod}</span>
+                          </div>
+                          
+                          <div className="mt-4">
+                            <Link to="/orders">
+                              <button className={`${theme.primary} ${theme.textPrimary} px-4 py-2 rounded-lg hover:${theme.secondary} transition shadow-sm text-sm`}>
+                                View All Orders
+                              </button>
+                            </Link>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
                     <div className="text-center py-8 text-amber-700 bg-white rounded-lg shadow-inner border border-amber-100">
-                      No product purchases found
+                      No orders found. <Link to="/collection" className="text-[#D08860] hover:underline">Shop now</Link>
                     </div>
                   )}
                 </div>

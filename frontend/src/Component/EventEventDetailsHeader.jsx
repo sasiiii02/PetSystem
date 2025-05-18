@@ -141,7 +141,7 @@ const EventDetailsHeader = ({ event }) => {
               />
             </svg>
             <span className="text-lg font-semibold text-gray-700">
-              Registered Tickets: {event.registeredTickets} / Remaining: {remainingTickets}
+              Active Registrations: {event.registeredTickets} / Remaining: {remainingTickets}
             </span>
           </div>
         </div>

@@ -1,3 +1,4 @@
+//product controller
 import Product from '../models/productModel.js';
 import cloudinary from '../config/cloudinary.js';
 

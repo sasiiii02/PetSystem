@@ -54,12 +54,12 @@ const StoreStripeVerify = () => {
                             toast.success('Payment successful!');
                             navigate('/orders', { replace: true });
                         } else {
-                            toast.error(response.data.message || 'Payment verification failed');
+                            toast.error(response.data.message );
                             navigate('/orders', { replace: true });
                         }
                     } catch (error) {
                         console.error('Verification error:', error);
-                        toast.error(error.response?.data?.message || 'Payment verification failed');
+                        toast.error(error.response?.data?.message );
                         navigate('/orders', { replace: true });
                     }
                 } else {

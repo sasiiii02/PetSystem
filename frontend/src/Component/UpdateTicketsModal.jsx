@@ -50,7 +50,7 @@ const UpdateTicketsModal = ({ registration, onConfirm, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+    <div className="fixed inset-0 bg-gray-800/30 backdrop-blur-lg flex items-center justify-center z-50 px-4">
       <div className="bg-white/90 rounded-2xl p-8 w-full max-w-lg shadow-xl transform transition-all">
         <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D08860] to-[#B3704D]">

@@ -22,8 +22,10 @@ import {
   Phone,
   Calendar,
   TrendingUp,
-  PieChart
+  PieChart,
+  LogOut
 } from 'lucide-react';
+import jsPDF from 'jspdf';
 
 const PetAdoptionCoordinatorDashboard = () => {
   const [pendingPets, setPendingPets] = useState([]); // For pets in foradoption table
@@ -113,7 +115,7 @@ const PetAdoptionCoordinatorDashboard = () => {
   // Fetch adoption forms
   const fetchAdoptionForms = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
       if (!token) {
         console.error("No token found in localStorage");
         setError("Authentication required. Please log in again.");
@@ -152,7 +154,7 @@ const PetAdoptionCoordinatorDashboard = () => {
   // Add this function to fetch home visits
   const fetchHomeVisits = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
       const response = await axios.get('http://localhost:5000/api/homevisits', {
         headers: {
           Authorization: `Bearer ${token}`
@@ -882,6 +884,7 @@ const PetAdoptionCoordinatorDashboard = () => {
                                   </h3>
                                   <p className="text-gray-600">Email: {form.email}</p>
                                   <p className="text-gray-600">Phone: {form.phoneNumber}</p>
+                                  <p className="text-gray-600">Submitted: {new Date(form.createdAt).toLocaleDateString()}</p>
                                 </div>
                                 <div>
                                   <p className="text-gray-600">Home Type: {form.homeType}</p>
@@ -935,6 +938,7 @@ const PetAdoptionCoordinatorDashboard = () => {
     // Get all visited home visits
     const visitedVisits = homeVisits.filter(visit => visit.status === 'visited');
     const visitedFormIds = new Set(visitedVisits.map(visit => visit.adoptionFormId));
+    // For rejected: no need to check home visits
 
     return (
       <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100">
@@ -942,7 +946,7 @@ const PetAdoptionCoordinatorDashboard = () => {
           <h2 className="text-3xl font-extrabold text-gray-800 flex items-center">
             <FileText className="mr-3 text-gray-600" /> Visited Applications
           </h2>
-                                </div>
+        </div>
 
         {/* Filter Buttons */}
         <div className="flex justify-center mb-8">
@@ -959,7 +963,7 @@ const PetAdoptionCoordinatorDashboard = () => {
               <span>Pending Review</span>
               <span className="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-sm">
                 {adoptionForms.filter(form => form.status === 'pending_review' && visitedFormIds.has(form._id)).length}
-                                  </span>
+              </span>
             </button>
             <button
               onClick={() => setApplicationFilter('approved')}
@@ -986,128 +990,141 @@ const PetAdoptionCoordinatorDashboard = () => {
               <XCircle className="w-5 h-5" />
               <span>Rejected</span>
               <span className="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-sm">
-                {adoptionForms.filter(form => form.status === 'rejected' && visitedFormIds.has(form._id)).length}
+                {adoptionForms.filter(form => form.status === 'rejected').length}
               </span>
             </button>
-                </div>
-              </div>
+          </div>
+        </div>
 
-                <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {adoptionForms
-            .filter(form => form.status === applicationFilter && visitedFormIds.has(form._id))
+            .filter(form => {
+              if (applicationFilter === 'rejected') {
+                return form.status === 'rejected';
+              } else {
+                return form.status === applicationFilter && visitedFormIds.has(form._id);
+              }
+            })
             .length === 0 ? (
-                    <div className="text-center py-10 bg-white rounded-xl shadow-md">
-              <p className="text-gray-500">No {applicationFilter.replace('_', ' ')} applications with completed visits</p>
-                    </div>
-                  ) : (
-                    adoptionForms
-              .filter(form => form.status === applicationFilter && visitedFormIds.has(form._id))
-                      .map((form) => (
-                        <div 
-                          key={form._id} 
-                  className={`bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition ${
-                    form._id === highlightedFormId ? 'ring-4 ring-[#D08860] animate-pulse' : ''
-                  }`}
-                        >
-                          <div className="flex flex-col md:flex-row gap-6">
-                            {/* Left Section - Pet Image and Basic Info */}
-                            <div className="flex-shrink-0">
-                              <div className="relative w-40 h-40 rounded-xl overflow-hidden">
-                                {form.petImage ? (
-                                  <img 
-                                    src={form.petImage.startsWith('http') ? form.petImage : `http://localhost:5000${form.petImage}`} 
-                                    alt={form.petName} 
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                      e.target.onerror = null;
-                                      e.target.src = 'https://via.placeholder.com/150?text=No+Image';
-                                    }}
-                                  />
-                                ) : (
-                                  <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                                    <Dog className="text-gray-400" size={32} />
-                                  </div>
-                                )}
-                              </div>
-                              <div className="mt-4 text-center">
-                                <h3 className="text-xl font-bold text-gray-800">{form.petName}</h3>
-                                <p className="text-gray-600">Pet Type: {form.petType}</p>
-                              </div>
+              <div className="text-center py-10 bg-white rounded-xl shadow-md">
+                <p className="text-gray-500">No {applicationFilter.replace('_', ' ')} applications with completed visits</p>
+              </div>
+            ) : (
+              adoptionForms
+                .filter(form => {
+                  if (applicationFilter === 'rejected') {
+                    return form.status === 'rejected';
+                  } else {
+                    return form.status === applicationFilter && visitedFormIds.has(form._id);
+                  }
+                })
+                .map((form) => (
+                  <div 
+                    key={form._id} 
+                    className={`bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition ${
+                      form._id === highlightedFormId ? 'ring-4 ring-[#D08860] animate-pulse' : ''
+                    }`}
+                  >
+                    <div className="flex flex-col md:flex-row gap-6">
+                      {/* Left Section - Pet Image and Basic Info */}
+                      <div className="flex-shrink-0">
+                        <div className="relative w-40 h-40 rounded-xl overflow-hidden">
+                          {form.petImage ? (
+                            <img 
+                              src={form.petImage.startsWith('http') ? form.petImage : `http://localhost:5000${form.petImage}`} 
+                              alt={form.petName} 
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = 'https://via.placeholder.com/150?text=No+Image';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                              <Dog className="text-gray-400" size={32} />
                             </div>
+                          )}
+                        </div>
+                        <div className="mt-4 text-center">
+                          <h3 className="text-xl font-bold text-gray-800">{form.petName}</h3>
+                          <p className="text-gray-600">Pet Type: {form.petType}</p>
+                        </div>
+                      </div>
 
-                            {/* Right Section - Form Details */}
-                            <div className="flex-grow">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                  <h3 className="text-xl font-bold text-gray-800 mb-2">
-                                    {form.firstName} {form.lastName}
-                                  </h3>
-                                  <p className="text-gray-600">Email: {form.email}</p>
-                                  <p className="text-gray-600">Phone: {form.phoneNumber}</p>
-                                </div>
-                                <div>
-                                  <p className="text-gray-600">Home Type: {form.homeType}</p>
-                                  <p className="text-gray-600">Employment: {form.employmentStatus}</p>
-                                  <p className="text-gray-600">
-                                    <span className="font-semibold">Has Yard:</span> {form.hasYard ? 'Yes' : 'No'}
-                                  </p>
-                                  <p className="text-gray-600">
-                                    <span className="font-semibold">Has Other Pets:</span> {form.hasOtherPets ? 'Yes' : 'No'}
-                                  </p>
-                                </div>
-                              </div>
-
-                              {form.additionalInfo && (
-                                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                                  <p className="text-gray-600">
-                                    <span className="font-semibold">Additional Info:</span> {form.additionalInfo}
-                                  </p>
-                                </div>
-                              )}
-
-                      <div className="mt-4 flex justify-between items-center">
-                        <div className="flex items-center space-x-3">
-                          <span className={`px-3 py-1 rounded-full ${
-                            form.status === 'approved' 
-                              ? 'bg-green-100 text-green-800' 
-                              : form.status === 'rejected'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {form.status === 'pending_review' ? 'Pending Review' : form.status.charAt(0).toUpperCase() + form.status.slice(1)}
-                          </span>
-                          <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full">
-                            Visit Completed
-                                </span>
+                      {/* Right Section - Form Details */}
+                      <div className="flex-grow">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">
+                              {form.firstName} {form.lastName}
+                            </h3>
+                            <p className="text-gray-600">Email: {form.email}</p>
+                            <p className="text-gray-600">Phone: {form.phoneNumber}</p>
+                            <p className="text-gray-600">Submitted: {new Date(form.createdAt).toLocaleDateString()}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Home Type: {form.homeType}</p>
+                            <p className="text-gray-600">Employment: {form.employmentStatus}</p>
+                            <p className="text-gray-600">
+                              <span className="font-semibold">Has Yard:</span> {form.hasYard ? 'Yes' : 'No'}
+                            </p>
+                            <p className="text-gray-600">
+                              <span className="font-semibold">Has Other Pets:</span> {form.hasOtherPets ? 'Yes' : 'No'}
+                            </p>
+                          </div>
                         </div>
 
-                        {form.status === 'pending_review' && (
-                          <div className="flex space-x-3">
+                        {form.additionalInfo && (
+                          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                            <p className="text-gray-600">
+                              <span className="font-semibold">Additional Info:</span> {form.additionalInfo}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="mt-4 flex justify-between items-center">
+                          <div className="flex items-center space-x-3">
+                            <span className={`px-3 py-1 rounded-full ${
+                              form.status === 'approved' 
+                                ? 'bg-green-100 text-green-800' 
+                                : form.status === 'rejected'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {form.status === 'pending_review' ? 'Pending Review' : form.status.charAt(0).toUpperCase() + form.status.slice(1)}
+                            </span>
+                            <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full">
+                              Visit Completed
+                            </span>
+                          </div>
+
+                          {form.status === 'pending_review' && (
+                            <div className="flex space-x-3">
                               <button 
-                              onClick={() => handleApproveApplication(form._id)}
-                              className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition flex items-center space-x-2"
+                                onClick={() => handleApproveApplication(form._id)}
+                                className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition flex items-center space-x-2"
                               >
-                              <CheckCircle className="inline-block" size={18} />
-                              <span>Approve Application</span>
+                                <CheckCircle className="inline-block" size={18} />
+                                <span>Approve Application</span>
                               </button>
-                            <button
-                              onClick={() => handleRejectApplication(form._id)}
-                              className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition flex items-center space-x-2"
-                            >
-                              <XCircle className="inline-block" size={18} />
-                              <span>Reject Application</span>
-                            </button>
-                          </div>
-                            )}
-                          </div>
+                              <button
+                                onClick={() => handleRejectApplication(form._id)}
+                                className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition flex items-center space-x-2"
+                              >
+                                <XCircle className="inline-block" size={18} />
+                                <span>Reject Application</span>
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
-                  ))
-              )}
-            </div>
-    </div>
-  );
+                  </div>
+                ))
+            )}
+        </div>
+      </div>
+    );
   };
 
   const renderHomeVisits = () => (
@@ -1612,10 +1629,17 @@ const PetAdoptionCoordinatorDashboard = () => {
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
     
-    const monthlyAdoptions = adoptedPets.filter(pet => {
+    // Count adopted pets in the current month
+    const monthlyAdoptedPets = adoptedPets.filter(pet => {
       const adoptionDate = new Date(pet.adoptionDate);
       return adoptionDate.getMonth() === currentMonth && adoptionDate.getFullYear() === currentYear;
     }).length;
+    // Count approved applications in the current month
+    const monthlyApprovedApplications = adoptionForms.filter(form => {
+      return form.status === 'approved' && new Date(form.createdAt).getMonth() === currentMonth && new Date(form.createdAt).getFullYear() === currentYear;
+    }).length;
+    // Monthly adoptions = adopted pets + approved applications (if not already counted)
+    const monthlyAdoptions = monthlyAdoptedPets + monthlyApprovedApplications;
 
     const monthlyVisits = homeVisits.filter(visit => {
       const visitDate = new Date(visit.date);
@@ -1645,11 +1669,55 @@ const PetAdoptionCoordinatorDashboard = () => {
       return acc;
     }, {});
 
+    // Download adoption coordinator report as PDF
+    const handleDownloadCoordinatorReport = () => {
+      const doc = new jsPDF();
+      doc.setFillColor(208, 136, 96); // #D08860
+      doc.rect(0, 0, 210, 30, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(22);
+      doc.text('Adoption Coordinator Report', 105, 20, { align: 'center' });
+      doc.setTextColor(60, 40, 27);
+      doc.setFontSize(14);
+      let y = 40;
+      doc.text('Key Statistics:', 14, y); y += 10;
+      doc.setFontSize(12);
+      doc.text(`Total Pets: ${pendingPets.length + adoptablePets.length}`, 14, y); y += 8;
+      doc.text(`Adopted Pets: ${adoptedPets.length}`, 14, y); y += 8;
+      doc.text(`Adoption Rate: ${totalPets > 0 ? ((adoptedPets.length / (pendingPets.length + adoptablePets.length)) * 100).toFixed(1) : 0}%`, 14, y); y += 8;
+      doc.text(`Home Visits: ${homeVisits.length}`, 14, y); y += 8;
+      doc.text(`Completed Visits: ${homeVisits.filter(v => v.status === 'visited').length}`, 14, y); y += 8;
+      doc.text(`Visit Completion Rate: ${homeVisits.length > 0 ? ((homeVisits.filter(v => v.status === 'visited').length / homeVisits.length) * 100).toFixed(1) : 0}%`, 14, y); y += 8;
+      doc.text(`Applications: ${adoptionForms.length}`, 14, y); y += 8;
+      doc.text(`Approved Applications: ${adoptionForms.filter(f => f.status === 'approved').length}`, 14, y); y += 8;
+      doc.text(`Application Approval Rate: ${adoptionForms.length > 0 ? ((adoptionForms.filter(f => f.status === 'approved').length / adoptionForms.length) * 100).toFixed(1) : 0}%`, 14, y); y += 12;
+      doc.setFontSize(14);
+      doc.text('Monthly Statistics:', 14, y); y += 10;
+      doc.setFontSize(12);
+      doc.text(`Monthly Adoptions: ${monthlyAdoptions}`, 14, y); y += 8;
+      doc.text(`Monthly Home Visits: ${monthlyVisits}`, 14, y); y += 12;
+      doc.setFontSize(14);
+      doc.text('Lost & Found:', 14, y); y += 10;
+      doc.setFontSize(12);
+      doc.text(`Total Lost Pets: ${lostPets.length}`, 14, y); y += 8;
+      doc.text(`Total Found Pets: ${foundPets.length}`, 14, y); y += 8;
+      doc.save('Adoption_Coordinator_Report.pdf');
+    };
+
     return (
       <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100">
-        <h2 className="text-3xl font-extrabold text-gray-800 mb-6 flex items-center">
-          <FileText className="mr-3 text-gray-600" /> Adoption Coordinator Reports
-        </h2>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-3xl font-extrabold text-gray-800 mb-6 flex items-center">
+            <FileText className="mr-3 text-gray-600" /> Adoption Coordinator Reports
+          </h2>
+          <button
+            onClick={handleDownloadCoordinatorReport}
+            className="flex items-center gap-2 px-5 py-2 bg-[#D08860] text-white rounded-lg shadow hover:bg-[#80533b] transition-colors font-semibold"
+          >
+            <FileText size={18} />
+            Download Report
+          </button>
+        </div>
 
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -1987,7 +2055,7 @@ const PetAdoptionCoordinatorDashboard = () => {
 
   const handleApproveApplication = async (formId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
       await axios.put(
         `http://localhost:5000/api/adoptionform/update/${formId}`,
         { status: 'approved' },
@@ -2021,7 +2089,8 @@ const PetAdoptionCoordinatorDashboard = () => {
 
   const handleRejectApplication = async (formId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+      // Reject the application
       await axios.put(
         `http://localhost:5000/api/adoptionform/update/${formId}`,
         { status: 'rejected' },
@@ -2031,7 +2100,18 @@ const PetAdoptionCoordinatorDashboard = () => {
           }
         }
       );
+      // Also update all related home visits to rejected
+      await axios.put(
+        `http://localhost:5000/api/homevisits/by-form/${formId}/reject`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
       fetchAdoptionForms();
+      fetchHomeVisits();
       setNotification({
         show: true,
         message: 'Application rejected successfully',
@@ -2089,7 +2169,7 @@ const PetAdoptionCoordinatorDashboard = () => {
   const handleSubmitVisit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
       if (!token) {
         setNotification({
           show: true,
@@ -2249,7 +2329,7 @@ const PetAdoptionCoordinatorDashboard = () => {
   // Update the delete handler
   const handleDeleteLostFoundPet = async (petId, type) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
       if (!token) {
         setNotification({
           show: true,
@@ -2308,7 +2388,7 @@ const PetAdoptionCoordinatorDashboard = () => {
 
   const handleUpdateVisitStatus = async (visitId, status) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
       await axios.put(
         `http://localhost:5000/api/homevisits/${visitId}`,
         { status },
@@ -2343,7 +2423,7 @@ const PetAdoptionCoordinatorDashboard = () => {
   // Add this new handler function after handleUpdateVisitStatus
   const handleMarkAsVisited = async (visitId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
       
       // First, get the visit details to find the associated adoption form
       const visit = homeVisits.find(v => v._id === visitId);
@@ -2455,71 +2535,90 @@ const PetAdoptionCoordinatorDashboard = () => {
     localStorage.setItem('activeSection', section);
   };
 
+  // Logout handler
+  const handleLogout = () => {
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('token');
+    navigate('/login');
+  };
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      <div className="w-72 bg-gradient-to-b from-[#80533b] to-[#D08860] shadow-2xl">
-        <div className="p-6 border-b border-white/20 flex items-center">
-          <PawPrint className="mr-3 text-white" size={40} />
-          <h1 className="text-2xl font-bold text-white">Pawsome Adoptions</h1>
+      <div className="w-72 bg-gradient-to-b from-[#80533b] to-[#D08860] shadow-2xl flex flex-col justify-between">
+        <div>
+          <div className="p-6 border-b border-white/20 flex items-center">
+            <PawPrint className="mr-3 text-white" size={40} />
+            <h1 className="text-2xl font-bold text-white">Pawsome Adoptions</h1>
+          </div>
+          <nav className="p-4">
+            <ul className="space-y-2">
+              {[
+                { 
+                  name: 'Pets', 
+                  icon: Dog, 
+                  section: 'pets',
+                  color: 'hover:bg-[#D08860]/20' 
+                },
+                { 
+                  name: 'Adoption Forms', 
+                  icon: FileText, 
+                  section: 'forms',
+                  color: 'hover:bg-[#D08860]/20' 
+                },
+                { 
+                  name: 'Home Visits', 
+                  icon: CalendarCheck, 
+                  section: 'visits',
+                  color: 'hover:bg-[#D08860]/20' 
+                },
+                { 
+                  name: 'Application Status', 
+                  icon: CheckCircle2, 
+                  section: 'status',
+                  color: 'hover:bg-[#D08860]/20' 
+                },
+                { 
+                  name: 'Lost & Found', 
+                  icon: MapPin, 
+                  section: 'lostfound',
+                  color: 'hover:bg-[#D08860]/20' 
+                },
+                { 
+                  name: 'Reports', 
+                  icon: FileText, 
+                  section: 'reports',
+                  color: 'hover:bg-[#D08860]/20' 
+                }
+              ].map(item => (
+                <li 
+                  key={item.section}
+                  className={
+                    `flex items-center p-3 rounded-lg cursor-pointer ${
+                      activeSection === item.section 
+                        ? 'bg-white/20 text-white' 
+                        : 'text-white/90 ' + item.color
+                    } transition-all duration-300`
+                  }
+                  onClick={() => handleSectionChange(item.section)}
+                >
+                  <item.icon className="mr-3" />
+                  {item.name}
+                </li>
+              ))}
+            </ul>
+          </nav>
         </div>
-        <nav className="p-4">
-          <ul className="space-y-2">
-            {[
-              { 
-                name: 'Pets', 
-                icon: Dog, 
-                section: 'pets',
-                color: 'hover:bg-[#D08860]/20' 
-              },
-              { 
-                name: 'Adoption Forms', 
-                icon: FileText, 
-                section: 'forms',
-                color: 'hover:bg-[#D08860]/20' 
-              },
-              { 
-                name: 'Home Visits', 
-                icon: CalendarCheck, 
-                section: 'visits',
-                color: 'hover:bg-[#D08860]/20' 
-              },
-              { 
-                name: 'Application Status', 
-                icon: CheckCircle2, 
-                section: 'status',
-                color: 'hover:bg-[#D08860]/20' 
-              },
-              { 
-                name: 'Lost & Found', 
-                icon: MapPin, 
-                section: 'lostfound',
-                color: 'hover:bg-[#D08860]/20' 
-              },
-              { 
-                name: 'Reports', 
-                icon: FileText, 
-                section: 'reports',
-                color: 'hover:bg-[#D08860]/20' 
-              }
-            ].map(item => (
-              <li 
-                key={item.section}
-                className={`
-                  flex items-center p-3 rounded-lg cursor-pointer 
-                  ${activeSection === item.section 
-                    ? 'bg-white/20 text-white' 
-                    : 'text-white/90 ' + item.color}
-                  transition-all duration-300
-                `}
-                onClick={() => handleSectionChange(item.section)}
-              >
-                <item.icon className="mr-3" />
-                {item.name}
-              </li>
-            ))}
-          </ul>
-        </nav>
+        {/* Logout Button */}
+        <div className="p-4 mb-4">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-all font-semibold text-lg"
+          >
+            <LogOut className="mr-2" />
+            Logout
+          </button>
+        </div>
       </div>
 
       {/* Main Content */}

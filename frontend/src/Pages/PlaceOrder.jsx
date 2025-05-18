@@ -29,15 +29,32 @@ const PlaceOrder = () => {
     phone: ''
   });
   
-  // Check if user is logged in
+  // Check if user is logged in and if cart has items
   useEffect(() => {
+    // Check if cart is empty
+    let hasItems = false;
+    for (const itemId in cartItems) {
+      for (const size in cartItems[itemId]) {
+        if (cartItems[itemId][size] > 0) {
+          hasItems = true;
+          break;
+        }
+      }
+      if (hasItems) break;
+    }
+    
+    if (!hasItems) {
+      navigate('/collection');
+      return;
+    }
+    
     const token = localStorage.getItem('petOwnerToken');
     if (!token) {
       localStorage.setItem('returnUrl', location.pathname);
       toast.error("Please login to place an order");
       navigate('/login');
     }
-  }, [navigate, location]);
+  }, [navigate, location, cartItems]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -136,17 +153,17 @@ const PlaceOrder = () => {
                 toast.success("Order placed successfully!");
                 navigate('/orders');
             } else {
-                toast.error(response.data.message || "Failed to place order");
+                toast.error(response.data.message );
             }
         }
     } catch (error) {
         console.error("Order placement error:", error);
         if (error.response) {
             console.error("Error response:", error.response.data);
-            toast.error(error.response.data.message || "Failed to place order");
+            toast.error(error.response.data.message );
         } else if (error.request) {
             console.error("Error request:", error.request);
-            toast.error("No response from server. Please try again.");
+           
         } else {
             console.error("Error message:", error.message);
             toast.error("An error occurred. Please try again.");

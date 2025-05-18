@@ -140,12 +140,7 @@ const UserEventsPage = () => {
             <FaPaw size={20} />
             All Events
           </button>
-          <button
-            className="bg-[#D08860] text-white px-6 py-3 rounded-xl hover:bg-[#80533b] transition-colors flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-          >
-            <FaFilter size={20} />
-            Filter
-          </button>
+          
           <button
             onClick={handleViewRegisteredEvents}
             disabled={!token}

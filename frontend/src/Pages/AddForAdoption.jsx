@@ -77,6 +77,15 @@ const PetOwnerForm = () => {
     fetchUserData();
   }, [navigate]);
 
+  useEffect(() => {
+    if (submissionStatus === 'success') {
+      const timer = setTimeout(() => {
+        navigate('/pet-owner-dashboard');
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [submissionStatus, navigate]);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -158,7 +167,6 @@ const PetOwnerForm = () => {
           },
         });
         setSubmissionStatus('success');
-        alert(response.data.message);
       } catch (error) {
         console.error("Error adding pet for adoption:", error);
         if (error.response?.status === 401) {
@@ -185,7 +193,7 @@ const PetOwnerForm = () => {
 
   // Success message component
   const SuccessMessage = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0  bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
       <div className="bg-white p-12 rounded-3xl shadow-2xl text-center max-w-md">
         <CheckCircle className="mx-auto mb-6 text-green-500" size={80} />
         <h2 className="text-3xl font-bold text-[#80533b] mb-4">Pet Successfully Listed!</h2>
@@ -195,13 +203,7 @@ const PetOwnerForm = () => {
         <p className="text-md text-gray-600 mb-6">
           We will review your listing and notify you when potential adopters show interest.
         </p>
-        <button 
-         
-          onClick={handleFormData}
-          className="bg-[#B3704D] text-white px-8 py-3 rounded-xl hover:bg-[#D08860] transition-colors"
-        >
-          Close
-        </button>
+        {/* No close button needed since it auto-closes */}
       </div>
     </div>
   );

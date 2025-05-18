@@ -13,7 +13,6 @@ const EditFoundPet = () => {
     petType: '',
     breed: '',
     color: '',
-    age: '',
     gender: '',
     foundDate: '',
     foundLocation: '',
@@ -29,22 +28,21 @@ const EditFoundPet = () => {
 
   const fetchPetDetails = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
       const response = await axios.get(`http://localhost:5000/api/lost-and-found/found/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const pet = response.data;
       setFormData({
-        petType: pet.petType,
-        breed: pet.breed,
-        color: pet.color,
-        age: pet.age,
-        gender: pet.gender,
-        foundDate: new Date(pet.foundDate).toISOString().split('T')[0],
-        foundLocation: pet.foundLocation,
-        description: pet.description,
-        contactNumber: pet.contactNumber,
-        email: pet.email,
+        petType: pet.petType || '',
+        breed: pet.breed || '',
+        color: pet.color || '',
+        gender: pet.gender || '',
+        foundDate: pet.foundDate ? new Date(pet.foundDate).toISOString().split('T')[0] : '',
+        foundLocation: pet.foundLocation || '',
+        description: pet.description || '',
+        contactNumber: pet.contactNumber || '',
+        email: pet.email || '',
         image: null
       });
     } catch (error) {
@@ -74,7 +72,7 @@ const EditFoundPet = () => {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('petOwnerToken') || localStorage.getItem('adminToken');
       const formDataToSend = new FormData();
       
       // Append all form fields
@@ -108,7 +106,7 @@ const EditFoundPet = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('petOwnerToken') || localStorage.getItem('adminToken');
       await axios.delete(`http://localhost:5000/api/lost-and-found/found/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -171,18 +169,6 @@ const EditFoundPet = () => {
                   type="text"
                   name="color"
                   value={formData.color}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-[#D08860] focus:border-[#D08860]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
-                <input
-                  type="text"
-                  name="age"
-                  value={formData.age}
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-[#D08860] focus:border-[#D08860]"
