@@ -467,12 +467,6 @@ const ProfilePage = () => {
                     Edit Profile
                   </button>
                 </Link>
-                <button
-                  className="bg-white text-amber-800 px-6 py-2 rounded-lg hover:bg-amber-50 transition shadow-md border border-amber-200 flex items-center"
-                >
-                  <CreditCard className="mr-2" size={18} />
-                  Payment Methods
-                </button>
               </div>
             </>
           ) : (
